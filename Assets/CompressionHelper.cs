@@ -154,6 +154,11 @@ public static class CompressionHelper
 		ActOnFile(path, pathOut, CompressBytes);
 	}
 
+    public static void CompressMemToFile(byte[] bytesIn, string pathOut)
+	{
+		ActOnMemToFile(bytesIn, pathOut, CompressBytes);
+	}
+
 	public static void DecompressFile(string path, string pathOut)
 	{
 		ActOnFile(path, pathOut, DecompressBytes);
@@ -169,6 +174,12 @@ public static class CompressionHelper
 	{
 		byte[] input = File.ReadAllBytes(path);
 		byte[] output = act(input);
+		File.WriteAllBytes(pathOut, output);
+	}
+
+    private static void ActOnMemToFile(byte[] bytesIn, string pathOut, Func<Byte[], Byte[]> act)
+	{
+		byte[] output = act(bytesIn);
 		File.WriteAllBytes(pathOut, output);
 	}
 

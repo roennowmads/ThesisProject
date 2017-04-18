@@ -67,7 +67,7 @@
 				UNITY_INITIALIZE_OUTPUT(v2f, o)
 				UNITY_SETUP_INSTANCE_ID(v);
 
-				float texSize = 1024.0 * 8.0;
+				float texSize = 1024.0 * 4.0;
 				float instanceId = float(v.iid + _FrameTime);
 				float2 texCoords = float2(instanceId % texSize, instanceId / texSize) / texSize;
 				o.color = tex2Dlod(_MainTex, float4(texCoords, 0, 0));
