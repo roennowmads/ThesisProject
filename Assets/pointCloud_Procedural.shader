@@ -28,9 +28,9 @@
 
 			//float4x4 depthCameraTUnityWorld;
 			sampler2D _MainTex;
-			sampler2D _ColorTex;
+			//sampler2D _ColorTex;
+			Texture2D<float4> _ColorTex;
 			sampler2D _AlbedoTex;
-			Texture2D<uint2> //look at directx11 documentation.
 			int _FrameTime;
 
 			uniform matrix model;
@@ -75,7 +75,7 @@
 				float2 texCoords = float2(instanceId % texSize, instanceId / texSize) / texSize;
 				//o.color = tex2Dlod(_MainTex, float4(texCoords, 0, 0));
 
-				float maxMagnitude = 1000.0f;
+				float maxMagnitude = 1000.0;
 				float value = tex2Dlod(_MainTex, float4(texCoords, 0, 0)).r / maxMagnitude;
 
 				if (value > 0.3)
@@ -87,7 +87,8 @@
 				return;
 				}*/
 
-				o.color = tex2Dlod(_ColorTex, float4(value, 0, 0, 0));
+				//o.color = tex2Dlod(_ColorTex, float4(value, 0, 0, 0));
+				o.color = _ColorTex.Load(int3(int(value*1024.0), 0, 0));
 
 				//UNITY_TRANSFER_INSTANCE_ID(v, o);
 
