@@ -29,30 +29,22 @@ public class PointCloud : MonoBehaviour {
     private float m_currentTime;
 
     private int m_textureSize = 1024 * 4;
+    private int m_lookupTextureSize = 1024;
 
     private ComputeBuffer computebuffer;
 
-    void readPointsFile1Value(int fileIndex, int offset, Texture2D tex) {
-        //TextAsset pointValues = Resources.Load<UnityEngine.Object>("AtriumData/fireAtrium0." + index) as TextAsset;
-        //StreamReader reader = new StreamReader(new MemoryStream(pointValues.bytes));
-        //List<Color> colors = new List<Color>();
+    Texture2D createColorLookupTexture() {
+        int numberOfValues = m_lookupTextureSize;
 
-        //CompressionHelper.CompressFile("fireAtrium0.0.bytes");
-        string path = "Assets/Resources/AtriumData/";
+        Texture2D lookupTexture = new Texture2D(m_lookupTextureSize, 1, TextureFormat.RGBA32, false, false);
 
-        //CompressionHelper.CompressFile(path + "fireAtrium0." + fileIndex + ".bytes", "fireAtrium0." + fileIndex +".lzf");
-        byte[] bytes = CompressionHelper.DecompressFileToMem(path + "fireAtrium0." + fileIndex +".lzf");
+        for (int i = 0; i < numberOfValues; i++) {
+            //float maxMagnitude = 1000.0f;/*5.73f * 0.5f;*/
+            float textureIndex = i;
 
-        //TextAsset ta = Resources.Load("AtriumData/fireAtrium0." + index, typeof(TextAsset)) as TextAsset;
-        //byte[] bytes = ta.bytes;
-        
-        float[] vals = new float[bytes.Length / 4];
-        Buffer.BlockCopy(bytes, 0, vals, 0, bytes.Length);
 
-        //foreach (float val in vals) {
-        for (int i = 0; i< vals.Length; i++) {
-            float maxMagnitude = 1000.0f;/*5.73f * 0.5f;*/
-            float value = 1.0f - (vals[i] / maxMagnitude);
+            //0 - 1023 --> 1.0 - 0.0
+            float value = 1.0f - (textureIndex / numberOfValues);
 
             var a = (1.0f - value) / 0.25f; //invert and group
             float X = Mathf.Floor(a);   //this is the integer part
@@ -81,19 +73,65 @@ public class PointCloud : MonoBehaviour {
                     break;
             }
 
-            color.a = value;
-
-            int texIndex = i + offset;
-            int x = texIndex % tex.width;
-            int y = texIndex / tex.height;
+            color.a = 0.0f;//value;
             
-            tex.SetPixel(x, y, color); 
+            lookupTexture.SetPixel(i, 0, color); 
 
             //alternatives: (necessary if I want to store only one component per pixel)
             //tex.LoadRawTextureData()
             //tex.SetPixels(x, y, width, height, colors.ToArray()); 
             //pixels are stored in rectangle blocks... maybe it would actually be better for caching anyway? problem is a frame's colors would need to fit in a rectangle.
         }
+
+        lookupTexture.Apply();
+
+        return lookupTexture;
+    }
+
+    void readPointsFile1Value(Texture2D tex) {
+        //CompressionHelper.CompressFile(path + "fireAtrium0." + fileIndex + ".bytes", "fireAtrium0." + fileIndex +".lzf");
+        //byte[] bytes = CompressionHelper.DecompressFileToMem(path + "fireAtrium0." + fileIndex +".lzf");
+        //float[] vals = new float[bytes.Length / 4];
+        //Buffer.BlockCopy(bytes, 0, vals, 0, bytes.Length);
+
+        byte[] vals = new byte[m_textureSize * m_textureSize * 4];
+
+        times = new int[m_numberOfFrames];
+        int offset = 0;
+        int frameSize = 0;
+        for (int k = 0; k < m_numberOfFrames; k++) {
+            TextAsset ta = Resources.Load("AtriumData/fireAtrium0." + k, typeof(TextAsset)) as TextAsset;
+            byte[] bytes = CompressionHelper.DecompressBytes(ta.bytes);
+
+            frameSize = bytes.Length;
+            Buffer.BlockCopy(bytes, 0, vals, k*frameSize, frameSize);
+
+            times[k] = offset;
+            offset += m_pointsCount;
+        }
+        //Fill in the rest of the texture will 0 values:
+        int restSize = vals.Length - frameSize*m_numberOfFrames;
+        byte[] restBytes = new byte[restSize];
+        for (int i = 0; i < restSize; i++) {
+            //initialize the values:
+            restBytes[i] = 0;
+        }
+        Buffer.BlockCopy(restBytes, 0, vals, frameSize*m_numberOfFrames, restSize);
+
+        tex.LoadRawTextureData(vals);
+        tex.Apply();
+
+
+        /*byte[] gottenBytes = tex.GetRawTextureData();
+        float[] gottenFloats = new float[gottenBytes.Length / 4];
+        Buffer.BlockCopy(gottenBytes, 0, gottenFloats, 0, gottenBytes.Length);
+
+        for (int i = 0; i < gottenFloats.Length; i++) {
+            if (gottenFloats[i] != 1000.0f && gottenFloats[i] != 0f) {
+                int x = 0;
+            }
+        }*/
+
     } 
 
     List<Vector4> readPointsFile3Attribs()
@@ -130,14 +168,20 @@ public class PointCloud : MonoBehaviour {
         //Set up mesh:
         List<Vector4> points = readPointsFile3Attribs();
 
-        
-
         m_pointsCount = points.Count;
 
         //Set up texture:
-        Texture2D texture = new Texture2D(m_textureSize, m_textureSize);
+        //Texture2D texture = new Texture2D(m_textureSize, m_textureSize, TextureFormat.RGBA32, false, false);
+
+        //We don't need more precision than the resolution of the colorTexture. 10 bits is sufficient for 1024 different color values.
+        //That means we can pack 3 10bit integer values into a pixel 
+        Texture2D texture = new Texture2D(m_textureSize, m_textureSize, TextureFormat.RFloat, false, false);
+
+        Texture2D colorTexture = createColorLookupTexture();
+
         pointRenderer = GetComponent<Renderer>();
         pointRenderer.material.mainTexture = texture;
+        pointRenderer.material.SetTexture("_ColorTex", colorTexture);
 
         computebuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.GPUMemory);
         computebuffer.SetData(points.ToArray());
@@ -150,21 +194,11 @@ public class PointCloud : MonoBehaviour {
 
 
         //One down-side to storing and loading a texture is that we are storing all channels, as well as any unused parts of the texture.
-        TextAsset ta = Resources.Load("fireAtriumTex", typeof(TextAsset)) as TextAsset;
-        byte[] texBytes = CompressionHelper.DecompressBytes(ta.bytes);
-        //byte[] texBytes = CompressionHelper.DecompressFileToMem("fireAtriumTex.bytes");
-        texture.LoadRawTextureData(texBytes);
+        //TextAsset ta = Resources.Load("fireAtriumTex", typeof(TextAsset)) as TextAsset;
+        //byte[] texBytes = CompressionHelper.DecompressBytes(ta.bytes);
+        //texture.LoadRawTextureData(texBytes);
 
-        //parallelize this:
-        times = new int[m_numberOfFrames];
-        int offset = 0;
-        for (int k = 0; k < m_numberOfFrames; k++) {
-            //readPointsFile1Value(k, offset, texture);
-            times[k] = offset;
-            offset += m_pointsCount;
-        }
-
-        texture.Apply();
+        readPointsFile1Value(texture);
 
         //Vector4[] pointsArr = points.ToArray();
         //var byteArray = new byte[pointsArr.Length * 4 * 4];
@@ -209,25 +243,6 @@ public class PointCloud : MonoBehaviour {
         }
 
         //Debug.Log("FPS: " + m_currentFPS);
-
-        //Graphics.DrawProcedural(MeshTopology.Points, 100, 100000);   
-
-
-        //Graphics.DrawProcedural(MeshTopology.Points, 100, 1023);
-
-        //Graphics.DrawProcedural(MeshTopology.Points, 100, 100000);
-
-        //Graphics.DrawMeshInstanced()
-
-        //pointRenderer.material.SetPass(0);
-        //Graphics.DrawProcedural(MeshTopology.Points, points4.Count, 1);
-       // Graphics.DrawProcedural(MeshTopology.Triangles, 6, /*points4.Count*/10000);
-
-        //Graphics.DrawMeshInstanced(m_mesh, 0, pointRenderer.material, matrices, 1023, matProb);
-
-        //Graphics.DrawMeshInstanced(m_mesh, this.transform.localToWorldMatrix, pointRenderer.material, 0);
-
-        //Graphics.DrawMesh(m_mesh, this.transform.localToWorldMatrix, pointRenderer.material, 0);
     }
 
     private void OnRenderObject()

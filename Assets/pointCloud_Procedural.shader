@@ -2,6 +2,7 @@
 	Properties{
 		_MainTex("Texture", 2D) = "white" {}
 		_AlbedoTex("AlbedoTex", 2D) = "white" {}
+		_ColorTex("_ColorTex", 2D) = "white" {}
 		_FrameTime("_FrameTime", Int) = 0
 		//_Pos("_Pos", Vector) = (0.0, 0.0, 0.0, 0.0)
 	}
@@ -27,7 +28,9 @@
 
 			//float4x4 depthCameraTUnityWorld;
 			sampler2D _MainTex;
+			sampler2D _ColorTex;
 			sampler2D _AlbedoTex;
+			Texture2D<uint2> //look at directx11 documentation.
 			int _FrameTime;
 
 			uniform matrix model;
@@ -70,17 +73,21 @@
 				float texSize = 1024.0 * 4.0;
 				float instanceId = float(v.iid + _FrameTime);
 				float2 texCoords = float2(instanceId % texSize, instanceId / texSize) / texSize;
-				o.color = tex2Dlod(_MainTex, float4(texCoords, 0, 0));
+				//o.color = tex2Dlod(_MainTex, float4(texCoords, 0, 0));
 
-				if (o.color.a < 0.7)
+				float maxMagnitude = 1000.0f;
+				float value = tex2Dlod(_MainTex, float4(texCoords, 0, 0)).r / maxMagnitude;
+
+				if (value > 0.3)
 				{
 					return;
 				}
-				/*if (o.color.a < 0.5)
+				/*if (value < 0.5)
 				{
-					return;
+				return;
 				}*/
 
+				o.color = tex2Dlod(_ColorTex, float4(value, 0, 0, 0));
 
 				//UNITY_TRANSFER_INSTANCE_ID(v, o);
 
@@ -122,7 +129,7 @@
 
 				float quadSize = 0.01;
 
-				quadSize = 0.01 * exp(o.color.a); /// (input[0].color.b*5.0 + 0.1);
+				quadSize = 0.01 * exp(1.0 - value); /// (input[0].color.b*5.0 + 0.1);
 
 				/*if (halfSideLength < 0.001)
 				{
