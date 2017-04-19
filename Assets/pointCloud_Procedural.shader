@@ -31,7 +31,7 @@
 			Texture2D<float> _MainTex;
 			Texture2D<float4> _ColorTex;
 			sampler2D _AlbedoTex;
-			int _FrameTime;
+			uint _FrameTime;
 
 			StructuredBuffer<float4> points;
 
@@ -74,15 +74,17 @@
 			void vert(in appdata v, out v2f o)
 			{
 				UNITY_INITIALIZE_OUTPUT(v2f, o)
-				UNITY_SETUP_INSTANCE_ID(v);
+				UNITY_SETUP_INSTANCE_ID(v); 
 				//UNITY_TRANSFER_INSTANCE_ID(v, o);
 
-				float texSize = 1024.0 * 4.0;
-				float instanceId = float(v.iid + _FrameTime);
-				float2 texCoords = float2(instanceId % texSize, instanceId / texSize) / texSize;
+				uint texSize = 1024 * 4;//1024.0 * 4.0;
+				uint instanceId = v.iid + _FrameTime;//float(v.iid + _FrameTime);
+				//float2 texCoords = float2(instanceId % texSize, instanceId / texSize) / texSize;
+				uint2 texelCoords = uint2(instanceId % texSize, instanceId / texSize);
 
 				float maxMagnitude = 1000.0;
-				float value = _MainTex.SampleLevel(sampler_MainTex, texCoords, 0).r / maxMagnitude;
+				//float value = _MainTex.SampleLevel(sampler_MainTex, texCoords, 0).r / maxMagnitude;
+				float value = _MainTex.Load(uint3(texelCoords, 0)).r / maxMagnitude;
 				//float value = tex2Dlod(_MainTex, float4(texCoords, 0, 0)).r / maxMagnitude;
 
 				if (value > 0.3)
