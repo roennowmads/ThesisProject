@@ -7,9 +7,6 @@ using System.IO;
 using UnityEngine.Rendering;
 using System.Runtime.InteropServices;
 using System;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Runtime.Serialization;
-using System.Reflection;
 
 public class PointCloud : MonoBehaviour {
 
@@ -37,6 +34,8 @@ public class PointCloud : MonoBehaviour {
         int numberOfValues = m_lookupTextureSize;
 
         Texture2D lookupTexture = new Texture2D(m_lookupTextureSize, 1, TextureFormat.RGB24, false, false);
+        lookupTexture.filterMode = FilterMode.Point;
+        lookupTexture.anisoLevel = 1;
 
         for (int i = 0; i < numberOfValues; i++) {
             //float maxMagnitude = 1000.0f;/*5.73f * 0.5f;*/
@@ -136,13 +135,12 @@ public class PointCloud : MonoBehaviour {
 
     List<Vector4> readPointsFile3Attribs()
     {
-        StreamReader reader = new StreamReader(new MemoryStream(pointData.bytes));
         List<Vector4> points = new List<Vector4>();
 
         char[] delimiterChars = { ',' };
 
         string line;
-        using (reader) {
+        using (StreamReader reader = new StreamReader(new MemoryStream(pointData.bytes))) {
             // While there's lines left in the text file, do this:
             do {
                 line = reader.ReadLine();
@@ -159,26 +157,29 @@ public class PointCloud : MonoBehaviour {
                 }
             }
             while (line != null);
-            // Done reading, close the reader and return true to broadcast success    
-            reader.Close();
         }
         return points;
     }
     void Start () {
         //Set up mesh:
         List<Vector4> points = readPointsFile3Attribs();
-
         m_pointsCount = points.Count;
 
-        //Set up texture:
-        //Texture2D texture = new Texture2D(m_textureSize, m_textureSize, TextureFormat.RGBA32, false, false);
-
+         //Set up textures:
+        Texture2D colorTexture = createColorLookupTexture();
+        
         //We don't need more precision than the resolution of the colorTexture. 10 bits is sufficient for 1024 different color values.
         //That means we can pack 3 10bit integer values into a pixel 
         Texture2D texture = new Texture2D(m_textureSize, m_textureSize, TextureFormat.RFloat, false, false);
+        texture.filterMode = FilterMode.Point;
 
-        Texture2D colorTexture = createColorLookupTexture();
+        bool supportsTextureFormat = SystemInfo.SupportsTextureFormat(TextureFormat.R16); 
+        if (supportsTextureFormat) {
+            Debug.Log("");
+        }
 
+        texture.anisoLevel = 1;
+        readPointsFile1Value(texture);
         pointRenderer = GetComponent<Renderer>();
         pointRenderer.material.mainTexture = texture;
         pointRenderer.material.SetTexture("_ColorTex", colorTexture);
@@ -197,8 +198,6 @@ public class PointCloud : MonoBehaviour {
         //TextAsset ta = Resources.Load("fireAtriumTex", typeof(TextAsset)) as TextAsset;
         //byte[] texBytes = CompressionHelper.DecompressBytes(ta.bytes);
         //texture.LoadRawTextureData(texBytes);
-
-        readPointsFile1Value(texture);
 
         //Vector4[] pointsArr = points.ToArray();
         //var byteArray = new byte[pointsArr.Length * 4 * 4];
@@ -242,7 +241,7 @@ public class PointCloud : MonoBehaviour {
             //Debug.Log("FPS: " + m_currentFPS);
         }
 
-        //Debug.Log("FPS: " + m_currentFPS);
+        Debug.Log("FPS: " + m_currentFPS);
     }
 
     private void OnRenderObject()
