@@ -27,17 +27,17 @@
 			#pragma target es3.1
 
 			//float4x4 depthCameraTUnityWorld;
-			sampler2D _MainTex;
-			//sampler2D _ColorTex;
+
+			Texture2D<float> _MainTex;
 			Texture2D<float4> _ColorTex;
 			sampler2D _AlbedoTex;
 			int _FrameTime;
 
+			StructuredBuffer<float4> points;
+
 			uniform matrix model;
 			uniform float4 trans;
 			uniform float aspect;
-
-			StructuredBuffer<float4> points;
 
 			struct appdata
 			{
@@ -49,9 +49,16 @@
 			struct v2f
 			{
 				float4 vertex : SV_POSITION;
-				float4 color : COLOR;
+				float3 color : COLOR;
 				float4 texCoord : TEXCOORD0;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
+			};
+
+			SamplerState sampler_MainTex
+			{
+				Filter = MIN_MAG_MIP_POINT;
+				AddressU = Wrap;
+				AddressV = Wrap;
 			};
 
 
@@ -66,17 +73,17 @@
 
 			void vert(in appdata v, out v2f o)
 			{
-				//o = (v2f)0;
 				UNITY_INITIALIZE_OUTPUT(v2f, o)
 				UNITY_SETUP_INSTANCE_ID(v);
+				//UNITY_TRANSFER_INSTANCE_ID(v, o);
 
 				float texSize = 1024.0 * 4.0;
 				float instanceId = float(v.iid + _FrameTime);
 				float2 texCoords = float2(instanceId % texSize, instanceId / texSize) / texSize;
-				//o.color = tex2Dlod(_MainTex, float4(texCoords, 0, 0));
 
 				float maxMagnitude = 1000.0;
-				float value = tex2Dlod(_MainTex, float4(texCoords, 0, 0)).r / maxMagnitude;
+				float value = _MainTex.SampleLevel(sampler_MainTex, texCoords, 0).r / maxMagnitude;
+				//float value = tex2Dlod(_MainTex, float4(texCoords, 0, 0)).r / maxMagnitude;
 
 				if (value > 0.3)
 				{
@@ -88,18 +95,9 @@
 				}*/
 
 				//o.color = tex2Dlod(_ColorTex, float4(value, 0, 0, 0));
-				o.color = _ColorTex.Load(int3(int(value*1024.0), 0, 0));
+				o.color = _ColorTex.Load(int3(int(value*1024.0), 0, 0)).rgb;
 
-				//UNITY_TRANSFER_INSTANCE_ID(v, o);
-
-				//float4 a = float4(0.0, 0.0, 0.0, 1.0);
-				//float4 instancePos = UNITY_ACCESS_INSTANCED_PROP(_Pos);
-				 
-				//float4 quadCorner = quad[v.id];
 				float4 point_position = points[v.iid] * 0.1;
-				//float4 point_position = points[v.iid];
-
-				//float4 vertex_position = quad[v.id];
 
 				const float4 quadCoords[6] = {
 					float4(-0.1, -0.1, 0.0, 0.0),
@@ -123,6 +121,7 @@
 				//o.vertex = mul(UNITY_MATRIX_MVP, v.vertex +/*v.vertex*/);
 				//o.vertex = UnityObjectToClipPos(/*instancePos*/ /*v.vertex*/ /*quadCorner*10.0 +*/ point_position*0.001 + float4(0.5 * float(v.id), 0.0, 0.0, 0.0));
 				
+				//Correcting the translation:
 				point_position = mul(model, point_position);
 				point_position += trans;
 				point_position = UnityWorldToClipPos(point_position.xyz);
@@ -137,12 +136,10 @@
 				return;
 				}*/
 
+				//Translating the vertices in a quad shape:
 				o.vertex = point_position;
 				o.vertex.x += quadCoords[v.id].x * quadSize;
 				o.vertex.y += quadCoords[v.id].y * quadSize * aspect;
-
-
-				//o.color.a = 1.0;
 
 				o.texCoord = quadTexCoords[v.id];
 			}
@@ -158,9 +155,7 @@
 				fragOutput o;
 				
 				float albedo = tex2D(_AlbedoTex, i.texCoord).a;
-				//o.color = fixed4(i.color);//fixed4(1.0, 1.0, 1.0, 1.0);//fixed4(i.color.xyz, albedo);
-				o.color = fixed4(i.color.xyz, albedo);
-				//o.color = fixed4(1.0, 1.0, 1.0, 1.0);
+				o.color = fixed4(i.color, albedo);
 				return o;
 			}
 			ENDCG

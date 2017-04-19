@@ -36,7 +36,7 @@ public class PointCloud : MonoBehaviour {
     Texture2D createColorLookupTexture() {
         int numberOfValues = m_lookupTextureSize;
 
-        Texture2D lookupTexture = new Texture2D(m_lookupTextureSize, 1, TextureFormat.RGBA32, false, false);
+        Texture2D lookupTexture = new Texture2D(m_lookupTextureSize, 1, TextureFormat.RGB24, false, false);
 
         for (int i = 0; i < numberOfValues; i++) {
             //float maxMagnitude = 1000.0f;/*5.73f * 0.5f;*/
