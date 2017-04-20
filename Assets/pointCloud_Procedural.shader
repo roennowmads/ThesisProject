@@ -28,8 +28,11 @@
 
 			//float4x4 depthCameraTUnityWorld;
 
-			Texture2D<float> _MainTex;
-			Texture2D<float4> _ColorTex;
+			//Texture2D<float> _MainTex;
+			//sampler2D _MainTex;
+			Texture2D<float4> _MainTex;
+
+			sampler2D _ColorTex;
 			sampler2D _AlbedoTex;
 			uint _FrameTime;
 
@@ -79,12 +82,18 @@
 
 				uint texSize = 1024 * 4;//1024.0 * 4.0;
 				uint instanceId = v.iid + _FrameTime;//float(v.iid + _FrameTime);
-				//float2 texCoords = float2(instanceId % texSize, instanceId / texSize) / texSize;
-				uint2 texelCoords = uint2(instanceId % texSize, instanceId / texSize);
+				//float4 texCoords = float4(float2(instanceId % texSize, instanceId / texSize) / texSize, 0, 0);
+				uint3 texelCoords = uint3(instanceId % texSize, instanceId / texSize, 0);
 
-				float maxMagnitude = 1000.0;
+				//float maxMagnitude = 1000.0;
 				//float value = _MainTex.SampleLevel(sampler_MainTex, texCoords, 0).r / maxMagnitude;
-				float value = _MainTex.Load(uint3(texelCoords, 0)).r / maxMagnitude;
+				//float value = float(_MainTex.Load(uint3(texelCoords, 0)).a) / 255.0; /// maxMagnitude;
+				//float value = float(_MainTex.Load(uint3(texelCoords, 0)).r); /// maxMagnitude;
+				
+				//float value = tex2Dlod(_MainTex, texCoords).a;
+				//float value = _MainTex.SampleLevel(sampler_MainTex, texCoords, 0).a;
+				float value = _MainTex.Load(texelCoords).a;
+
 				//float value = tex2Dlod(_MainTex, float4(texCoords, 0, 0)).r / maxMagnitude;
 
 				if (value > 0.3)
@@ -96,8 +105,9 @@
 				return;
 				}*/
 
-				//o.color = tex2Dlod(_ColorTex, float4(value, 0, 0, 0));
-				o.color = _ColorTex.Load(int3(int(value*1024.0), 0, 0)).rgb;
+				o.color = tex2Dlod(_ColorTex, float4(value, 0, 0, 0)).rgb;
+				//o.color = _ColorTex.Load(int3(int(value*1024.0), 0, 0)).rgb;
+				//o.color = float3(value, value, value);
 
 				float4 point_position = points[v.iid] * 0.1;
 

@@ -93,7 +93,7 @@ public class PointCloud : MonoBehaviour {
         //float[] vals = new float[bytes.Length / 4];
         //Buffer.BlockCopy(bytes, 0, vals, 0, bytes.Length);
 
-        byte[] vals = new byte[m_textureSize * m_textureSize * 4];
+        byte[] vals = new byte[m_textureSize * m_textureSize];//new byte[m_textureSize * m_textureSize * 4];
 
         times = new int[m_numberOfFrames];
         int offset = 0;
@@ -102,8 +102,20 @@ public class PointCloud : MonoBehaviour {
             TextAsset ta = Resources.Load("AtriumData/fireAtrium0." + k, typeof(TextAsset)) as TextAsset;
             byte[] bytes = CompressionHelper.DecompressBytes(ta.bytes);
 
-            frameSize = bytes.Length;
-            Buffer.BlockCopy(bytes, 0, vals, k*frameSize, frameSize);
+
+            float[] gottenFloats = new float[bytes.Length / 4];
+            Buffer.BlockCopy(bytes, 0, gottenFloats, 0, bytes.Length);
+
+            byte[] processedBytes = new byte[gottenFloats.Length];
+
+            float maxMagnitude = 1000.0f;
+            for (int i = 0; i < processedBytes.Length; i++) {
+                byte val = (byte)((gottenFloats[i] / maxMagnitude) * 255.0f);
+                processedBytes[i] = val;
+            }
+
+            frameSize = gottenFloats.Length;//bytes.Length;
+            Buffer.BlockCopy(processedBytes, 0, vals, k*frameSize, frameSize);
 
             times[k] = offset;
             offset += m_pointsCount;
@@ -170,13 +182,14 @@ public class PointCloud : MonoBehaviour {
         
         //We don't need more precision than the resolution of the colorTexture. 10 bits is sufficient for 1024 different color values.
         //That means we can pack 3 10bit integer values into a pixel 
-        Texture2D texture = new Texture2D(m_textureSize, m_textureSize, TextureFormat.RFloat, false, false);
+        //Texture2D texture = new Texture2D(m_textureSize, m_textureSize, TextureFormat.RFloat, false, false);
+        Texture2D texture = new Texture2D(m_textureSize, m_textureSize, TextureFormat.Alpha8, false, false);
         texture.filterMode = FilterMode.Point;
 
-        bool supportsTextureFormat = SystemInfo.SupportsTextureFormat(TextureFormat.R16); 
+        /*bool supportsTextureFormat = SystemInfo.SupportsTextureFormat(TextureFormat.R16); 
         if (supportsTextureFormat) {
             Debug.Log("");
-        }
+        }*/
 
         texture.anisoLevel = 1;
         readPointsFile1Value(texture);
