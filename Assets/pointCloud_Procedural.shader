@@ -36,7 +36,7 @@
 			sampler2D _AlbedoTex;
 			uint _FrameTime;
 
-			StructuredBuffer<float4> points;
+			StructuredBuffer<float3> points;
 
 			uniform matrix model;
 			uniform float4 trans;
@@ -60,8 +60,8 @@
 			SamplerState sampler_MainTex
 			{
 				Filter = MIN_MAG_MIP_POINT;
-				AddressU = Wrap;
-				AddressV = Wrap;
+				AddressU = Clamp;
+				AddressV = Clamp;
 			};
 
 
@@ -109,7 +109,7 @@
 				//o.color = _ColorTex.Load(int3(int(value*1024.0), 0, 0)).rgb;
 				//o.color = float3(value, value, value);
 
-				float4 point_position = points[v.iid] * 0.1;
+				float4 point_position = float4(points[v.iid] * 0.1, 0.0);
 
 				const float4 quadCoords[6] = {
 					float4(-0.1, -0.1, 0.0, 0.0),

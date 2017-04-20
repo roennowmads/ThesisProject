@@ -72,7 +72,7 @@ public class PointCloud : MonoBehaviour {
                     break;
             }
 
-            color.a = 0.0f;//value;
+            //color.a = 0.0f;//value;
             
             lookupTexture.SetPixel(i, 0, color); 
 
@@ -145,9 +145,9 @@ public class PointCloud : MonoBehaviour {
 
     } 
 
-    List<Vector4> readPointsFile3Attribs()
+    List<Vector3> readPointsFile3Attribs()
     {
-        List<Vector4> points = new List<Vector4>();
+        List<Vector3> points = new List<Vector3>();
 
         char[] delimiterChars = { ',' };
 
@@ -159,7 +159,7 @@ public class PointCloud : MonoBehaviour {
                 //Debug.Log(line);
 
                 if (line != null) {
-                    Vector4 point = new Vector4();
+                    Vector3 point = new Vector3();
                     string[] parts = line.Split(delimiterChars);
                     point.x = float.Parse(parts[0]);
                     point.y = float.Parse(parts[1]);
@@ -174,7 +174,7 @@ public class PointCloud : MonoBehaviour {
     }
     void Start () {
         //Set up mesh:
-        List<Vector4> points = readPointsFile3Attribs();
+        List<Vector3> points = readPointsFile3Attribs();
         m_pointsCount = points.Count;
 
          //Set up textures:
@@ -197,7 +197,7 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.material.mainTexture = texture;
         pointRenderer.material.SetTexture("_ColorTex", colorTexture);
 
-        computebuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.GPUMemory);
+        computebuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.GPUMemory);
         computebuffer.SetData(points.ToArray());
         pointRenderer.material.SetBuffer ("points", computebuffer);
 
