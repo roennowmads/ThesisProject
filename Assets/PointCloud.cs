@@ -26,7 +26,7 @@ public class PointCloud : MonoBehaviour {
     private float m_currentTime;
 
     private int m_textureSize = 1024 * 4;
-    private int m_lookupTextureSize = 1024;
+    private int m_lookupTextureSize = 256; //Since the values in the value texture are only 0-255, it doesn't make sense to have more values here.
 
     private ComputeBuffer computebuffer;
 
