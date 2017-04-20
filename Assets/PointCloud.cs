@@ -93,45 +93,48 @@ public class PointCloud : MonoBehaviour {
         //float[] vals = new float[bytes.Length / 4];
         //Buffer.BlockCopy(bytes, 0, vals, 0, bytes.Length);
 
-        byte[] vals = new byte[m_textureSize * m_textureSize];//new byte[m_textureSize * m_textureSize * 4];
+        bool loadingFromBytes = false;
+
+        byte[] vals = new byte[m_textureSize * m_textureSize];
 
         times = new int[m_numberOfFrames];
         int offset = 0;
         int frameSize = 0;
-        for (int k = 0; k < m_numberOfFrames; k++) {
-            TextAsset ta = Resources.Load("AtriumData/fireAtrium0." + k, typeof(TextAsset)) as TextAsset;
-            byte[] bytes = CompressionHelper.DecompressBytes(ta.bytes);
+        if (loadingFromBytes) {
+            for (int k = 0; k < m_numberOfFrames; k++) {
+                TextAsset ta = Resources.Load("AtriumData/fireAtrium0." + k, typeof(TextAsset)) as TextAsset;
+                byte[] bytes = ta.bytes;
 
+                frameSize = bytes.Length;
+                Buffer.BlockCopy(bytes, 0, vals, k*frameSize, frameSize);
 
-            float[] gottenFloats = new float[bytes.Length / 4];
-            Buffer.BlockCopy(bytes, 0, gottenFloats, 0, bytes.Length);
-
-            byte[] processedBytes = new byte[gottenFloats.Length];
-
-            float maxMagnitude = 1000.0f;
-            for (int i = 0; i < processedBytes.Length; i++) {
-                byte val = (byte)((gottenFloats[i] / maxMagnitude) * 255.0f);
-                processedBytes[i] = val;
+                times[k] = offset;
+                offset += m_pointsCount;
             }
-
-            frameSize = gottenFloats.Length;//bytes.Length;
-            Buffer.BlockCopy(processedBytes, 0, vals, k*frameSize, frameSize);
-
-            times[k] = offset;
-            offset += m_pointsCount;
+        
+            //Fill in the rest of the texture will 0 values:
+            int restSize = vals.Length - frameSize*m_numberOfFrames;
+            byte[] restBytes = new byte[restSize];
+            for (int i = 0; i < restSize; i++) {
+                //initialize the values:
+                restBytes[i] = 0;
+            }
+            Buffer.BlockCopy(restBytes, 0, vals, frameSize*m_numberOfFrames, restSize);
         }
-        //Fill in the rest of the texture will 0 values:
-        int restSize = vals.Length - frameSize*m_numberOfFrames;
-        byte[] restBytes = new byte[restSize];
-        for (int i = 0; i < restSize; i++) {
-            //initialize the values:
-            restBytes[i] = 0;
+        else {
+            TextAsset ta = Resources.Load("AtriumData/fireAtriumPoints", typeof(TextAsset)) as TextAsset;
+            vals = CompressionHelper.DecompressBytes(ta.bytes);
+
+            for (int k = 0; k < m_numberOfFrames; k++) {
+                times[k] = offset;
+                offset += m_pointsCount;
+            }
         }
-        Buffer.BlockCopy(restBytes, 0, vals, frameSize*m_numberOfFrames, restSize);
 
         tex.LoadRawTextureData(vals);
         tex.Apply();
 
+        //CompressionHelper.CompressMemToFile(vals, "fireAtriumPoints.lzf");
 
         /*byte[] gottenBytes = tex.GetRawTextureData();
         float[] gottenFloats = new float[gottenBytes.Length / 4];

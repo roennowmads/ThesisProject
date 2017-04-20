@@ -42,14 +42,6 @@ def processFileValues(dir, name, index):
 		strippedLined = line.strip()
 		lines = strippedLined.split(',')
 		x = float(lines[0])
-		#y = float(lines[1])
-		#z = float(lines[2])
-		
-		#magnitude = x#math.sqrt(x*x+y*y+z*z)
-		
-		#global maxMag
-		#if magnitude > maxMag:
-		#	maxMag = magnitude
 		
 		outString += lines[0] + "\n"
 		
