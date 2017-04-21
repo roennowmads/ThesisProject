@@ -4,11 +4,10 @@
 		_AlbedoTex("AlbedoTex", 2D) = "white" {}
 		_ColorTex("_ColorTex", 2D) = "white" {}
 		_FrameTime("_FrameTime", Int) = 0
-		//_Pos("_Pos", Vector) = (0.0, 0.0, 0.0, 0.0)
 	}
 	SubShader {
-		//Tags{"Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent"}
-		Tags{"RenderType" = "Opaque"}
+		Tags{"Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent"}
+		//Tags{"RenderType" = "Opaque"}
 		Blend SrcAlpha OneMinusSrcAlpha
 		AlphaTest Greater .01
 		//Cull Off
@@ -48,7 +47,7 @@
 				uint iid : SV_InstanceID;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			}; 
-
+			
 			struct v2f
 			{
 				float4 vertex : SV_POSITION;
@@ -96,10 +95,14 @@
 
 				//float value = tex2Dlod(_MainTex, float4(texCoords, 0, 0)).r / maxMagnitude;
 
-				if (value > 0.3)
+				if (value > 0.7)
 				{
 					return;
 				}
+				/*if (value < 0.5 || value > 0.9999)
+				{
+					return;
+				}*/
 				/*if (value < 0.5)
 				{
 				return;
@@ -109,7 +112,7 @@
 				//o.color = _ColorTex.Load(int3(int(value*1024.0), 0, 0)).rgb;
 				//o.color = float3(value, value, value);
 
-				float4 point_position = float4(points[v.iid] * 0.1, 0.0);
+				float4 point_position = float4(points[v.iid], 0.0);
 
 				const float4 quadCoords[6] = {
 					float4(-0.1, -0.1, 0.0, 0.0),

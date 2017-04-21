@@ -94,7 +94,7 @@ public class PointCloud : MonoBehaviour {
         //Buffer.BlockCopy(bytes, 0, vals, 0, bytes.Length);
 
         bool loadingFromBytes = false;
-
+        
         byte[] vals = new byte[m_textureSize * m_textureSize];
 
         times = new int[m_numberOfFrames];
@@ -120,6 +120,8 @@ public class PointCloud : MonoBehaviour {
                 restBytes[i] = 0;
             }
             Buffer.BlockCopy(restBytes, 0, vals, frameSize*m_numberOfFrames, restSize);
+
+            CompressionHelper.CompressMemToFile(vals, "Assets/Resources/AtriumData/fireAtriumPoints.bytes");
         }
         else {
             TextAsset ta = Resources.Load("AtriumData/fireAtriumPoints", typeof(TextAsset)) as TextAsset;
@@ -131,21 +133,13 @@ public class PointCloud : MonoBehaviour {
             }
         }
 
+        //We will have to use textures for values because compute buffers require an element size of 4 bytes, hence we can't use bytes.
+        //It could be done with bit shifting, but then any advantage would wear off.
+
         tex.LoadRawTextureData(vals);
         tex.Apply();
 
-        //CompressionHelper.CompressMemToFile(vals, "fireAtriumPoints.lzf");
-
-        /*byte[] gottenBytes = tex.GetRawTextureData();
-        float[] gottenFloats = new float[gottenBytes.Length / 4];
-        Buffer.BlockCopy(gottenBytes, 0, gottenFloats, 0, gottenBytes.Length);
-
-        for (int i = 0; i < gottenFloats.Length; i++) {
-            if (gottenFloats[i] != 1000.0f && gottenFloats[i] != 0f) {
-                int x = 0;
-            }
-        }*/
-
+        
     } 
 
     List<Vector3> readPointsFile3Attribs()
@@ -238,12 +232,14 @@ public class PointCloud : MonoBehaviour {
 
         //Debug.Log(t);
         pointRenderer.material.SetInt("_FrameTime", count);
+        float aspect = Camera.main.GetComponent<Camera>().aspect;
+        pointRenderer.material.SetFloat("aspect", aspect);
 
         //Debug.Log("Support instancing: " + SystemInfo.supportsInstancing);
 
-        int a = pointRenderer.material.GetInt("_FrameTime");
+        //int a = pointRenderer.material.GetInt("_FrameTime");
 
-        Debug.Log(a);
+        //Debug.Log(a);
        
         m_currentTime += Time.deltaTime;
         ++m_framesSinceUpdate;
@@ -254,10 +250,8 @@ public class PointCloud : MonoBehaviour {
             m_currentTime = 0.0f;
             m_framesSinceUpdate = 0;
             m_accumulation = 0.0f;
-            //Debug.Log("FPS: " + m_currentFPS);
+            Debug.Log("FPS: " + m_currentFPS);
         }
-
-        Debug.Log("FPS: " + m_currentFPS);
     }
 
     private void OnRenderObject()
