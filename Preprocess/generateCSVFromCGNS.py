@@ -7,7 +7,7 @@ if __name__ == '__main__':
 
     for file in files:
         reader = simple.OpenDataFile(directory + "/" + file)
-        reader.PointArrayStatus = ['Temperature']
+        reader.PointArrayStatus = ['Visibility']
         filename = os.path.splitext(file)[0]
         writer = simple.CreateWriter(directory + "/output/" + filename + ".csv", reader)
         writer.WriteAllTimeSteps = 1
@@ -17,7 +17,7 @@ if __name__ == '__main__':
         print "File processed: " + file
         
     
-#Multprocessing version (doesn't seem to work with pvpython):
+#Multiprocessing version (doesn't seem to work with pvpython):
 '''from paraview import simple
 import os, os.path
 from multiprocessing import Process
@@ -27,7 +27,7 @@ def f(files, startI, endI):
     for i in range(startI, endI):
         file = files[i]
         reader = simple.OpenDataFile(directory + "/" + file)
-        reader.PointArrayStatus = ['Temperature']
+        reader.PointArrayStatus = ['Visibility']
         filename = os.path.splitext(file)[0]
         writer = simple.CreateWriter(directory + "/output/" + filename + ".csv", reader)
         writer.WriteAllTimeSteps = 1
