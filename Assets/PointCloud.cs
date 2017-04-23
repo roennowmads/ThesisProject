@@ -87,41 +87,55 @@ public class PointCloud : MonoBehaviour {
         return lookupTexture;
     }
 
-    void readPointsFile1Value(Texture2D tex) {
+    void readPointsFile1Value(Texture2D tex, Texture2D tex2) {
         //CompressionHelper.CompressFile(path + "fireAtrium0." + fileIndex + ".bytes", "fireAtrium0." + fileIndex +".lzf");
         //byte[] bytes = CompressionHelper.DecompressFileToMem(path + "fireAtrium0." + fileIndex +".lzf");
         //float[] vals = new float[bytes.Length / 4];
         //Buffer.BlockCopy(bytes, 0, vals, 0, bytes.Length);
 
-        bool loadingFromBytes = false;
+        bool loadingFromBytes = true;
         
         byte[] vals = new byte[m_textureSize * m_textureSize];
+        byte[] vals2 = new byte[m_textureSize * m_textureSize];
 
         times = new int[m_numberOfFrames];
         int offset = 0;
         int frameSize = 0;
+
+        int nextTexIndex = 0;
+
         if (loadingFromBytes) {
             for (int k = 0; k < m_numberOfFrames; k++) {
-                TextAsset ta = Resources.Load("AtriumData/fireAtrium0." + k, typeof(TextAsset)) as TextAsset;
+                TextAsset ta = Resources.Load("AtriumData/binaryDataFull/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
                 byte[] bytes = ta.bytes;
 
                 frameSize = bytes.Length;
-                Buffer.BlockCopy(bytes, 0, vals, k*frameSize, frameSize);
+                //Debug.Log(k * frameSize);
+                if (k * frameSize < m_textureSize * m_textureSize - frameSize) {
+                    Buffer.BlockCopy(bytes, 0, vals, k * frameSize, frameSize);
+                    nextTexIndex = k;
+                }
+                else {
+                    Debug.Log(k * frameSize - (nextTexIndex + 1) * frameSize);
+                    Buffer.BlockCopy(bytes, 0, vals2, k * frameSize - (nextTexIndex+1) * frameSize, frameSize);
+                }
+
+                Debug.Log(nextTexIndex);
 
                 times[k] = offset;
                 offset += m_pointsCount;
             }
         
             //Fill in the rest of the texture will 0 values:
-            int restSize = vals.Length - frameSize*m_numberOfFrames;
+            /*int restSize = vals.Length - frameSize*m_numberOfFrames;
             byte[] restBytes = new byte[restSize];
             for (int i = 0; i < restSize; i++) {
                 //initialize the values:
                 restBytes[i] = 0;
             }
-            Buffer.BlockCopy(restBytes, 0, vals, frameSize*m_numberOfFrames, restSize);
+            Buffer.BlockCopy(restBytes, 0, vals, frameSize*m_numberOfFrames, restSize);*/
 
-            CompressionHelper.CompressMemToFile(vals, "Assets/Resources/AtriumData/fireAtriumPoints.bytes");
+            //CompressionHelper.CompressMemToFile(vals, "Assets/Resources/AtriumData/fireAtriumPoints.bytes");
         }
         else {
             TextAsset ta = Resources.Load("AtriumData/fireAtriumPoints", typeof(TextAsset)) as TextAsset;
@@ -138,8 +152,10 @@ public class PointCloud : MonoBehaviour {
 
         tex.LoadRawTextureData(vals);
         tex.Apply();
+        tex2.LoadRawTextureData(vals2);
+        tex2.Apply();
 
-        
+
     } 
 
     List<Vector3> readPointsFile3Attribs()
@@ -182,6 +198,11 @@ public class PointCloud : MonoBehaviour {
         //Texture2D texture = new Texture2D(m_textureSize, m_textureSize, TextureFormat.RFloat, false, false);
         Texture2D texture = new Texture2D(m_textureSize, m_textureSize, TextureFormat.Alpha8, false, false);
         texture.filterMode = FilterMode.Point;
+        texture.wrapMode = TextureWrapMode.Repeat;
+
+        Texture2D texture2 = new Texture2D(m_textureSize, m_textureSize, TextureFormat.Alpha8, false, false);
+        texture2.filterMode = FilterMode.Point;
+        texture2.wrapMode = TextureWrapMode.Repeat;
 
         /*bool supportsTextureFormat = SystemInfo.SupportsTextureFormat(TextureFormat.R16); 
         if (supportsTextureFormat) {
@@ -189,9 +210,10 @@ public class PointCloud : MonoBehaviour {
         }*/
 
         texture.anisoLevel = 1;
-        readPointsFile1Value(texture);
+        readPointsFile1Value(texture, texture2);
         pointRenderer = GetComponent<Renderer>();
         pointRenderer.material.mainTexture = texture;
+        pointRenderer.material.SetTexture("_MainTex2", texture2);
         pointRenderer.material.SetTexture("_ColorTex", colorTexture);
 
         computebuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.GPUMemory);
@@ -228,7 +250,10 @@ public class PointCloud : MonoBehaviour {
 
         int t = ((int)(Time.fixedTime * m_frameSpeed)) % times.Length;
 
+        //t = 90;
+
         int count = times[t];
+        //Debug.Log(count);
 
         //Debug.Log(t);
         pointRenderer.material.SetInt("_FrameTime", count);
