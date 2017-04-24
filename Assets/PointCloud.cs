@@ -16,7 +16,6 @@ public class PointCloud : MonoBehaviour {
     public float m_frameSpeed = 5.0f;
     
     private int m_pointsCount = 61440;
-    private int[] times;
     private Renderer pointRenderer;
 
     //public string m_FPSText;
@@ -88,14 +87,10 @@ public class PointCloud : MonoBehaviour {
         //float[] vals = new float[bytes.Length / 4];
         //Buffer.BlockCopy(bytes, 0, vals, 0, bytes.Length);
 
-        bool loadingFromBytes = false;
+        bool loadingFromBytes = true;
         
         byte[] vals = new byte[m_textureSize * m_textureSize];
         //byte[] vals2 = new byte[m_textureSize * m_textureSize];
-
-        times = new int[m_numberOfFrames];
-        int offset = 0;
-        int frameSize = 0;
 
         int nextTexIndex = 0;
 
@@ -115,9 +110,10 @@ public class PointCloud : MonoBehaviour {
                 TextAsset ta = Resources.Load("AtriumData/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
                 byte[] bytes = ta.bytes;
 
-                frameSize = bytes.Length;
+                int frameSize = bytes.Length;
                 //Debug.Log(k * frameSize);
                 //if (k * frameSize < m_textureSize * m_textureSize - frameSize) {
+                    
                     Buffer.BlockCopy(bytes, 0, vals, k * frameSize, frameSize);
                     nextTexIndex = k;
                 //}
@@ -128,8 +124,8 @@ public class PointCloud : MonoBehaviour {
 
                 Debug.Log(nextTexIndex);
 
-                times[k] = offset;
-                offset += m_pointsCount;
+                //times[k] = offset;
+                //offset += m_pointsCount;
             }
         
             //Fill in the rest of the texture will 0 values:
@@ -148,8 +144,8 @@ public class PointCloud : MonoBehaviour {
             vals = CompressionHelper.DecompressBytes(ta.bytes);
 
             for (int k = 0; k < m_numberOfFrames; k++) {
-                times[k] = offset;
-                offset += m_pointsCount;
+                //times[k] = offset;
+                //offset += m_pointsCount;
             }
         }
 
@@ -204,8 +200,9 @@ public class PointCloud : MonoBehaviour {
 
         computebuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.GPUMemory);
         computebuffer.SetData(points);
-        pointRenderer.material.SetBuffer ("points", computebuffer);
+        pointRenderer.material.SetBuffer ("_Points", computebuffer);
 
+        pointRenderer.material.SetInt("_PointsCount", m_pointsCount);
         float aspect = Camera.main.GetComponent<Camera>().aspect;
         pointRenderer.material.SetFloat("aspect", aspect);
         Vector4 trans = transform.position;
@@ -234,15 +231,14 @@ public class PointCloud : MonoBehaviour {
 	void Update () {
         //Debug.Log(Time.fixedTime);
 
-        int t = ((int)(Time.fixedTime * m_frameSpeed)) % times.Length;
+        int t = ((int)(Time.fixedTime * m_frameSpeed)) % m_numberOfFrames;
 
-        //t = 3;
+        //t = 45;  //The error happens right at t == 45, or where count == 16876035, the first time it's greater than 4096*4096. It seems to also have happened when using two textures.
 
-        int count = times[t];
         //Debug.Log(count);
 
         //Debug.Log(t);
-        pointRenderer.material.SetInt("_FrameTime", count);
+        pointRenderer.material.SetInt("_FrameTime", t);
         float aspect = Camera.main.GetComponent<Camera>().aspect;
         pointRenderer.material.SetFloat("aspect", aspect);
 

@@ -43,6 +43,7 @@ def processFileValues(dir, filename):
 
     outString = ""
     
+    minMagnitude = 0.59729
     maxMagnitude = 1000#0.735  # Only correct for Visibility property
 
     #skip first line
@@ -52,16 +53,16 @@ def processFileValues(dir, filename):
         lines = strippedLined.split(',')
         x = float(lines[0])
         
-        #global maxMag
-        #if maxMag < x:
-        #    maxMag = x
+        global maxMag
+        if maxMag < x:
+            maxMag = x
         
-        #global minMag
-        #if minMag > x:
-        #    minMag = x
+        global minMag
+        if minMag > x:
+            minMag = x
         
         #print x
-        value = int((x / maxMagnitude) * 255.0)
+        value = int(((x - minMagnitude) / (maxMagnitude - minMagnitude)) * 255.0)
         #print value
         #global array
         #if array.has_key(value):
@@ -87,7 +88,7 @@ def processFileValues(dir, filename):
     fOut.close()
 	
 
-dir = 'C:/Users/madsr/Desktop/files'
+dir = 'G:/prep/atrium data part 2/output'
 filenames = [name for name in os.listdir(dir) if os.path.isfile(os.path.join(dir, name))]
 numFiles = len(filenames)
 

@@ -35,13 +35,15 @@
 
 			sampler2D _ColorTex;
 			sampler2D _AlbedoTex;
-			uint _FrameTime;
+			
 
-			StructuredBuffer<float3> points;
+			StructuredBuffer<float3> _Points;
 
 			uniform matrix model;
 			uniform float4 trans;
 			uniform float aspect;
+			uniform int _PointsCount;
+			uniform uint _FrameTime;
 
 			struct appdata
 			{
@@ -123,11 +125,11 @@
 				
 				//float value = _MainTex.SampleLevel(sampler_MainTex, texCoords, 0).a;
 
-				half value = 0.0;
+				half value = 0.0; 
 
 
 				//if (_FrameTime < 13125805) {
-					uint instanceId = v.iid + _FrameTime;//float(v.iid + _FrameTime);
+					uint instanceId = v.iid + (_FrameTime * _PointsCount);//float(v.iid + _FrameTime);
 					uint3 texelCoords = uint3(instanceId % texSize, instanceId >> magnitude, 0);
 					value = _MainTex.Load(texelCoords).a;
 				//}
@@ -155,10 +157,10 @@
 				return;
 				}*/
 
-				o.color = tex2Dlod(_ColorTex, half4(value, 0, 0, 0)).rgb;
-				//o.color = float3(value, value, value);
+				//o.color = tex2Dlod(_ColorTex, half4(value, 0, 0, 0)).rgb;
+				o.color = float3(value, value, value);
 
-				float4 point_position = float4(points[v.iid], 0.0);
+				float4 point_position = float4(_Points[v.iid], 0.0);
 				//Correcting the translation:
 				o.vertex = mul(model, point_position);
 				o.vertex += trans;
