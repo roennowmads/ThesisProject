@@ -2,43 +2,48 @@ import math
 import os, os.path
 import struct
 
-maxMag = 0.0
+maxMag = float("-inf")
+minMag = float("inf")
 
+array = {}
 
 def processFilePositions(dir, filename):
     fIn = open(dir + "/" + filename)
     filenameNoExt = os.path.splitext(filename)[0]
     
-    fOut = open(dir + "/output/" + filenameNoExt + ".pos.csv", "w")
-    
-    outString = ""
+    fOut = open(dir + "/output/" + filenameNoExt + ".pos.bytes", "wb+")
 
     #skip first line
     fIn.readline()	
-    for line in fIn:
+    for i, line in enumerate(fIn):
         strippedLined = line.strip()
         lines = strippedLined.split(',')
-        x = lines[1]
-        y = lines[2]
-        z = lines[3]
+        x = float(lines[1])
+        y = float(lines[2])
+        z = float(lines[3])
 
-        outString += x + "," + y + "," + z + "\n"
-        
+        dataX = struct.pack('f',x)
+        dataY = struct.pack('f',y)
+        dataZ = struct.pack('f',z)
 
-    fOut.write(outString[:-1])  #avoid including the last newline character
+        fOut.write(dataX)
+        fOut.write(dataY)
+        fOut.write(dataZ)
+
+        if (i % 100000) == 0:
+            print "Positions processed:", i
         
     fIn.close()
     fOut.close()
 
 def processFileValues(dir, filename):
-
     fIn = open(dir + "/" + filename)
     filenameNoExt = os.path.splitext(filename)[0]
     fOut = open(dir + "/output/" + filenameNoExt + ".bytes", "wb+")
 
     outString = ""
     
-    maxMagnitude = 1000.0  # Only correct for Visibility property
+    maxMagnitude = 1000#0.735  # Only correct for Visibility property
 
     #skip first line
     fIn.readline()	
@@ -47,7 +52,33 @@ def processFileValues(dir, filename):
         lines = strippedLined.split(',')
         x = float(lines[0])
         
-        value = (x / maxMagnitude) * 255.0
+        #global maxMag
+        #if maxMag < x:
+        #    maxMag = x
+        
+        #global minMag
+        #if minMag > x:
+        #    minMag = x
+        
+        #print x
+        value = int((x / maxMagnitude) * 255.0)
+        #print value
+        #global array
+        #if array.has_key(value):
+        #    array[value] += 1
+        #else:
+        #    array[value] = 1
+        #print value
+        
+        #global maxMag
+        #if maxMag < value:
+        #    maxMag = value
+        
+        #global minMag
+        #if minMag > value:
+        #    minMag = value
+        
+        
         data = struct.pack('B',value) #pack values as binary byte 
         
         fOut.write(data)
@@ -56,7 +87,7 @@ def processFileValues(dir, filename):
     fOut.close()
 	
 
-dir = 'G:/prep/atrium data part 2/output'
+dir = 'C:/Users/madsr/Desktop/files'
 filenames = [name for name in os.listdir(dir) if os.path.isfile(os.path.join(dir, name))]
 numFiles = len(filenames)
 
@@ -65,4 +96,5 @@ processFilePositions(dir, filenames[0])
 for filename in filenames:
     processFileValues(dir, filename)
 	
-print maxMag
+print minMag, maxMag
+print array

@@ -2,14 +2,15 @@ from paraview import simple
 import os, os.path
 
 if __name__ == '__main__':
-    directory = 'atrium data part 2'
+    directory = 'C:\Users\madsr\Desktop\Oil Rig Data'
     files = [name for name in os.listdir(directory) if os.path.isfile(os.path.join(directory, name))]
 
-    for file in files:
+    for i, file in enumerate(files):
+        print "Processing: " + file
         reader = simple.OpenDataFile(directory + "/" + file)
-        reader.PointArrayStatus = ['Visibility']
-        filename = os.path.splitext(file)[0]
-        writer = simple.CreateWriter(directory + "/output/" + filename + ".csv", reader)
+        reader.PointArrayStatus = ['CH4methaneIG.MassFraction']
+        #filename = os.path.splitext(file)[0]
+        writer = simple.CreateWriter(directory + "/output/" + "frame" + str(i) + ".csv", reader)
         writer.WriteAllTimeSteps = 1
         writer.FieldAssociation = "Points"
         writer.UpdatePipeline()

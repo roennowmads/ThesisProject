@@ -9,10 +9,10 @@
 	SubShader {
 		Tags{"Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent"}
 		//Tags{"RenderType" = "Opaque"}
-		//Blend SrcAlpha OneMinusSrcAlpha
-		//AlphaTest Greater .01
-		Cull Off
-		//ZWrite off 
+		Blend SrcAlpha OneMinusSrcAlpha
+		AlphaTest Greater .01
+		//Cull Off
+		ZWrite off 
 		//LOD 200
 
 		Pass {
@@ -22,7 +22,7 @@
 
 			// Enable instancing for this shader
 			#pragma multi_compile_instancing
-
+			
 			#include "UnityCG.cginc"
 			#pragma target es3.1
 
@@ -31,7 +31,7 @@
 			//Texture2D<float> _MainTex;
 			//sampler2D _MainTex;
 			Texture2D<float4> _MainTex;
-			Texture2D<float4> _MainTex2;
+			//Texture2D<float4> _MainTex2;
 
 			sampler2D _ColorTex;
 			sampler2D _AlbedoTex;
@@ -53,8 +53,8 @@
 			struct v2f
 			{
 				float4 vertex : SV_POSITION;
-				float3 color : COLOR;
-				float4 texCoord : TEXCOORD0;
+				fixed3 color : COLOR;
+				float2 texCoord : TEXCOORD0;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 
@@ -65,35 +65,35 @@
 				AddressV = Wrap;
 			};
 
-			SamplerState sampler_MainTex2
+			/*SamplerState sampler_MainTex2
 			{
 				Filter = MIN_MAG_MIP_POINT;
 				AddressU = Wrap;
 				AddressV = Wrap;
-			};
+			};*/
 
-			static const uint magnitude = 12;
+			static const uint magnitude = 13;
 			static const uint texSize = 1 << magnitude; // 1 << 12 == 4096 
 			static const float inv_texSize = 1.0 / texSize;
 
-			static const float4 quadCoords[6] = {
-				float4(-0.1, -0.1, 0.0, 0.0),
-				float4(0.1, 0.1, 0.0, 0.0),
-				float4(0.1, -0.1, 0.0, 0.0),
+			static const half2 quadCoords[6] = {
+				half2(-0.1, -0.1),
+				half2(0.1, 0.1),
+				half2(0.1, -0.1),
 
-				float4(-0.1, 0.1, 0.0, 0.0),
-				float4(0.1, 0.1, 0.0, 0.0),
-				float4(-0.1, -0.1, 0.0, 0.0)
+				half2(-0.1, 0.1),
+				half2(0.1, 0.1),
+				half2(-0.1, -0.1)
 			};
 
-			static const float4 quadTexCoords[6] = {
-				float4(0.0, 0.0, 0.0, 0.0),
-				float4(1.0, 1.0, 0.0, 0.0),
-				float4(1.0, 0.0, 0.0, 0.0),
+			static const float2 quadTexCoords[6] = {
+				float2(0.0, 0.0),
+				float2(1.0, 1.0),
+				float2(1.0, 0.0),
 
-				float4(0.0, 1.0, 0.0, 0.0),
-				float4(1.0, 1.0, 0.0, 0.0),
-				float4(0.0, 0.0, 0.0, 0.0)
+				float2(0.0, 1.0),
+				float2(1.0, 1.0),
+				float2(0.0, 0.0)
 			};
 
 			// Declare instanced properties inside a cbuffer.
@@ -123,21 +123,24 @@
 				
 				//float value = _MainTex.SampleLevel(sampler_MainTex, texCoords, 0).a;
 
-				float value = 0.0;
+				half value = 0.0;
 
 
-				if (_FrameTime < 13125805) {
+				//if (_FrameTime < 13125805) {
 					uint instanceId = v.iid + _FrameTime;//float(v.iid + _FrameTime);
 					uint3 texelCoords = uint3(instanceId % texSize, instanceId >> magnitude, 0);
 					value = _MainTex.Load(texelCoords).a;
-				}
-				else {
-					uint instanceId = v.iid + (_FrameTime - 13125805);//float(v.iid + _FrameTime);
-					uint3 texelCoords = uint3(instanceId % texSize, instanceId >> magnitude, 0);
-					value = _MainTex2.Load(texelCoords).a;
-				}
+				//}
+				//else {
+				//	uint instanceId = v.iid + (_FrameTime - 13125805);//float(v.iid + _FrameTime);
+				//	uint3 texelCoords = uint3(instanceId % texSize, instanceId >> magnitude, 0);
+				//	value = _MainTex2.Load(texelCoords).a;
+				//}
 				//float value = tex2Dlod(_MainTex, texCoords).a;
 
+				/*if (value < 0.1) {
+					return;
+				}*/
 
 				if (value > 0.7)
 				{
@@ -152,7 +155,7 @@
 				return;
 				}*/
 
-				o.color = tex2Dlod(_ColorTex, float4(value, 0, 0, 0)).rgb;
+				o.color = tex2Dlod(_ColorTex, half4(value, 0, 0, 0)).rgb;
 				//o.color = float3(value, value, value);
 
 				float4 point_position = float4(points[v.iid], 0.0);
@@ -162,9 +165,9 @@
 				o.vertex = UnityWorldToClipPos(o.vertex.xyz);
 
 				//Translating the vertices in a quad shape:
-				float size = 0.01 * exp(1.0 - value);
-				float2 quadSize = float2(size, size * aspect);
-				float2 deltaSize = quadCoords[v.id].xy * quadSize;
+				half size = 0.01 * exp(1.0 - value);
+				half2 quadSize = half2(size, size * aspect);
+				half2 deltaSize = quadCoords[v.id] * quadSize;
 				o.vertex.xy += deltaSize;
 
 				o.texCoord = quadTexCoords[v.id];
@@ -180,7 +183,7 @@
 			{
 				fragOutput o;
 				
-				float albedo = tex2D(_AlbedoTex, i.texCoord).a;
+				fixed albedo = tex2D(_AlbedoTex, i.texCoord).a;
 				o.color = fixed4(i.color, albedo);
 				return o;
 			}

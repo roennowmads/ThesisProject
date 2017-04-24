@@ -1,1 +1,1 @@
-pvpython generateCSVFromPVD.py
+pvpython generateCSVFromCGNS.py

@@ -25,7 +25,7 @@ public class PointCloud : MonoBehaviour {
     private float m_accumulation;
     private float m_currentTime;
 
-    private int m_textureSize = 1024 * 4;
+    private int m_textureSize = 1024 * 8;
     private int m_lookupTextureSize = 256; //Since the values in the value texture are only 0-255, it doesn't make sense to have more values here.
 
     private ComputeBuffer computebuffer;
@@ -38,11 +38,9 @@ public class PointCloud : MonoBehaviour {
         lookupTexture.anisoLevel = 1;
 
         for (int i = 0; i < numberOfValues; i++) {
-            //float maxMagnitude = 1000.0f;/*5.73f * 0.5f;*/
             float textureIndex = i;
 
-
-            //0 - 1023 --> 1.0 - 0.0
+            //0 - 255 --> 1.0 - 0.0
             float value = 1.0f - (textureIndex / numberOfValues);
 
             var a = (1.0f - value) / 0.25f; //invert and group
@@ -70,10 +68,7 @@ public class PointCloud : MonoBehaviour {
                 default:
                     color = new Color(1.0f, 0, 0);
                     break;
-            }
-
-            //color.a = 0.0f;//value;
-            
+            }            
             lookupTexture.SetPixel(i, 0, color); 
 
             //alternatives: (necessary if I want to store only one component per pixel)
@@ -87,16 +82,16 @@ public class PointCloud : MonoBehaviour {
         return lookupTexture;
     }
 
-    void readPointsFile1Value(Texture2D tex, Texture2D tex2) {
+    void readPointsFile1Value(Texture2D tex/*, Texture2D tex2*/) {
         //CompressionHelper.CompressFile(path + "fireAtrium0." + fileIndex + ".bytes", "fireAtrium0." + fileIndex +".lzf");
         //byte[] bytes = CompressionHelper.DecompressFileToMem(path + "fireAtrium0." + fileIndex +".lzf");
         //float[] vals = new float[bytes.Length / 4];
         //Buffer.BlockCopy(bytes, 0, vals, 0, bytes.Length);
 
-        bool loadingFromBytes = true;
+        bool loadingFromBytes = false;
         
         byte[] vals = new byte[m_textureSize * m_textureSize];
-        byte[] vals2 = new byte[m_textureSize * m_textureSize];
+        //byte[] vals2 = new byte[m_textureSize * m_textureSize];
 
         times = new int[m_numberOfFrames];
         int offset = 0;
@@ -106,19 +101,30 @@ public class PointCloud : MonoBehaviour {
 
         if (loadingFromBytes) {
             for (int k = 0; k < m_numberOfFrames; k++) {
-                TextAsset ta = Resources.Load("AtriumData/binaryDataFull/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
+
+                //http://answers.unity3d.com/questions/759469/why-doesnt-my-asynchronous-loading-work.html
+                //StartCoroutine (LoadFrames ());
+
+                //ResourceRequest bla = Resources.LoadAsync("AtriumData/frame" + k + "0.0", typeof(TextAsset));
+
+                //while (!bla.isDone) {
+                //    yield return 0;
+                //}
+
+                //TextAsset ta = Resources.Load("AtriumData/binaryDataFull/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
+                TextAsset ta = Resources.Load("AtriumData/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
                 byte[] bytes = ta.bytes;
 
                 frameSize = bytes.Length;
                 //Debug.Log(k * frameSize);
-                if (k * frameSize < m_textureSize * m_textureSize - frameSize) {
+                //if (k * frameSize < m_textureSize * m_textureSize - frameSize) {
                     Buffer.BlockCopy(bytes, 0, vals, k * frameSize, frameSize);
                     nextTexIndex = k;
-                }
-                else {
-                    Debug.Log(k * frameSize - (nextTexIndex + 1) * frameSize);
-                    Buffer.BlockCopy(bytes, 0, vals2, k * frameSize - (nextTexIndex+1) * frameSize, frameSize);
-                }
+                //}
+                //else {
+                //    Debug.Log(k * frameSize - (nextTexIndex + 1) * frameSize);
+                //    Buffer.BlockCopy(bytes, 0, vals2, k * frameSize - (nextTexIndex+1) * frameSize, frameSize);
+                //}
 
                 Debug.Log(nextTexIndex);
 
@@ -135,10 +141,10 @@ public class PointCloud : MonoBehaviour {
             }
             Buffer.BlockCopy(restBytes, 0, vals, frameSize*m_numberOfFrames, restSize);*/
 
-            //CompressionHelper.CompressMemToFile(vals, "Assets/Resources/AtriumData/fireAtriumPoints.bytes");
+            //CompressionHelper.CompressMemToFile(vals, "Assets/Resources/AtriumData/fireAtriumCompressedValues.bytes");
         }
         else {
-            TextAsset ta = Resources.Load("AtriumData/fireAtriumPoints", typeof(TextAsset)) as TextAsset;
+            TextAsset ta = Resources.Load("AtriumData/fireAtriumCompressedValues", typeof(TextAsset)) as TextAsset;
             vals = CompressionHelper.DecompressBytes(ta.bytes);
 
             for (int k = 0; k < m_numberOfFrames; k++) {
@@ -152,43 +158,23 @@ public class PointCloud : MonoBehaviour {
 
         tex.LoadRawTextureData(vals);
         tex.Apply();
-        tex2.LoadRawTextureData(vals2);
-        tex2.Apply();
+        //tex2.LoadRawTextureData(vals2);
+        //tex2.Apply();
 
 
     } 
 
-    List<Vector3> readPointsFile3Attribs()
+    float[] readPointsFile3Attribs()
     {
-        List<Vector3> points = new List<Vector3>();
-
-        char[] delimiterChars = { ',' };
-
-        string line;
-        using (StreamReader reader = new StreamReader(new MemoryStream(pointData.bytes))) {
-            // While there's lines left in the text file, do this:
-            do {
-                line = reader.ReadLine();
-                //Debug.Log(line);
-
-                if (line != null) {
-                    Vector3 point = new Vector3();
-                    string[] parts = line.Split(delimiterChars);
-                    point.x = float.Parse(parts[0]);
-                    point.y = float.Parse(parts[1]);
-                    point.z = float.Parse(parts[2]);
-
-                    points.Add(point);
-                }
-            }
-            while (line != null);
-        }
+        byte[] bytes = pointData.bytes;
+        float[] points = new float[(bytes.Length / 4)];
+        Buffer.BlockCopy(bytes, 0, points, 0, bytes.Length);
         return points;
     }
     void Start () {
         //Set up mesh:
-        List<Vector3> points = readPointsFile3Attribs();
-        m_pointsCount = points.Count;
+        float[] points = readPointsFile3Attribs();
+        m_pointsCount = points.Length / 3;
 
          //Set up textures:
         Texture2D colorTexture = createColorLookupTexture();
@@ -200,9 +186,9 @@ public class PointCloud : MonoBehaviour {
         texture.filterMode = FilterMode.Point;
         texture.wrapMode = TextureWrapMode.Repeat;
 
-        Texture2D texture2 = new Texture2D(m_textureSize, m_textureSize, TextureFormat.Alpha8, false, false);
-        texture2.filterMode = FilterMode.Point;
-        texture2.wrapMode = TextureWrapMode.Repeat;
+        //Texture2D texture2 = new Texture2D(m_textureSize, m_textureSize, TextureFormat.Alpha8, false, false);
+        //texture2.filterMode = FilterMode.Point;
+        //texture2.wrapMode = TextureWrapMode.Repeat;
 
         /*bool supportsTextureFormat = SystemInfo.SupportsTextureFormat(TextureFormat.R16); 
         if (supportsTextureFormat) {
@@ -210,14 +196,14 @@ public class PointCloud : MonoBehaviour {
         }*/
 
         texture.anisoLevel = 1;
-        readPointsFile1Value(texture, texture2);
+        readPointsFile1Value(texture/*, texture2*/);
         pointRenderer = GetComponent<Renderer>();
         pointRenderer.material.mainTexture = texture;
-        pointRenderer.material.SetTexture("_MainTex2", texture2);
+        //pointRenderer.material.SetTexture("_MainTex2", texture2);
         pointRenderer.material.SetTexture("_ColorTex", colorTexture);
 
         computebuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.GPUMemory);
-        computebuffer.SetData(points.ToArray());
+        computebuffer.SetData(points);
         pointRenderer.material.SetBuffer ("points", computebuffer);
 
         float aspect = Camera.main.GetComponent<Camera>().aspect;
@@ -250,7 +236,7 @@ public class PointCloud : MonoBehaviour {
 
         int t = ((int)(Time.fixedTime * m_frameSpeed)) % times.Length;
 
-        //t = 90;
+        //t = 3;
 
         int count = times[t];
         //Debug.Log(count);
