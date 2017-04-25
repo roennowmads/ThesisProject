@@ -11,7 +11,7 @@ using System;
 public class PointCloud : MonoBehaviour {
 
     public TextAsset pointData;
-    public int m_numberOfFrames = 25;
+    public int m_lastFrameIndex = 25;
     public float m_FPSUpdateFrequency = 1.0f;
     public float m_frameSpeed = 5.0f;
     
@@ -95,7 +95,7 @@ public class PointCloud : MonoBehaviour {
         int nextTexIndex = 0;
 
         if (loadingFromBytes) {
-            for (int k = 0; k < m_numberOfFrames; k++) {
+            for (int k = 0; k < m_lastFrameIndex; k++) {
 
                 //http://answers.unity3d.com/questions/759469/why-doesnt-my-asynchronous-loading-work.html
                 //StartCoroutine (LoadFrames ());
@@ -143,7 +143,7 @@ public class PointCloud : MonoBehaviour {
             TextAsset ta = Resources.Load("AtriumData/fireAtriumCompressedValues", typeof(TextAsset)) as TextAsset;
             vals = CompressionHelper.DecompressBytes(ta.bytes);
 
-            for (int k = 0; k < m_numberOfFrames; k++) {
+            for (int k = 0; k < m_lastFrameIndex; k++) {
                 //times[k] = offset;
                 //offset += m_pointsCount;
             }
@@ -225,13 +225,15 @@ public class PointCloud : MonoBehaviour {
         m_currentFPS = 0;
         m_framesSinceUpdate = 0;
         m_currentTime = 0.0f;
+
+        Debug.Log("Number of points: " + m_pointsCount);
     }
 	
 	// Update is called once per frame
 	void Update () {
         //Debug.Log(Time.fixedTime);
 
-        int t = ((int)(Time.fixedTime * m_frameSpeed)) % m_numberOfFrames;
+        int t = ((int)(Time.fixedTime * m_frameSpeed)) % m_lastFrameIndex;
 
         //t = 45;  //The error happens right at t == 45, or where count == 16876035, the first time it's greater than 4096*4096. It seems to also have happened when using two textures.
 

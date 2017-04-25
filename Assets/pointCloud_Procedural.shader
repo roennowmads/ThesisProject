@@ -12,7 +12,7 @@
 		Blend SrcAlpha OneMinusSrcAlpha
 		AlphaTest Greater .01
 		//Cull Off
-		ZWrite off 
+		ZWrite Off 
 		//LOD 200
 
 		Pass {
