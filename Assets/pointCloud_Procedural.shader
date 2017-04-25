@@ -140,14 +140,14 @@
 				//}
 				//float value = tex2Dlod(_MainTex, texCoords).a;
 
-				/*if (value < 0.1) {
-					return;
-				}*/
-
-				if (value > 0.7)
-				{
+				if (value < 0.01) {
 					return;
 				}
+
+				/*if (value > 0.7)
+				{
+					return;
+				}*/
 				/*if (value < 0.5 || value > 0.9999)
 				{
 					return;
@@ -157,8 +157,8 @@
 				return;
 				}*/
 
-				//o.color = tex2Dlod(_ColorTex, half4(value, 0, 0, 0)).rgb;
-				o.color = float3(value, value, value);
+				o.color = tex2Dlod(_ColorTex, half4(value, 0, 0, 0)).rgb;
+				//o.color = float3(value, value, value);
 
 				float4 point_position = float4(_Points[v.iid], 0.0);
 				//Correcting the translation:
@@ -167,7 +167,7 @@
 				o.vertex = UnityWorldToClipPos(o.vertex.xyz);
 
 				//Translating the vertices in a quad shape:
-				half size = 0.01 * exp(1.0 - value);
+				half size = 0.0025 * exp(1.0 - value);
 				half2 quadSize = half2(size, size * aspect);
 				half2 deltaSize = quadCoords[v.id] * quadSize;
 				o.vertex.xy += deltaSize;

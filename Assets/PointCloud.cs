@@ -107,7 +107,7 @@ public class PointCloud : MonoBehaviour {
                 //}
 
                 //TextAsset ta = Resources.Load("AtriumData/binaryDataFull/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
-                TextAsset ta = Resources.Load("AtriumData/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
+                TextAsset ta = Resources.Load("OilRigData/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
                 byte[] bytes = ta.bytes;
 
                 int frameSize = bytes.Length;
