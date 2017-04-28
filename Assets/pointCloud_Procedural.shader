@@ -74,7 +74,7 @@
 				AddressV = Wrap;
 			};*/
 
-			static const uint magnitude = 13;
+			static const uint magnitude = 14;
 			static const uint texSize = 1 << magnitude; // 1 << 12 == 4096 
 			static const float inv_texSize = 1.0 / texSize;
 
