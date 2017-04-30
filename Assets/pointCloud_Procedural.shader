@@ -31,7 +31,7 @@
 			//Texture2D<float> _MainTex;
 			//sampler2D _MainTex;
 			Texture2D<float4> _MainTex;
-			//Texture2D<float4> _MainTex2;
+			Texture2D<float4> _MainTex2;
 
 			sampler2D _ColorTex;
 			sampler2D _AlbedoTex;
@@ -44,6 +44,7 @@
 			uniform float aspect;
 			uniform int _PointsCount;
 			uniform uint _FrameTime;
+			uniform uint _Magnitude;
 
 			struct appdata
 			{
@@ -67,16 +68,16 @@
 				AddressV = Wrap;
 			};
 
-			/*SamplerState sampler_MainTex2
+			SamplerState sampler_MainTex2
 			{
 				Filter = MIN_MAG_MIP_POINT;
 				AddressU = Wrap;
 				AddressV = Wrap;
-			};*/
+			};
 
-			static const uint magnitude = 14;
-			static const uint texSize = 1 << magnitude; // 1 << 12 == 4096 
-			static const float inv_texSize = 1.0 / texSize;
+			//static const uint magnitude = 14;
+			static const uint texSize = 1 << _Magnitude; // 1 << 12 == 4096 
+			//static const float inv_texSize = 1.0 / texSize;
 
 			static const half2 quadCoords[6] = {
 				half2(-0.1, -0.1),
@@ -121,22 +122,19 @@
 
 				//Division by 4096 == instanceId << 12 
 				
-				//float2 texCoords = float2(instanceId, instanceId >> magnitude) * inv_texSize;
-				
-				//float value = _MainTex.SampleLevel(sampler_MainTex, texCoords, 0).a;
+				//float2 texCoords = float2(instanceId, instanceId >> _Magnitude) * inv_texSize;
+				//half value = _MainTex.SampleLevel(sampler_MainTex, texCoords, 0).a;
+				half value = 0.0;
+				uint instanceId = v.iid + (_FrameTime * _PointsCount) % (texSize * texSize);
 
-				half value = 0.0; 
-
-
-				//if (_FrameTime < 13125805) {
-					uint instanceId = v.iid + (_FrameTime * _PointsCount);//float(v.iid + _FrameTime);
-					uint3 texelCoords = uint3(instanceId % texSize, instanceId >> magnitude, 0);
+				//if (instanceId <= texSize * texSize) {
+					uint3 texelCoords = uint3(instanceId % texSize, instanceId >> _Magnitude, 0);
 					value = _MainTex.Load(texelCoords).a;
 				//}
 				//else {
-				//	uint instanceId = v.iid + (_FrameTime - 13125805);//float(v.iid + _FrameTime);
-				//	uint3 texelCoords = uint3(instanceId % texSize, instanceId >> magnitude, 0);
-				//	value = _MainTex2.Load(texelCoords).a;
+					//instanceId -= texSize * texSize;
+				//	uint3 texelCoords = uint3(instanceId % texSize, instanceId >> _Magnitude, 0);
+				//	value = _MainTex.Load(texelCoords).a;
 				//}
 				//float value = tex2Dlod(_MainTex, texCoords).a;
 
@@ -160,7 +158,7 @@
 				o.color = tex2Dlod(_ColorTex, half4(value, 0, 0, 0)).rgb;
 				//o.color = float3(value, value, value);
 
-				float4 point_position = float4(_Points[v.iid], 0.0);
+				float4 point_position = float4(-_Points[v.iid], 0.0);
 				//Correcting the translation:
 				o.vertex = mul(model, point_position);
 				o.vertex += trans;
