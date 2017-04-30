@@ -29,6 +29,8 @@ public class PointCloud : MonoBehaviour {
     private int m_textureSize;
     private int m_lookupTextureSize = 256; //Since the values in the value texture are only 0-255, it doesn't make sense to have more values here.
 
+    private int m_textureSwitchFrameNumber = -1;
+
     private ComputeBuffer computebuffer;
 
     Texture2D createColorLookupTexture() {
@@ -83,7 +85,7 @@ public class PointCloud : MonoBehaviour {
         return lookupTexture;
     }
 
-    void readPointsFile1ValueAsync(int k, Texture2D tex2) {
+    IEnumerator readPointsFile1ValueAsync(int k, Texture2D tex2) {
         byte[] vals = new byte[m_textureSize];
 
         int index = 0;
@@ -103,7 +105,7 @@ public class PointCloud : MonoBehaviour {
 
         pointRenderer = GetComponent<Renderer>();
         pointRenderer.material.SetTexture("_MainTex2", tex2);
-        //yield return 0;
+        yield return 0;
     }
 
     void readPointsFile1Value(Texture2D tex, Texture2D tex2) {
@@ -144,7 +146,8 @@ public class PointCloud : MonoBehaviour {
                 }*/
 
                 if (k * frameSize >= m_textureSize - frameSize) {
-                    /*StartCoroutine(*/readPointsFile1ValueAsync(k, tex2)/*)*/;
+                    m_textureSwitchFrameNumber = k - 1;
+                    StartCoroutine(readPointsFile1ValueAsync(k, tex2));
                     break;
                 }
                 Buffer.BlockCopy(bytes, 0, vals, k * frameSize, frameSize);
@@ -237,6 +240,9 @@ public class PointCloud : MonoBehaviour {
         Vector4 trans = transform.position;
         pointRenderer.material.SetVector("trans", trans);
         pointRenderer.material.SetInt("_Magnitude", m_textureSideSizePower);
+        pointRenderer.material.SetInt("_TextureSwitchFrameNumber", m_textureSwitchFrameNumber);
+
+        
 
 
         //One down-side to storing and loading a texture is that we are storing all channels, as well as any unused parts of the texture.

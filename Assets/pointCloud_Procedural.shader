@@ -45,6 +45,7 @@
 			uniform int _PointsCount;
 			uniform uint _FrameTime;
 			uniform uint _Magnitude;
+			uniform int _TextureSwitchFrameNumber;
 
 			struct appdata
 			{
@@ -125,17 +126,19 @@
 				//float2 texCoords = float2(instanceId, instanceId >> _Magnitude) * inv_texSize;
 				//half value = _MainTex.SampleLevel(sampler_MainTex, texCoords, 0).a;
 				half value = 0.0;
-				uint instanceId = v.iid + (_FrameTime * _PointsCount) % (texSize * texSize);
+				uint offset = _FrameTime * _PointsCount;
+				int maxTextureOffset = _TextureSwitchFrameNumber * _PointsCount;
 
-				//if (instanceId <= texSize * texSize) {
+				if (offset <= maxTextureOffset) {
+					uint instanceId = v.iid + offset;
 					uint3 texelCoords = uint3(instanceId % texSize, instanceId >> _Magnitude, 0);
 					value = _MainTex.Load(texelCoords).a;
-				//}
-				//else {
-					//instanceId -= texSize * texSize;
-				//	uint3 texelCoords = uint3(instanceId % texSize, instanceId >> _Magnitude, 0);
-				//	value = _MainTex.Load(texelCoords).a;
-				//}
+				}
+				else {
+					uint instanceId = v.iid + (offset % maxTextureOffset);
+					uint3 texelCoords = uint3(instanceId % texSize, instanceId >> _Magnitude, 0);
+					value = _MainTex2.Load(texelCoords).a;
+				}
 				//float value = tex2Dlod(_MainTex, texCoords).a;
 
 				if (value < 0.01) {
