@@ -9,8 +9,7 @@ using System.Runtime.InteropServices;
 using System;
 
 public class PointCloud : MonoBehaviour {
-
-    public TextAsset pointData;
+    public string m_valueDataPath = "OilRigData";
     public int m_lastFrameIndex = 25;
     public float m_FPSUpdateFrequency = 1.0f;
     public float m_frameSpeed = 5.0f;
@@ -91,7 +90,7 @@ public class PointCloud : MonoBehaviour {
         int index = 0;
         for (int i = k + 1; i < m_lastFrameIndex; i++) {
 
-            TextAsset ta = Resources.Load("OilRigData/frame" + i + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
+            TextAsset ta = Resources.Load(m_valueDataPath + "/frame" + i + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
             byte[] bytes = ta.bytes;
 
             int frameSize = bytes.Length;
@@ -134,7 +133,7 @@ public class PointCloud : MonoBehaviour {
                 //}
 
                 //TextAsset ta = Resources.Load("AtriumData/binaryDataFull/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
-                TextAsset ta = Resources.Load("OilRigData/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
+                TextAsset ta = Resources.Load(m_valueDataPath + "/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
                 byte[] bytes = ta.bytes;
 
                 int frameSize = bytes.Length;
@@ -168,7 +167,7 @@ public class PointCloud : MonoBehaviour {
             //CompressionHelper.CompressMemToFile(vals, "Assets/Resources/OilRigData/compressedValues.bytes");
         }
         else {
-            TextAsset ta = Resources.Load("OilRigData/compressedValues", typeof(TextAsset)) as TextAsset;
+            TextAsset ta = Resources.Load(m_valueDataPath + "/compressedValues", typeof(TextAsset)) as TextAsset;
             vals = CompressionHelper.DecompressBytes(ta.bytes);
 
             for (int k = 0; k < m_lastFrameIndex; k++) {
@@ -190,6 +189,7 @@ public class PointCloud : MonoBehaviour {
 
     float[] readPointsFile3Attribs()
     {
+        TextAsset pointData = Resources.Load(m_valueDataPath + "/frame00.0.pos", typeof(TextAsset)) as TextAsset;
         byte[] bytes = pointData.bytes;
         float[] points = new float[(bytes.Length / 4)];
         Buffer.BlockCopy(bytes, 0, points, 0, bytes.Length);
