@@ -43,8 +43,8 @@ def processFileValues(dir, filename):
 
     outString = ""
     
-    minMagnitude = 0.0
-    maxMagnitude = 0.735  # Only correct for Visibility property
+    minMagnitude = -7.9246e-07
+    maxMagnitude = 0.0010371  # Only correct for Visibility property
 
     #skip first line
     fIn.readline()	
@@ -88,7 +88,7 @@ def processFileValues(dir, filename):
     fOut.close()
 	
 
-dir = 'C:/Users/madsr/Desktop/Oil Rig Data/output'
+dir = 'C:\Users\madsr\Desktop\Atrium Data\output'
 filenames = [name for name in os.listdir(dir) if os.path.isfile(os.path.join(dir, name))]
 numFiles = len(filenames)
 

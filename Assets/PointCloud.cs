@@ -42,8 +42,8 @@ public class PointCloud : MonoBehaviour {
         for (int i = 0; i < numberOfValues; i++) {
             float textureIndex = i;
 
-            //0 - 255 --> 1.0 - 0.0
-            float value = 1.0f - (textureIndex / numberOfValues);
+            //0 - 255 --> 0.0 - 1.0
+            float value = textureIndex / numberOfValues;
 
             var a = (1.0f - value) / 0.25f; //invert and group
             float X = Mathf.Floor(a);   //this is the integer part

@@ -141,14 +141,14 @@
 				}
 				//float value = tex2Dlod(_MainTex, texCoords).a;
 
-				if (value < 0.01) {
-					return;
-				}
-
-				/*if (value > 0.7)
-				{
+				/*if (value < 0.01) {
 					return;
 				}*/
+
+				if (value < 0.001)
+				{
+					return;
+				}
 				/*if (value < 0.5 || value > 0.9999)
 				{
 					return;

@@ -2,13 +2,13 @@ from paraview import simple
 import os, os.path
 
 if __name__ == '__main__':
-    directory = 'C:\Users\madsr\Desktop\Oil Rig Data'
+    directory = 'C:\Users\madsr\Desktop\Atrium Data'
     files = [name for name in os.listdir(directory) if os.path.isfile(os.path.join(directory, name))]
 
     for i, file in enumerate(files):
         print "Processing: " + file
         reader = simple.OpenDataFile(directory + "/" + file)
-        reader.PointArrayStatus = ['CH4methaneIG.MassFraction']
+        reader.PointArrayStatus = ['soot']
         #filename = os.path.splitext(file)[0]
         writer = simple.CreateWriter(directory + "/output/" + "frame" + str(i) + ".csv", reader)
         writer.WriteAllTimeSteps = 1
