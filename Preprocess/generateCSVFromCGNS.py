@@ -3,14 +3,14 @@ import os, os.path
 import preprocess
 
 if __name__ == '__main__':
-    directory = 'C:\Users\madsr\Desktop\Atrium Data'
+    directory = 'C:\Users\madsr\Desktop\Oil Rig Data'
     files = [name for name in os.listdir(directory) if os.path.isfile(os.path.join(directory, name))]
     
     rangeMin = float("inf")
     rangeMax = float("-inf")
     numberOfPoints = 0
     
-    attribute = "soot"
+    attribute = "CH4methaneIG.MassFraction"
 
     for i, file in enumerate(files):
         print "Processing: " + file
