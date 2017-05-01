@@ -1,15 +1,32 @@
-from paraview import simple
+from paraview import simple, vtk
 import os, os.path
+import preprocess
 
 if __name__ == '__main__':
     directory = 'C:\Users\madsr\Desktop\Atrium Data'
     files = [name for name in os.listdir(directory) if os.path.isfile(os.path.join(directory, name))]
+    
+    rangeMin = float("inf")
+    rangeMax = float("-inf")
+    numberOfPoints = 0
+    
+    attribute = "soot"
 
     for i, file in enumerate(files):
         print "Processing: " + file
         reader = simple.OpenDataFile(directory + "/" + file)
-        reader.PointArrayStatus = ['soot']
-        #filename = os.path.splitext(file)[0]
+        reader.PointArrayStatus = [attribute]
+        reader.UpdatePipeline()
+        info = reader.GetDataInformation().DataInformation
+        arrayInfo = info.GetArrayInformation(attribute, vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS)
+        numberOfPoints = arrayInfo.GetNumberOfTuples()
+        range = arrayInfo.GetComponentRange(0)  #all the cgns files need to be loaded in in order to get the real range.
+        if rangeMin > range[0]:
+            rangeMin = range[0]
+        
+        if rangeMax < range[1]:
+            rangeMax = range[1]
+        
         writer = simple.CreateWriter(directory + "/output/" + "frame" + str(i) + ".csv", reader)
         writer.WriteAllTimeSteps = 1
         writer.FieldAssociation = "Points"
@@ -17,45 +34,7 @@ if __name__ == '__main__':
         simple.Delete() #Avoids memory leak
         print "File processed: " + file
         
-    
-#Multiprocessing version (doesn't seem to work with pvpython):
-'''from paraview import simple
-import os, os.path
-from multiprocessing import Process
+    print rangeMin, rangeMax, numberOfPoints
 
-def f(files, startI, endI):
-    numberOfFiles = len(files)
-    for i in range(startI, endI):
-        file = files[i]
-        reader = simple.OpenDataFile(directory + "/" + file)
-        reader.PointArrayStatus = ['Visibility']
-        filename = os.path.splitext(file)[0]
-        writer = simple.CreateWriter(directory + "/output/" + filename + ".csv", reader)
-        writer.WriteAllTimeSteps = 1
-        writer.FieldAssociation = "Points"
-        writer.UpdatePipeline()
-        simple.Delete() #Avoids memory leak
-        print "File processed: " + file
-    
-if __name__ == '__main__':
-    directory = 'atrium data part 2'
-    files = [name for name in os.listdir(directory) if os.path.isfile(os.path.join(directory, name))]
-    
-
-    p1 = Process(target=f, args=(files, 0, 20))
-    p1.start()
-    
-    p2 = Process(target=f, args=(files, 20, 40))
-    p2.start()
-    
-    p3 = Process(target=f, args=(files, 40, 60))
-    p3.start()
-    
-    p4 = Process(target=f, args=(files, 80, 100))
-    p4.start()
-    
-    p1.join()
-    p2.join()
-    p3.join()
-    p4.join()
-'''
+    #Run preprocess directly after:
+    preprocess.runPreprocess(directory, rangeMin, rangeMax, numberOfPoints)

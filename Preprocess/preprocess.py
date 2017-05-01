@@ -2,18 +2,12 @@ import math
 import os, os.path
 import struct
 
-maxMagnitude = float("-inf")
-minMagnitude = float("inf")
-
-array = {}
-
 def processFilePositions(dir, filename, valuePerLine):
     fIn = open(dir + "/" + filename)
     filenameNoExt = os.path.splitext(filename)[0]
     
     fOut = open(dir + "/output/" + filenameNoExt + ".pos.bytes", "wb+")
 
-    #print valuePerLine
     numberOfFinalPoints = 0
     
     #skip first line
@@ -36,36 +30,15 @@ def processFilePositions(dir, filename, valuePerLine):
             numberOfFinalPoints += 1
             
 
-        #if (i % 100000) == 0:
-        #print "Positions processed:", i
+        if (i % 100000) == 0:
+            print "Positions processed:", i
         
     fIn.close()
     fOut.close()
     print numberOfFinalPoints
 
-	
-def findMinAndMaxValues(dir, filename, valuePerLine):
-    fIn = open(dir + "/" + filename)
-    #skip first line
-    fIn.readline()	
-    for line in fIn:
-        strippedLined = line.strip()
-        lines = strippedLined.split(',')
-        x = float(lines[0])
 
-        global maxMagnitude
-        if maxMagnitude < x:
-            maxMagnitude = x
-
-        global minMagnitude
-        if minMagnitude > x:
-            minMagnitude = x
-            
-        valuePerLine.append(0)
-    fIn.close()
-
-
-def findInterestingFileValues(dir, filename, valuePerLine):
+def findInterestingFileValues(dir, filename, valuePerLine, fileData):
     fIn = open(dir + "/" + filename)
 
     #skip first line
@@ -76,61 +49,52 @@ def findInterestingFileValues(dir, filename, valuePerLine):
         x = float(lines[0])
         
         value = int(((x - minMagnitude) / (maxMagnitude - minMagnitude)) * 255.0)
+        fileData.append(value)
         
-        valuePerLine[i] += value
+        valuePerLine[i] += value        
     fIn.close()
 	
 
-def processFileValues(dir, filename, valuePerLine):
-    fIn = open(dir + "/" + filename)
+def processFileValues(dir, filename, valuePerLine, fileData):
     filenameNoExt = os.path.splitext(filename)[0]
     fOut = open(dir + "/output/" + filenameNoExt + ".bytes", "wb+")
-    
-    #skip first line
-    fIn.readline()	
-    for i, line in enumerate(fIn):
+    for i, value in enumerate(fileData):
         if valuePerLine[i] <> 0:
-            strippedLined = line.strip()
-            lines = strippedLined.split(',')
-            x = float(lines[0])
-            
-            #print x
-            value = int(((x - minMagnitude) / (maxMagnitude - minMagnitude)) * 255.0)
-            
             data = struct.pack('B', value) #pack values as binary byte 
-            
             fOut.write(data)
-            #print valuePerLine
-        
-    fIn.close()
     fOut.close()
     
-dir = 'C:\Users\madsr\Desktop\Atrium Data\output'
-filenames = [name for name in os.listdir(dir) if os.path.isfile(os.path.join(dir, name))]
-numFiles = len(filenames)
-valuePerLine = [] 
-
-print "Find min and max values..."
-for filename in filenames:
-    findMinAndMaxValues(dir, filename, valuePerLine)
-    print filename + " processed"
-
-
-print ""
-print "Finding permanent zeroes in values data..."
-for filename in filenames:
-    findInterestingFileValues(dir, filename, valuePerLine)
-    print filename + " processed"
     
-print ""
-print "Creating binary files..."
-for filename in filenames:
-    processFileValues(dir, filename, valuePerLine)
-    print filename + " processed"
-	
-print ""
-print "Processing positions..."
-processFilePositions(dir, filenames[0], valuePerLine)
+def runPreprocess(directory, minMag, maxMag, numberOfPoints):
+    dir = directory + '\output'
+    filenames = [name for name in os.listdir(dir) if os.path.isfile(os.path.join(dir, name))]
+    numFiles = len(filenames)
+    valuePerLine = [0] * numberOfPoints
     
-print minMagnitude, maxMagnitude
-#print array
+    global maxMagnitude
+    maxMagnitude = maxMag
+    
+    global minMagnitude
+    minMagnitude = minMag
+
+    print ""
+    print "Finding permanent zeroes in values data..."
+    filesData = []
+    for filename in filenames:
+        fileData = []
+        findInterestingFileValues(dir, filename, valuePerLine, fileData)
+        print filename + " processed"
+        filesData.append(fileData)
+        
+    print ""
+    print "Creating binary files..."
+    for i, filename in enumerate(filenames):
+        fileData = filesData[i]
+        processFileValues(dir, filename, valuePerLine, fileData)
+        print filename + " processed"
+        
+    print ""
+    print "Processing positions..."
+    processFilePositions(dir, filenames[0], valuePerLine)
+        
+    print minMagnitude, maxMagnitude
