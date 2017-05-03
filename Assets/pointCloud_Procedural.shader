@@ -25,7 +25,7 @@
 			
 			#include "UnityCG.cginc"
 			#pragma target es3.1
-
+			
 			//float4x4 depthCameraTUnityWorld;
 
 			//Texture2D<float> _MainTex;
@@ -141,14 +141,14 @@
 				}
 				//float value = tex2Dlod(_MainTex, texCoords).a;
 
-				/*if (value < 0.01) {
-					return;
-				}*/
-
-				if (value < 0.001)
-				{
+				if (value < 0.01) {
 					return;
 				}
+
+				/*if (value < 0.001)
+				{
+					return;
+				}*/
 				/*if (value < 0.5 || value > 0.9999)
 				{
 					return;
@@ -168,7 +168,7 @@
 				o.vertex = UnityWorldToClipPos(o.vertex.xyz);
 
 				//Translating the vertices in a quad shape:
-				half size = 0.0025 * exp(1.0 - value);
+				half size = 0.01 * exp(1.0 - value);
 				half2 quadSize = half2(size, size * aspect);
 				half2 deltaSize = quadCoords[v.id] * quadSize;
 				o.vertex.xy += deltaSize;

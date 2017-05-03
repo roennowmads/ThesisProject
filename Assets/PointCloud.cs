@@ -275,7 +275,7 @@ public class PointCloud : MonoBehaviour {
 
         //Debug.Log(count);
 
-        Debug.Log(t);
+        //Debug.Log(t);
         pointRenderer.material.SetInt("_FrameTime", t);
         float aspect = Camera.main.GetComponent<Camera>().aspect;
         pointRenderer.material.SetFloat("aspect", aspect);
@@ -303,6 +303,7 @@ public class PointCloud : MonoBehaviour {
     {
         pointRenderer.material.SetPass(0);
         pointRenderer.material.SetMatrix("model", transform.localToWorldMatrix);
+        //Graphics.DrawProcedural(MeshTopology.Points, 1, m_pointsCount);
         Graphics.DrawProcedural(MeshTopology.Triangles, 6, m_pointsCount);
     }
 
