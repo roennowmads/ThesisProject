@@ -23,6 +23,9 @@ using Tango;
 using UnityEngine;
 
 /// <summary>
+/// DEPRECATED -- This pose controller is deprecated.  Please use TangoPoseController
+/// instead.
+///
 /// An advanced movement controller which updates the position and rotation of a
 /// GameObject's transform by applying deltas based on the poses returned from
 /// Tango. This allows you to control movement using movement deltas; for
@@ -117,7 +120,7 @@ public class TangoDeltaPoseController : MonoBehaviour, ITangoPose
 
     /// <summary>
     /// Matrix that transforms from the Unity Camera to the Unity World.
-    /// 
+    ///
     /// Needed to calculate offsets.
     /// </summary>
     private Matrix4x4 m_uwTuc;
@@ -130,7 +133,7 @@ public class TangoDeltaPoseController : MonoBehaviour, ITangoPose
 
     /// <summary>
     /// Gets or sets a value indicating whether the clutch is active.
-    /// 
+    ///
     /// If the clutch is active, the controller ignores device movement and yaw,
     /// but follows pitch and roll to keep the ground plane level.
     /// </summary>
@@ -154,12 +157,12 @@ public class TangoDeltaPoseController : MonoBehaviour, ITangoPose
     }
 
     /// <summary>
-    /// Gets the TRS matrix for the offset between the pose returned by the 
-    /// Tango Service and the desired pose in the Unity world. If the only 
+    /// Gets the TRS matrix for the offset between the pose returned by the
+    /// Tango Service and the desired pose in the Unity world. If the only
     /// source of movement are position and rotation updates from the Tango
     /// service, there is no offset and this returns an identity matrix. If
     /// other movement is applied (i.e. from activating the clutch or calling
-    /// <c>SetPose</c>), this returns a matrix which can be multiplied to a 
+    /// <c>SetPose</c>), this returns a matrix which can be multiplied to a
     /// transform to apply the offset.
     /// </summary>
     /// <value>The Unity world offset.</value>
@@ -238,7 +241,7 @@ public class TangoDeltaPoseController : MonoBehaviour, ITangoPose
             ClutchActive = buttonState;
         }
     }
-    
+
     /// <summary>
     /// Unity callback when application is paused.
     /// </summary>

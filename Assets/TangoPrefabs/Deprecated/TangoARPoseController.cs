@@ -23,7 +23,10 @@ using Tango;
 using UnityEngine;
 
 /// <summary>
-/// A movement controller that automatically sets the position and rotation of 
+/// DEPRECATED -- This controller is deprecated.  Please use TangoPoseController
+/// instead.
+///
+/// A movement controller that automatically sets the position and rotation of
 /// the GameObject this is attached to. Movement matches what comes from Tango
 /// and is synchronized with the color camera. Used by the Tango AR Camera
 /// prefab to provide an augmented reality experience.
@@ -261,11 +264,11 @@ public class TangoARPoseController : MonoBehaviour, ITangoLifecycle
 
             // Calculate matrix for the camera in the Unity world, taking into account offsets.
             Matrix4x4 uwTuc = uwTDevice.ToMatrix4x4() * m_dTuc * TangoSupport.m_colorCameraPoseRotation;
-            
+
             // Extract final position, rotation.
             m_tangoPosition = uwTuc.GetColumn(3);
             m_tangoRotation = Quaternion.LookRotation(uwTuc.GetColumn(2), uwTuc.GetColumn(1));
-            
+
             // Other pose data -- Pose count gets reset if pose status just became valid.
             if (pose.status_code != m_poseStatus)
             {
@@ -273,13 +276,13 @@ public class TangoARPoseController : MonoBehaviour, ITangoLifecycle
             }
 
             m_poseCount++;
-            
+
             // Other pose data -- Pose time.
             m_poseTimestamp = timestamp;
         }
 
         m_poseStatus = pose.status_code;
-        
+
         // Apply final position and rotation.
         transform.position = m_tangoPosition;
         transform.rotation = m_tangoRotation;
@@ -300,13 +303,13 @@ public class TangoARPoseController : MonoBehaviour, ITangoLifecycle
         double timestamp = 0.0;
         TangoCoordinateFramePair pair;
         TangoPoseData poseData = new TangoPoseData();
-        
+
         // Get the transformation of device frame with respect to IMU frame.
         pair.baseFrame = TangoEnums.TangoCoordinateFrameType.TANGO_COORDINATE_FRAME_IMU;
         pair.targetFrame = TangoEnums.TangoCoordinateFrameType.TANGO_COORDINATE_FRAME_DEVICE;
         PoseProvider.GetPoseAtTime(poseData, timestamp, pair);
         Matrix4x4 imuTd = poseData.ToMatrix4x4();
-        
+
         // Get the transformation of IMU frame with respect to color camera frame.
         pair.baseFrame = TangoEnums.TangoCoordinateFrameType.TANGO_COORDINATE_FRAME_IMU;
         pair.targetFrame = TangoEnums.TangoCoordinateFrameType.TANGO_COORDINATE_FRAME_CAMERA_COLOR;

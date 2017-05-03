@@ -40,7 +40,7 @@ Properties{
        
         fixed4 frag (v2f i) : SV_Target
         {
-		   return float4(1.0, 1.0 ,1.0, 1.0);//i.color;
+           return i.color;
         }
         ENDCG
      }

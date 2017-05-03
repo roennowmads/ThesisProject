@@ -147,10 +147,20 @@ Prefab:
       propertyPath: m_RootOrder
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 114177468604350284, guid: f9669ced66d0b394e999dac99bfe2c1a,
+    - target: {fileID: 114344195366934650, guid: f9669ced66d0b394e999dac99bfe2c1a,
         type: 2}
-      propertyPath: m_textureSideSizePower
-      value: 12
+      propertyPath: m_Text
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 20011010104537718, guid: f9669ced66d0b394e999dac99bfe2c1a,
+        type: 2}
+      propertyPath: m_AllowMSAA
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 20011010104537718, guid: f9669ced66d0b394e999dac99bfe2c1a,
+        type: 2}
+      propertyPath: near clip plane
+      value: 0.35
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: f9669ced66d0b394e999dac99bfe2c1a, type: 2}

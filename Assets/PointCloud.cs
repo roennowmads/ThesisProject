@@ -11,18 +11,12 @@ using System;
 public class PointCloud : MonoBehaviour {
     public string m_valueDataPath = "OilRigData";
     public int m_lastFrameIndex = 25;
-    public float m_FPSUpdateFrequency = 1.0f;
+    
     public float m_frameSpeed = 5.0f;
     public int m_textureSideSizePower = 14;
 
     private int m_pointsCount = 61440;
     private Renderer pointRenderer;
-
-    //public string m_FPSText;
-    private int m_currentFPS;
-    private int m_framesSinceUpdate;
-    private float m_accumulation;
-    private float m_currentTime;
 
     private int m_textureSideSize;
     private int m_textureSize;
@@ -258,10 +252,6 @@ public class PointCloud : MonoBehaviour {
 
         //CompressionHelper.CompressMemToFile(texture.GetRawTextureData(), "fireAtriumTex.lzf");       
 
-        m_currentFPS = 0;
-        m_framesSinceUpdate = 0;
-        m_currentTime = 0.0f;
-
         Debug.Log("Number of points: " + m_pointsCount);
     }
 	
@@ -285,18 +275,6 @@ public class PointCloud : MonoBehaviour {
         //int a = pointRenderer.material.GetInt("_FrameTime");
 
         //Debug.Log(a);
-       
-        m_currentTime += Time.deltaTime;
-        ++m_framesSinceUpdate;
-        m_accumulation += Time.timeScale / Time.deltaTime;
-        if (m_currentTime >= m_FPSUpdateFrequency)
-        {
-            m_currentFPS = (int)(m_accumulation / m_framesSinceUpdate);
-            m_currentTime = 0.0f;
-            m_framesSinceUpdate = 0;
-            m_accumulation = 0.0f;
-            Debug.Log("FPS: " + m_currentFPS);
-        }
     }
 
     private void OnRenderObject()
