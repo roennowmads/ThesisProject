@@ -282,7 +282,7 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.material.SetPass(0);
         pointRenderer.material.SetMatrix("model", transform.localToWorldMatrix);
         //Graphics.DrawProcedural(MeshTopology.Points, 1, m_pointsCount);
-        Graphics.DrawProcedural(MeshTopology.Triangles, 6, m_pointsCount);
+        Graphics.DrawProcedural(MeshTopology.Triangles, m_pointsCount*6);  // index buffer.
     }
 
     void OnDestroy() {

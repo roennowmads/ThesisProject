@@ -173,7 +173,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 31.37, y: -49.31, z: -28.882002}
---- !u!1001 &160091204
+--- !u!1001 &1474200903
 Prefab:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -182,15 +182,15 @@ Prefab:
     m_Modifications:
     - target: {fileID: 4444389419694198, guid: 94b76e50c03828949a1995c8df14f660, type: 2}
       propertyPath: m_LocalPosition.x
-      value: 0.36261845
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4444389419694198, guid: 94b76e50c03828949a1995c8df14f660, type: 2}
       propertyPath: m_LocalPosition.y
-      value: 2.9065218
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4444389419694198, guid: 94b76e50c03828949a1995c8df14f660, type: 2}
       propertyPath: m_LocalPosition.z
-      value: -0.5603361
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4444389419694198, guid: 94b76e50c03828949a1995c8df14f660, type: 2}
       propertyPath: m_LocalRotation.x
@@ -212,28 +212,8 @@ Prefab:
       propertyPath: m_RootOrder
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 1237938124131778, guid: 94b76e50c03828949a1995c8df14f660, type: 2}
+    - target: {fileID: 1204084995803430, guid: 94b76e50c03828949a1995c8df14f660, type: 2}
       propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 114774826676465254, guid: 94b76e50c03828949a1995c8df14f660,
-        type: 2}
-      propertyPath: m_keepScreenAwake
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 114545867842546252, guid: 94b76e50c03828949a1995c8df14f660,
-        type: 2}
-      propertyPath: m_baseFrameMode
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 114116868975665934, guid: 94b76e50c03828949a1995c8df14f660,
-        type: 2}
-      propertyPath: m_enableEnvironmentalLighting
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 114116868975665934, guid: 94b76e50c03828949a1995c8df14f660,
-        type: 2}
-      propertyPath: m_enableDebugUI
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

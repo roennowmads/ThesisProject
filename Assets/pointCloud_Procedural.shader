@@ -21,7 +21,7 @@
 			#pragma fragment frag
 
 			// Enable instancing for this shader
-			#pragma multi_compile_instancing
+			//#pragma multi_compile_instancing
 			
 			#include "UnityCG.cginc"
 			#pragma target es3.1
@@ -50,8 +50,8 @@
 			struct appdata
 			{
 				uint id : SV_VertexID;
-				uint iid : SV_InstanceID;
-				UNITY_VERTEX_INPUT_INSTANCE_ID
+				//uint iid : SV_InstanceID;
+				//UNITY_VERTEX_INPUT_INSTANCE_ID
 			}; 
 			
 			struct v2f
@@ -59,7 +59,7 @@
 				float4 vertex : SV_POSITION;
 				fixed3 color : COLOR;
 				float2 texCoord : TEXCOORD0;
-				UNITY_VERTEX_INPUT_INSTANCE_ID
+				//UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 
 			SamplerState sampler_MainTex
@@ -112,7 +112,7 @@
 			void vert(in appdata v, out v2f o)
 			{
 				UNITY_INITIALIZE_OUTPUT(v2f, o)
-				UNITY_SETUP_INSTANCE_ID(v); 
+				//UNITY_SETUP_INSTANCE_ID(v); 
 				//UNITY_TRANSFER_INSTANCE_ID(v, o);
 
 				
@@ -129,13 +129,15 @@
 				uint offset = _FrameTime * _PointsCount;
 				int maxTextureOffset = _TextureSwitchFrameNumber * _PointsCount;
 
+				uint quadId = v.id / 6;
+
 				if (offset <= maxTextureOffset) {
-					uint instanceId = v.iid + offset;
+					uint instanceId = quadId + offset;
 					uint3 texelCoords = uint3(instanceId % texSize, instanceId >> _Magnitude, 0);
 					value = _MainTex.Load(texelCoords).a;
 				}
 				else {
-					uint instanceId = v.iid + (offset % maxTextureOffset);
+					uint instanceId = quadId + (offset % maxTextureOffset);
 					uint3 texelCoords = uint3(instanceId % texSize, instanceId >> _Magnitude, 0);
 					value = _MainTex2.Load(texelCoords).a;
 				}
@@ -144,6 +146,8 @@
 				if (value < 0.01) {
 					return;
 				}
+				
+				//float modifier = (sign(value - 0.01) * 0.5) + 0.5; //sign returns -1.0 or 1.0. Tranformed to return 0.0 or 1.0.
 
 				/*if (value < 0.001)
 				{
@@ -153,27 +157,27 @@
 				{
 					return;
 				}*/
-				/*if (value < 0.5)
-				{
-				return;
-				}*/
 
-				o.color = tex2Dlod(_ColorTex, half4(value, 0, 0, 0)).rgb;
+				o.color = tex2Dlod(_ColorTex, half4(value, 0, 0, 0)).rgb /** modifier*/;
 				//o.color = float3(value, value, value);
+				//o.color = float3(0.0, 0.0, 1.0);
+				
+				//_Points[v.iid] += float3(0.1, 0.1, 0.1);
 
-				float4 point_position = float4(-_Points[v.iid], 0.0);
 				//Correcting the translation:
-				o.vertex = mul(model, point_position);
+				o.vertex = mul(model, -_Points[quadId]);
 				o.vertex += trans;
 				o.vertex = UnityWorldToClipPos(o.vertex.xyz);
+				
+				uint quad_vertexID = v.id % 6;
 
 				//Translating the vertices in a quad shape:
-				half size = 0.01 * exp(1.0 - value);
+				half size = 0.01 * exp(1.0 - value) /** modifier*/;
 				half2 quadSize = half2(size, size * aspect);
-				half2 deltaSize = quadCoords[v.id] * quadSize;
+				half2 deltaSize = quadCoords[quad_vertexID] * quadSize;
 				o.vertex.xy += deltaSize;
 
-				o.texCoord = quadTexCoords[v.id];
+				o.texCoord = quadTexCoords[quad_vertexID];
 			}
 
 			struct fragOutput
