@@ -26,6 +26,18 @@ public class PointCloud : MonoBehaviour {
 
     private ComputeBuffer computebuffer;
 
+    public int getPointCount () {
+        return m_pointsCount;
+    }
+
+    public void setPointCount (int pointsCount) {
+        m_pointsCount = pointsCount;
+    }
+
+    public void changePointsCount(int increment) {
+        m_pointsCount += increment;
+    }
+
     Texture2D createColorLookupTexture() {
         int numberOfValues = m_lookupTextureSize;
 

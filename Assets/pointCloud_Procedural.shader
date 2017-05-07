@@ -143,9 +143,9 @@
 				}
 				//float value = tex2Dlod(_MainTex, texCoords).a;
 
-				if (value < 0.01) {
+				/*if (value < 0.01) { 
 					return;
-				}
+				}*/
 				
 				//float modifier = (sign(value - 0.01) * 0.5) + 0.5; //sign returns -1.0 or 1.0. Tranformed to return 0.0 or 1.0.
 
