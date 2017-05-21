@@ -61,6 +61,11 @@ public class AndroidButtonControl : MonoBehaviour {
     private bool m_bShutDown = false;
 
     public GameObject m_particlesObject;
+    public GameObject m_particlesObject2;
+    public GameObject m_particlesObject3;
+    public GameObject m_particlesObject4;
+    public GameObject m_particlesObject5;
+    public GameObject m_particlesObject6;
 
     //quick access to reference
     private static AndroidButtonControl s_instance = null;
@@ -141,6 +146,16 @@ public class AndroidButtonControl : MonoBehaviour {
             //GameObject particlesObject = GameObject.FindWithTag("PointCloud");
             PointCloud script = m_particlesObject.GetComponent<PointCloud>();
             script.changePointsCount(-10000);
+            PointCloud script2 = m_particlesObject2.GetComponent<PointCloud>();
+            script2.changePointsCount(-10000);
+            PointCloud script3 = m_particlesObject3.GetComponent<PointCloud>();
+            script3.changePointsCount(-10000);
+            PointCloud script4 = m_particlesObject4.GetComponent<PointCloud>();
+            script4.changePointsCount(-10000);
+            PointCloud script5 = m_particlesObject5.GetComponent<PointCloud>();
+            script5.changePointsCount(-10000);
+            PointCloud script6 = m_particlesObject6.GetComponent<PointCloud>();
+            script6.changePointsCount(-10000);
             Debug.Log(script.getPointCount());
             
             foreach (VolumeListener listener in m_vVolumeListenerGO)
@@ -166,6 +181,16 @@ public class AndroidButtonControl : MonoBehaviour {
             //GameObject particlesObject = GameObject.FindWithTag("PointCloud");
             PointCloud script = m_particlesObject.GetComponent<PointCloud>();
             script.changePointsCount(10000);
+            PointCloud script2 = m_particlesObject2.GetComponent<PointCloud>();
+            script2.changePointsCount(10000);
+            PointCloud script3 = m_particlesObject3.GetComponent<PointCloud>();
+            script3.changePointsCount(10000);
+            PointCloud script4 = m_particlesObject4.GetComponent<PointCloud>();
+            script4.changePointsCount(10000);
+            PointCloud script5 = m_particlesObject5.GetComponent<PointCloud>();
+            script5.changePointsCount(10000);
+            PointCloud script6 = m_particlesObject6.GetComponent<PointCloud>();
+            script6.changePointsCount(10000);
             Debug.Log(script.getPointCount());
 
             foreach (VolumeListener listener in m_vVolumeListenerGO)
