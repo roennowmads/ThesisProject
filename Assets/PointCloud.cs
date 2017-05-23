@@ -291,6 +291,10 @@ public class PointCloud : MonoBehaviour {
 
     private void OnRenderObject()
     {
+
+        Vector4 trans = transform.position;
+        pointRenderer.material.SetVector("trans", trans);
+
         pointRenderer.material.SetPass(0);
         pointRenderer.material.SetMatrix("model", transform.localToWorldMatrix);
         //Graphics.DrawProcedural(MeshTopology.Points, 1, m_pointsCount);
