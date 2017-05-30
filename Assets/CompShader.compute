@@ -14,10 +14,10 @@ RWStructuredBuffer<float4> _Points;
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
 	// TODO: insert actual code here!
-	int idx = id.x + id.y * 1024; //thread_group_size_x * 32;
+	int idx = id.x + id.y * 512; //thread_group_size_x * 32;
 	//float spacing = 1.0;
 	
-	float2 pos1 = float2(-60.0, 0.0);
+	float2 pos1 = float2(-40.0, 0.0);
 	float2 pos2 = float2(-10.0, 20.0);
 	float2 pos3 = float2(20.0, -20.0);
 	float2 pos4 = float2(40.0, 0.0);
@@ -30,10 +30,10 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 	float distance3 = distance(pos3, position);
 	float distance4 = distance(pos4, position);
 
-	float2 deltaDir1 = -normalize(pos1 - position) / pow(distance1, 1.5);
-	float2 deltaDir2 = -normalize(pos2 - position) / pow(distance2, 1.5);
-	float2 deltaDir3 = normalize(pos3 - position) / pow(distance3, 1.5);
-	float2 deltaDir4 = normalize(pos4 - position) / pow(distance4, 1.5);
+	float2 deltaDir1 = float2(0.0, 0.0);//-normalize(pos1 - position) / pow(distance1, 1.5);
+	float2 deltaDir2 = float2(0.0, 0.0);//-normalize(pos2 - position) / pow(distance2, 1.5);
+	float2 deltaDir3 = normalize(pos3 - position) / pow(distance3, 1.9);
+	float2 deltaDir4 = normalize(pos4 - position) / pow(distance4, 1.9);
 
 	float damping = 0.9995;
 	float2 velocityNew = velocity + (deltaDir1 + deltaDir2 + deltaDir3 + deltaDir4);
@@ -42,7 +42,12 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 	float len = length(velocityNew);
 	if (len > 1.0) {
 		float2 dir = normalize(velocityNew);
-		velocityNew = dir*1.0;
+		velocityNew = velocityNew*0.5;//dir*1.5;
+	}
+
+	if (len > 3.0) {
+		float2 dir = normalize(velocityNew);
+		velocityNew = dir*3.0;
 	}
 
 	_Points[idx].xy = position + velocityNew*1.0;

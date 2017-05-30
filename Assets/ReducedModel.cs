@@ -25,6 +25,9 @@ public class ReducedModel : MonoBehaviour {
     private int m_textureSwitchFrameNumber = -1;
 
     private ComputeBuffer computebuffer;
+    private int m_dimensionWidth;
+    private int m_dimensionHeight;
+
 
     public ComputeShader computeShader;
     private int _kernel;
@@ -211,16 +214,16 @@ public class ReducedModel : MonoBehaviour {
 
         _kernel = computeShader.FindKernel("CSMain");
 
-        int dimensionWidth = 1024;
-        int dimensionHeight = 1024;
-        Vector4[] points = new Vector4[dimensionWidth*dimensionHeight];
+        m_dimensionWidth = 512;
+        m_dimensionHeight = 512;
+        Vector4[] points = new Vector4[m_dimensionWidth * m_dimensionHeight];
         Vector4 startingPosition = new Vector4(0.0f, 0.0f, 0.0f, 0.0f);
         
         float deltaPos = 0.005f;
 
-        for (int i = 0; i < dimensionWidth; i++) {
-            for (int j = 0; j < dimensionHeight; j++) {
-                int index = i + j * dimensionWidth;
+        for (int i = 0; i < m_dimensionWidth; i++) {
+            for (int j = 0; j < m_dimensionHeight; j++) {
+                int index = i + j * m_dimensionWidth;
                 points[index] = new Vector4();
                 //float randomVal = UnityEngine.Random.Range(0.0f, 1.0f);
                 points[index].x = i * deltaPos/* + randomVal*10.0f*/; //- dimensionWidth*deltaPos + dimensionWidth*deltaPos*0.5f + randomVal - 0.5f + startingPosition.x;
@@ -325,6 +328,6 @@ public class ReducedModel : MonoBehaviour {
         //computeShader.SetBuffer(_kernel, "offsets", offsetBuffer);
         //computeShader.SetBuffer(_kernel, "output", outputBuffer);
  
-        computeShader.Dispatch(_kernel, 1024 * 1024, 1, 1);
+        computeShader.Dispatch(_kernel, m_dimensionWidth, m_dimensionHeight, 1);
     }
 }
