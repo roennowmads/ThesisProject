@@ -26,6 +26,10 @@ public class PointCloud : MonoBehaviour {
 
     private ComputeBuffer computebuffer;
 
+    private float m_PointCountUpdateFrequency = 2.0f;
+    private float m_currentTime;
+    private int m_maxPointCount;
+
     public int getPointCount () {
         return m_pointsCount;
     }
@@ -265,6 +269,8 @@ public class PointCloud : MonoBehaviour {
         //CompressionHelper.CompressMemToFile(texture.GetRawTextureData(), "fireAtriumTex.lzf");       
 
         Debug.Log("Number of points: " + m_pointsCount);
+        m_currentTime = 0.0f;
+        m_maxPointCount = getPointCount();
     }
 	
 	// Update is called once per frame
@@ -287,6 +293,17 @@ public class PointCloud : MonoBehaviour {
         //int a = pointRenderer.material.GetInt("_FrameTime");
 
         //Debug.Log(a);
+
+        m_currentTime += Time.deltaTime;
+        if (m_currentTime >= m_PointCountUpdateFrequency) {
+            changePointsCount(-10000);
+            if (getPointCount() < 0) {
+                setPointCount(m_maxPointCount);
+            }
+            m_currentTime = 0.0f;
+        }
+
+
     }
 
     private void OnRenderObject()

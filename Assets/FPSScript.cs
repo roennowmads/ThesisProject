@@ -5,6 +5,8 @@ using UnityEngine.UI;
 
 public class FPSScript : MonoBehaviour {
 
+    public GameObject m_particlesObject;
+
     public float m_FPSUpdateFrequency = 1.0f;
     public Text uGUIText;
     private int m_currentFPS;
@@ -26,6 +28,10 @@ public class FPSScript : MonoBehaviour {
 		m_currentTime += Time.deltaTime;
         ++m_framesSinceUpdate;
         m_accumulation += Time.timeScale / Time.deltaTime;
+
+        PointCloud script = m_particlesObject.GetComponent<PointCloud>();
+        
+
         if (m_currentTime >= m_FPSUpdateFrequency)
         {
             m_currentFPS = (int)(m_accumulation / m_framesSinceUpdate);
@@ -33,7 +39,7 @@ public class FPSScript : MonoBehaviour {
             m_framesSinceUpdate = 0;
             m_accumulation = 0.0f;
             Debug.Log("FPS: " + m_currentFPS);
-            uGUIText.text = "" + m_currentFPS;
+            uGUIText.text = "" + m_currentFPS + "\n" + script.getPointCount();
         }
 	}
 }
