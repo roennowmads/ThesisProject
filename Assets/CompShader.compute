@@ -3,7 +3,8 @@
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
-RWStructuredBuffer<float4> _Points;
+RWStructuredBuffer<float3> _Positions;
+RWStructuredBuffer<float3> _Velocities;
 
 #define thread_group_size_x 1
 #define thread_group_size_y 1
@@ -14,46 +15,52 @@ RWStructuredBuffer<float4> _Points;
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
 	// TODO: insert actual code here!
-	int idx = id.x + id.y * 512; //thread_group_size_x * 32;
+	//int idx = id.x + id.y * 512; //thread_group_size_x * 32;
+	int idx = id.x + 64 * (id.y + 32 * id.z);
+
 	//float spacing = 1.0;
 	
-	float2 pos1 = float2(-40.0, 0.0);
-	float2 pos2 = float2(-10.0, 20.0);
-	float2 pos3 = float2(20.0, -20.0);
-	float2 pos4 = float2(40.0, 0.0);
+	float3 pos1 = float3(5.0, 0.0, 3.75);
+	float3 pos2 = float3(5.0, 5.0, 7.5);
+	float3 pos3 = float3(5.0, -5.0, 0.0);
+	float3 pos4 = float3(5.0, 5.0, 0.0);
+	float3 pos5 = float3(0.0, -5.0, 7.5);
 
-	float2 position = _Points[idx].xy;
-	float2 velocity = _Points[idx].zw;
+	float3 position = _Positions[idx].xyz;
+	float3 velocity = _Velocities[idx].xyz;
 
 	float distance1 = distance(pos1, position);
 	float distance2 = distance(pos2, position);
 	float distance3 = distance(pos3, position);
 	float distance4 = distance(pos4, position);
+	float distance5 = distance(pos5, position);
 
-	float2 deltaDir1 = float2(0.0, 0.0);//-normalize(pos1 - position) / pow(distance1, 1.5);
-	float2 deltaDir2 = float2(0.0, 0.0);//-normalize(pos2 - position) / pow(distance2, 1.5);
-	float2 deltaDir3 = normalize(pos3 - position) / pow(distance3, 1.9);
-	float2 deltaDir4 = normalize(pos4 - position) / pow(distance4, 1.9);
-
+	float3 deltaDir1 = -normalize(pos1 - position) / exp(distance1)*100.0;//pow(distance1, 1.7);
+	float3 deltaDir2 = normalize(pos2 - position) / pow(distance2, 1.9);
+	float3 deltaDir3 = normalize(pos3 - position) / pow(distance3, 1.9);
+	float3 deltaDir4 = normalize(pos4 - position) / pow(distance4, 1.9);
+	float3 deltaDir5 = normalize(pos5 - position) / pow(distance5, 1.9);
+	
 	float damping = 0.9995;
-	float2 velocityNew = velocity + (deltaDir1 + deltaDir2 + deltaDir3 + deltaDir4);
+	float3 velocityNew = velocity + (deltaDir1 + deltaDir2 + deltaDir3 + deltaDir4 + deltaDir5);
 	velocityNew *= damping;
 
 	float len = length(velocityNew);
 	if (len > 1.0) {
-		float2 dir = normalize(velocityNew);
-		velocityNew = velocityNew*0.5;//dir*1.5;
+		float3 dir = normalize(velocityNew);
+		if (len > 2.0) {
+			float3 dir = normalize(velocityNew); 
+			velocityNew = dir*2.0;
+		}
+		else {
+			velocityNew = velocityNew*0.5;// + float3(0.01, 0.01, 0.01);
+		}
 	}
 
-	if (len > 3.0) {
-		float2 dir = normalize(velocityNew);
-		velocityNew = dir*3.0;
-	}
-
-	_Points[idx].xy = position + velocityNew*1.0;
-	_Points[idx].zw = velocityNew;
+	_Positions[idx].xyz = position + velocityNew*1.0;
+	_Velocities[idx].xyz = velocityNew;
 
 	//float3 pos = float3(id.x*spacing, id.y*spacing, id.z*spacing);
 
-	//_Points[idx] = _Points[idx] + 0.01;
+	//_Positions[idx] = _Positions[idx] + 0.001;
 }
