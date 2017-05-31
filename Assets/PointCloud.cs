@@ -26,7 +26,7 @@ public class PointCloud : MonoBehaviour {
 
     private ComputeBuffer computebuffer;
 
-    private float m_PointCountUpdateFrequency = 2.0f;
+    private float m_PointCountUpdateFrequency = 4.0f;
     private float m_currentTime;
     private int m_maxPointCount;
 
@@ -296,7 +296,7 @@ public class PointCloud : MonoBehaviour {
 
         m_currentTime += Time.deltaTime;
         if (m_currentTime >= m_PointCountUpdateFrequency) {
-            changePointsCount(-10000);
+            changePointsCount(-1000);
             if (getPointCount() < 0) {
                 setPointCount(m_maxPointCount);
             }

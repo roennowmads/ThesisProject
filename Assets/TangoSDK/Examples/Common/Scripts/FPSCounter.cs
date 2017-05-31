@@ -46,6 +46,8 @@ public class FPSCounter : MonoBehaviour
     private float m_currentTime;
     private TangoApplication m_tangoApplication;
 
+    public GameObject m_particlesObject;
+
     /// <summary>
     /// Use this for initialization.
     /// </summary>
@@ -63,6 +65,8 @@ public class FPSCounter : MonoBehaviour
     /// </summary>
     private void Update()
     {
+        PointCloud script = m_particlesObject.GetComponent<PointCloud>();
+
         m_currentTime += Time.deltaTime;
         ++m_framesSinceUpdate;
         m_accumulation += Time.timeScale / Time.deltaTime;
@@ -72,7 +76,7 @@ public class FPSCounter : MonoBehaviour
             m_currentTime = 0.0f;
             m_framesSinceUpdate = 0;
             m_accumulation = 0.0f;
-            m_fpsText = "FPS: " + m_currentFPS;
+            m_fpsText = "FPS: " + m_currentFPS + "\n" + script.getPointCount()*18;
         }
     }
 

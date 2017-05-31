@@ -7,7 +7,7 @@ public class FPSScript : MonoBehaviour {
 
     public GameObject m_particlesObject;
 
-    public float m_FPSUpdateFrequency = 1.0f;
+    public float m_FPSUpdateFrequency = 3.0f;
     public Text uGUIText;
     private int m_currentFPS;
     private int m_framesSinceUpdate;
@@ -39,7 +39,7 @@ public class FPSScript : MonoBehaviour {
             m_framesSinceUpdate = 0;
             m_accumulation = 0.0f;
             Debug.Log("FPS: " + m_currentFPS);
-            uGUIText.text = "" + m_currentFPS + "\n" + script.getPointCount();
+            uGUIText.text = "" + m_currentFPS + "\n" + script.getPointCount() * 6;
         }
 	}
 }
