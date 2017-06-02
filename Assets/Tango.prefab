@@ -63064,6 +63064,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a51157d22e0288d4da1bd381ee3be6ae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_tangoApplication: {fileID: 0}
+  m_tangoServiceVersion: 
+  m_findPlaneWaitingForDepth: 0
   m_pointCloud: {fileID: 114435679767268334}
   m_prefabMarker: {fileID: 1481781611114812, guid: cd75c4e3034bfea4899978f229b80b1a,
     type: 2}

@@ -207,6 +207,8 @@ public class PointCloud : MonoBehaviour {
     }
 
     void Start () {
+        m_textureSideSizePower = 10;
+        m_lastFrameIndex = 1;
         m_textureSideSize = 1 << m_textureSideSizePower;
         m_textureSize = m_textureSideSize * m_textureSideSize;
 
@@ -287,21 +289,35 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.material.SetInt("_FrameTime", t);
         float aspect = Camera.main.GetComponent<Camera>().aspect;
         pointRenderer.material.SetFloat("aspect", aspect);
-
+        
         //Debug.Log("Support instancing: " + SystemInfo.supportsInstancing);
 
         //int a = pointRenderer.material.GetInt("_FrameTime");
 
         //Debug.Log(a);
 
-        m_currentTime += Time.deltaTime;
-        if (m_currentTime >= m_PointCountUpdateFrequency) {
+        if (Input.GetKeyUp(KeyCode.DownArrow)) { 
             changePointsCount(-1000);
             if (getPointCount() < 0) {
                 setPointCount(m_maxPointCount);
             }
-            m_currentTime = 0.0f;
         }
+
+        if (Input.GetKeyUp(KeyCode.UpArrow)) {
+            changePointsCount(1000);
+            if (getPointCount() > m_maxPointCount) {
+                setPointCount(0);
+            }
+        }
+
+        /*m_currentTime += Time.deltaTime;
+        if (m_currentTime >= m_PointCountUpdateFrequency) {
+            changePointsCount(-3000);
+            if (getPointCount() < 0) {
+                setPointCount(m_maxPointCount);
+            }
+            m_currentTime = 0.0f;
+        }*/
 
 
     }
