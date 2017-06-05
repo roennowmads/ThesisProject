@@ -16,33 +16,40 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 {
 	// TODO: insert actual code here!
 	//int idx = id.x + id.y * 512; //thread_group_size_x * 32;
-	int idx = id.x + 64 * (id.y + 32 * id.z);
+	int idx = id.x + 512 * (id.y + 1 * id.z);
 
 	//float spacing = 1.0;
 	
-	float3 pos1 = float3(5.0, 0.0, 3.75);
-	float3 pos2 = float3(5.0, 5.0, 7.5);
-	float3 pos3 = float3(5.0, -5.0, 0.0);
-	float3 pos4 = float3(5.0, 5.0, 0.0);
-	float3 pos5 = float3(0.0, -5.0, 7.5);
+	float3 posSrc = float3(30.0, 0.0, 0.0); //source
+	float3 posSnk = float3(-50.0, 0.0, 0.0); //sink
+
+	float3 pos1 = float3(-5.0, -5.0, 0.0);
+	float3 pos2 = float3(-10.0, 5.0, 0.0);
+	float3 pos3 = float3(-15.0, -5.0, 0.0);
+	float3 pos4 = float3(-20.0, 5.0, 0.0);
 
 	float3 position = _Positions[idx].xyz;
 	float3 velocity = _Velocities[idx].xyz;
 
+	float distanceSrc = distance(posSrc, position);
+	float distanceSnk = distance(posSnk, position);
+	//float distance3 = distance(pos3, position);
 	float distance1 = distance(pos1, position);
 	float distance2 = distance(pos2, position);
 	float distance3 = distance(pos3, position);
 	float distance4 = distance(pos4, position);
-	float distance5 = distance(pos5, position);
 
-	float3 deltaDir1 = -normalize(pos1 - position) / exp(distance1)*100.0;//pow(distance1, 1.7);
-	float3 deltaDir2 = normalize(pos2 - position) / pow(distance2, 1.9);
-	float3 deltaDir3 = normalize(pos3 - position) / pow(distance3, 1.9);
-	float3 deltaDir4 = normalize(pos4 - position) / pow(distance4, 1.9);
-	float3 deltaDir5 = normalize(pos5 - position) / pow(distance5, 1.9);
+	float3 deltaDirSrc = -normalize(posSrc - position) / exp(distanceSrc)*1.0;//pow(distance1, 1.7);
+	float3 deltaDirSnk = normalize(posSnk - position) /*/ exp(distance2)*1.0*/;
+
+	float3 deltaDir1 = normalize(pos1 - position) / pow(distance1, 2.2);
+	float3 deltaDir2 = normalize(pos2 - position) / pow(distance2, 2.2);
+	float3 deltaDir3 = normalize(pos3 - position) / pow(distance3, 2.2);
+	float3 deltaDir4 = normalize(pos4 - position) / pow(distance4, 2.2);
+	//float3 deltaDir5 = normalize(pos5 - position) / pow(distance5, 2.9);
 	
 	float damping = 0.9995;
-	float3 velocityNew = velocity + (deltaDir1 + deltaDir2 + deltaDir3 + deltaDir4 + deltaDir5);
+	float3 velocityNew = velocity + (deltaDirSrc + deltaDirSnk*0.001 + deltaDir1*0.1 + deltaDir2*0.1 + deltaDir3*0.1 + deltaDir4*0.1)*0.1;
 	velocityNew *= damping;
 
 	float len = length(velocityNew);
@@ -57,7 +64,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 		}
 	}
 
-	_Positions[idx].xyz = position + velocityNew*1.0;
+	_Positions[idx].xyz = position + velocityNew*0.1;
 	_Velocities[idx].xyz = velocityNew;
 
 	//float3 pos = float3(id.x*spacing, id.y*spacing, id.z*spacing);

@@ -48,7 +48,7 @@
 
 				uint quadId = v.id;
 				float4 particlePos = -float4(_Positions[quadId].xyz, 1.0);
-				particlePos.z += 20.0;
+				//particlePos.z += 20.0;
 
 				o.vertex = mul(model, particlePos);
 				o.vertex += trans;

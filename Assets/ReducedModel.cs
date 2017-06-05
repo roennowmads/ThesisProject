@@ -211,13 +211,13 @@ public class ReducedModel : MonoBehaviour {
         //m_textureSideSize = 1 << m_textureSideSizePower;
         //m_textureSize = m_textureSideSize * m_textureSideSize;
 
-        m_dimensionWidth = 64;
-        m_dimensionHeight = 64;
-        m_dimensionDepth = 32;
+        m_dimensionWidth = 512;
+        m_dimensionHeight = 512;
+        m_dimensionDepth = 1;
         Vector3[] points = new Vector3[m_dimensionWidth * m_dimensionHeight * m_dimensionDepth];
         Vector3 startingPosition = new Vector3(0.0f, 0.0f, 0.0f);
         
-        float deltaPos = 0.01f;
+        float deltaPos = 0.05f;
 
         for (int i = 0; i < m_dimensionWidth; i++) {
             for (int j = 0; j < m_dimensionHeight; j++) {
@@ -229,7 +229,8 @@ public class ReducedModel : MonoBehaviour {
                     points[index].x = i * deltaPos - m_dimensionWidth*deltaPos + m_dimensionWidth*deltaPos*0.5f /* + randomVal*10.0f*/; // + randomVal - 0.5f + startingPosition.x;
                     //randomVal = UnityEngine.Random.Range(0.0f, 1.0f);
                     points[index].y = j * deltaPos - m_dimensionHeight*deltaPos + m_dimensionHeight*deltaPos*0.5f/* + randomVal*10.0f*/; //- dimensionHeight*deltaPos + dimensionWidth*deltaPos*0.5f + randomVal - 0.5f + startingPosition.y;
-                    points[index].z = k * deltaPos - m_dimensionDepth*deltaPos + m_dimensionDepth*deltaPos*0.5f/* + randomVal*10.0f*/; //- dimensionHeight*deltaPos + dimensionWidth*deltaPos*0.5f + randomVal - 0.5f + startingPosition.y;
+                    //points[index].z = k * deltaPos - m_dimensionDepth*deltaPos + m_dimensionDepth*deltaPos*0.5f/* + randomVal*10.0f*/; //- dimensionHeight*deltaPos + dimensionWidth*deltaPos*0.5f + randomVal - 0.5f + startingPosition.y;
+                    
                 }
             }
         }
