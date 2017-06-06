@@ -225,10 +225,10 @@ public class ReducedModel : MonoBehaviour {
                     int index = i + m_dimensionWidth * (j + m_dimensionDepth * k);
                     //int index = i + j * m_dimensionWidth;
                     points[index] = new Vector3();
-                    //float randomVal = UnityEngine.Random.Range(0.0f, 1.0f);
-                    points[index].x = i * deltaPos - m_dimensionWidth*deltaPos + m_dimensionWidth*deltaPos*0.5f /* + randomVal*10.0f*/; // + randomVal - 0.5f + startingPosition.x;
-                    //randomVal = UnityEngine.Random.Range(0.0f, 1.0f);
-                    points[index].y = j * deltaPos - m_dimensionHeight*deltaPos + m_dimensionHeight*deltaPos*0.5f/* + randomVal*10.0f*/; //- dimensionHeight*deltaPos + dimensionWidth*deltaPos*0.5f + randomVal - 0.5f + startingPosition.y;
+                    float randomVal = UnityEngine.Random.Range(0.0f, 1.0f);
+                    points[index].x = i * deltaPos - m_dimensionWidth*deltaPos + m_dimensionWidth*deltaPos*0.5f + randomVal*1.0f; // + randomVal - 0.5f + startingPosition.x;
+                    randomVal = UnityEngine.Random.Range(0.0f, 1.0f);
+                    points[index].y = j * deltaPos - m_dimensionHeight*deltaPos + m_dimensionHeight*deltaPos*0.5f + randomVal*1.0f; //- dimensionHeight*deltaPos + dimensionWidth*deltaPos*0.5f + randomVal - 0.5f + startingPosition.y;
                     //points[index].z = k * deltaPos - m_dimensionDepth*deltaPos + m_dimensionDepth*deltaPos*0.5f/* + randomVal*10.0f*/; //- dimensionHeight*deltaPos + dimensionWidth*deltaPos*0.5f + randomVal - 0.5f + startingPosition.y;
                     
                 }
@@ -320,11 +320,12 @@ public class ReducedModel : MonoBehaviour {
         //int a = pointRenderer.material.GetInt("_FrameTime");
 
         //Debug.Log(a);
+        Dispatch();
     }
 
     private void OnRenderObject()
     {
-        Dispatch();
+        
 
         pointRenderer.material.SetPass(0);
         pointRenderer.material.SetMatrix("model", transform.localToWorldMatrix);
