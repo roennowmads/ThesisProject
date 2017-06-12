@@ -269,6 +269,8 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.material.SetInt("_FrameTime", t);
         float aspect = Camera.main.GetComponent<Camera>().aspect;
         pointRenderer.material.SetFloat("aspect", aspect);
+        Vector4 trans = transform.position;
+        pointRenderer.material.SetVector("trans", trans);
 
         //Debug.Log("Support instancing: " + SystemInfo.supportsInstancing);
 
