@@ -158,7 +158,9 @@
 					return;
 				}*/
 
-				o.color = tex2Dlod(_ColorTex, half4(pow(value, .0625), 0, 0, 0)).rgb /** modifier*/;
+				//o.color = tex2Dlod(_ColorTex, half4(pow((value*1.0), .0625), 0, 0, 0)).rgb /** modifier*/;
+				//o.color = tex2Dlod(_ColorTex, half4(pow((value*5.0), .0625), 0, 0, 0)).rgb /** modifier*/;
+				o.color = tex2Dlod(_ColorTex, half4(pow((value*5.0), .0625)*0.95, 0, 0, 0)).rgb /** modifier*/;
 				//o.color = float3(value, value, value);
 				//o.color = float3(0.0, 0.0, 1.0);
 				

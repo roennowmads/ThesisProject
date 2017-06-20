@@ -82,7 +82,7 @@ public class PointCloud : MonoBehaviour {
         byte[] vals = new byte[m_textureSize];
 
         int index = 0;
-        for (int i = k + 1; i < m_lastFrameIndex; i++) {
+        for (int i = k - 1; i < m_lastFrameIndex; i++) {
 
             TextAsset ta = Resources.Load(m_valueDataPath + "/frame" + i + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
             byte[] bytes = ta.bytes;
