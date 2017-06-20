@@ -158,7 +158,7 @@
 					return;
 				}*/
 
-				o.color = tex2Dlod(_ColorTex, half4(value, 0, 0, 0)).rgb /** modifier*/;
+				o.color = tex2Dlod(_ColorTex, half4(pow(value, .0625), 0, 0, 0)).rgb /** modifier*/;
 				//o.color = float3(value, value, value);
 				//o.color = float3(0.0, 0.0, 1.0);
 				
@@ -172,7 +172,7 @@
 				uint quad_vertexID = v.id % 6;
 
 				//Translating the vertices in a quad shape:
-				half size = 0.01 * exp(1.0 - value) /** modifier*/;
+				half size = 0.04 * exp(1.0 - value) /** modifier*/;
 				half2 quadSize = half2(size, size * aspect);
 				half2 deltaSize = quadCoords[quad_vertexID] * quadSize;
 				o.vertex.xy += deltaSize;
@@ -191,7 +191,7 @@
 				fragOutput o;
 				
 				fixed albedo = tex2D(_AlbedoTex, i.texCoord).a;
-				o.color = fixed4(i.color, albedo);
+				o.color = fixed4(i.color, albedo*0.125);
 				return o;
 			}
 			ENDCG
