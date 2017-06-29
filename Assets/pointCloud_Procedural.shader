@@ -10,7 +10,6 @@
 		Tags{"Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent"}
 		//Tags{"RenderType" = "Opaque"}
 		Blend SrcAlpha OneMinusSrcAlpha
-		AlphaTest Greater .01
 		//Cull Off
 		ZWrite Off 
 		//LOD 200
@@ -131,6 +130,10 @@
 
 				uint quadId = v.id / 6;
 
+				if (quadId % 2 != 0) {
+					return;
+				}
+
 				if (offset <= maxTextureOffset) {
 					uint instanceId = quadId + offset;
 					uint3 texelCoords = uint3(instanceId % texSize, instanceId >> _Magnitude, 0);
@@ -143,9 +146,22 @@
 				}
 				//float value = tex2Dlod(_MainTex, texCoords).a;
 
-				if (value < 0.01) {
+				//good for wind data (169 frames): 
+				if (value < 0.54) {
 					return;
 				}
+
+				/*if (value > 0.01 && value < 0.2 || value > 0.3 && value < 0.33) {
+					
+				}
+				else {
+					return;
+				}*/
+
+				//good for fireball:
+				/*if (value < 0.05) {
+					return;
+				}*/
 				
 				//float modifier = (sign(value - 0.01) * 0.5) + 0.5; //sign returns -1.0 or 1.0. Tranformed to return 0.0 or 1.0.
 
@@ -158,9 +174,11 @@
 					return;
 				}*/
 
-				//o.color = tex2Dlod(_ColorTex, half4(pow((value*1.0), .0625), 0, 0, 0)).rgb /** modifier*/;
+				//good for fireball:
+				o.color = tex2Dlod(_ColorTex, half4(value*2.0, 0, 0, 0)).rgb /** modifier*/;
+				//o.color = tex2Dlod(_ColorTex, half4(pow((value*5.0), .03125), 0, 0, 0)).rgb /** modifier*/;
 				//o.color = tex2Dlod(_ColorTex, half4(pow((value*5.0), .0625), 0, 0, 0)).rgb /** modifier*/;
-				o.color = tex2Dlod(_ColorTex, half4(pow((value*5.0), .0625)*0.95, 0, 0, 0)).rgb /** modifier*/;
+				//o.color = tex2Dlod(_ColorTex, half4(pow((value*5.0), .0625)*0.95, 0, 0, 0)).rgb /** modifier*/;
 				//o.color = float3(value, value, value);
 				//o.color = float3(0.0, 0.0, 1.0);
 				
@@ -174,8 +192,10 @@
 				uint quad_vertexID = v.id % 6;
 
 				//Translating the vertices in a quad shape:
-				half size = 0.04 * exp(1.0 - value) /** modifier*/;
-				half2 quadSize = half2(size, size * aspect);
+				//half size = 0.4 * exp(1.0 - value) /** modifier*/;
+				half size = 0.2 * exp(value) /** modifier*/;
+				//half size = 0.15 * exp(value) /** modifier*/;
+				half2 quadSize = half2(size, size * aspect); 
 				half2 deltaSize = quadCoords[quad_vertexID] * quadSize;
 				o.vertex.xy += deltaSize;
 
@@ -193,7 +213,10 @@
 				fragOutput o;
 				
 				fixed albedo = tex2D(_AlbedoTex, i.texCoord).a;
-				o.color = fixed4(i.color, albedo*0.125);
+				o.color = fixed4(/*i.color*/fixed3(0.5,0.1,0.1), albedo*0.0525);
+
+				//good for fireball:
+				//o.color = fixed4(i.color, albedo*0.125);
 				return o;
 			}
 			ENDCG
