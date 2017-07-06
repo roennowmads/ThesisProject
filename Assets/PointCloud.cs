@@ -25,6 +25,8 @@ public class PointCloud : MonoBehaviour {
     private int m_textureSwitchFrameNumber = -1;
 
     private ComputeBuffer computebuffer;
+    private float m_currentTime = 0;
+    private int m_frameIndex = 0;
 
     Texture2D createColorLookupTexture() {
         int numberOfValues = m_lookupTextureSize;
@@ -265,12 +267,22 @@ public class PointCloud : MonoBehaviour {
 
         //Debug.Log(count);
 
+        /*int t = 0;
+
+        m_currentTime += Time.deltaTime;
+        if (m_currentTime > m_frameSpeed) {
+            m_frameIndex = m_frameIndex + 1 % m_lastFrameIndex;
+            m_currentTime = 0;
+        }*/
+
+
         //Debug.Log(t);
         pointRenderer.material.SetInt("_FrameTime", t);
         float aspect = Camera.main.GetComponent<Camera>().aspect;
         pointRenderer.material.SetFloat("aspect", aspect);
         Vector4 trans = transform.position;
         pointRenderer.material.SetVector("trans", trans);
+        
 
         //Debug.Log("Support instancing: " + SystemInfo.supportsInstancing);
 
