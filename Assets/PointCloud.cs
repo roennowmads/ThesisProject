@@ -24,7 +24,10 @@ public class PointCloud : MonoBehaviour {
 
     private int m_textureSwitchFrameNumber = -1;
 
-    private ComputeBuffer computebuffer;
+    private ComputeBuffer m_computeBuffer;
+
+    private List<ComputeBuffer> m_indexComputeBuffers;
+
     private float m_currentTime = 0;
     private int m_frameIndex = 0;
 
@@ -102,6 +105,31 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.material.SetTexture("_MainTex2", tex2);
         yield return 0;
     }
+
+    void readIndicesAndValues(List<ComputeBuffer> computeBuffers)
+    {
+        //byte[] vals = new byte[m_textureSize];
+        for (int k = 0; k < m_lastFrameIndex; k++)
+        {
+            //TextAsset ta = Resources.Load("AtriumData/binaryDataFull/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
+            TextAsset ta = Resources.Load(m_valueDataPath + "/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
+            byte[] bytes = ta.bytes;
+
+            uint i = BitConverter.ToUInt32(bytes, 0);
+            uint o = i >> 8;
+            uint v = i & 0xFF;
+
+            ComputeBuffer indexComputeBuffer = new ComputeBuffer(bytes.Length / 4, Marshal.SizeOf(typeof(int)), ComputeBufferType.Raw);
+
+            indexComputeBuffer.SetData(bytes);
+
+            computeBuffers.Add(indexComputeBuffer);
+
+            //int frameSize = bytes.Length;
+            //Buffer.BlockCopy(bytes, 0, vals, k * frameSize, frameSize);
+        }
+        
+    } 
 
     void readPointsFile1Value(Texture2D tex, Texture2D tex2) {
         //CompressionHelper.CompressFile(path + "fireAtrium0." + fileIndex + ".bytes", "fireAtrium0." + fileIndex +".lzf");
@@ -202,33 +230,41 @@ public class PointCloud : MonoBehaviour {
 
          //Set up textures:
         Texture2D colorTexture = createColorLookupTexture();
-        
+
         //We don't need more precision than the resolution of the colorTexture. 10 bits is sufficient for 1024 different color values.
         //That means we can pack 3 10bit integer values into a pixel 
         //Texture2D texture = new Texture2D(m_textureSize, m_textureSize, TextureFormat.RFloat, false, false);
-        Texture2D texture = new Texture2D(m_textureSideSize, m_textureSideSize, TextureFormat.Alpha8, false, false);
+
+
+
+        /*Texture2D texture = new Texture2D(m_textureSideSize, m_textureSideSize, TextureFormat.RGBA32, false, false);
         texture.filterMode = FilterMode.Point;
         texture.wrapMode = TextureWrapMode.Repeat;
 
-        Texture2D texture2 = new Texture2D(m_textureSideSize, m_textureSideSize, TextureFormat.Alpha8, false, false);
+        Texture2D texture2 = new Texture2D(m_textureSideSize, m_textureSideSize, TextureFormat.RGBA32, false, false);
         texture2.filterMode = FilterMode.Point;
-        texture2.wrapMode = TextureWrapMode.Repeat;
+        texture2.wrapMode = TextureWrapMode.Repeat;*/
 
         /*bool supportsTextureFormat = SystemInfo.SupportsTextureFormat(TextureFormat.R16); 
         if (supportsTextureFormat) {
             Debug.Log("");
         }*/
 
-        texture.anisoLevel = 1;
-        readPointsFile1Value(texture, texture2);
+        m_indexComputeBuffers = new List<ComputeBuffer>();
+
+        readIndicesAndValues(m_indexComputeBuffers);
+
+        //texture.anisoLevel = 1;
+        //readPointsFile1Value(texture, texture2);
         pointRenderer = GetComponent<Renderer>();
-        pointRenderer.material.mainTexture = texture;
+        //pointRenderer.material.mainTexture = texture;
         //pointRenderer.material.SetTexture("_MainTex2", texture2);
         pointRenderer.material.SetTexture("_ColorTex", colorTexture);
 
-        computebuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.GPUMemory);
-        computebuffer.SetData(points);
-        pointRenderer.material.SetBuffer ("_Points", computebuffer);
+        m_computeBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.GPUMemory);
+        m_computeBuffer.SetData(points);
+        pointRenderer.material.SetBuffer ("_Points", m_computeBuffer);
+        pointRenderer.material.SetBuffer("_IndicesValues", m_indexComputeBuffers[0]);
 
         pointRenderer.material.SetInt("_PointsCount", m_pointsCount);
         float aspect = Camera.main.GetComponent<Camera>().aspect;
@@ -261,7 +297,9 @@ public class PointCloud : MonoBehaviour {
 	void Update () {
         //Debug.Log(Time.fixedTime);
 
-        int t = ((int)(Time.fixedTime * m_frameSpeed)) % m_lastFrameIndex;
+        m_frameIndex = ((int)(Time.fixedTime * m_frameSpeed)) % m_lastFrameIndex;
+
+        pointRenderer.material.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
 
         //t = 29;
 
@@ -277,7 +315,7 @@ public class PointCloud : MonoBehaviour {
 
 
         //Debug.Log(t);
-        pointRenderer.material.SetInt("_FrameTime", t);
+        pointRenderer.material.SetInt("_FrameTime", m_frameIndex);
         float aspect = Camera.main.GetComponent<Camera>().aspect;
         pointRenderer.material.SetFloat("aspect", aspect);
         Vector4 trans = transform.position;
@@ -296,10 +334,16 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.material.SetPass(0);
         pointRenderer.material.SetMatrix("model", transform.localToWorldMatrix);
         //Graphics.DrawProcedural(MeshTopology.Points, 1, m_pointsCount);
-        Graphics.DrawProcedural(MeshTopology.Triangles, m_pointsCount*6);  // index buffer.
+        Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count*6*4);  // index buffer.
     }
 
     void OnDestroy() {
-        computebuffer.Release();
+        m_computeBuffer.Release();
+
+        foreach (ComputeBuffer cb in m_indexComputeBuffers)
+        {
+            cb.Release();
+        }
+       
     }
 }

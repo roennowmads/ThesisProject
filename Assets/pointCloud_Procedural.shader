@@ -37,6 +37,7 @@
 			
 
 			StructuredBuffer<float3> _Points;
+			ByteAddressBuffer _IndicesValues;
 
 			uniform matrix model;
 			uniform float4 trans;
@@ -124,9 +125,9 @@
 				
 				//float2 texCoords = float2(instanceId, instanceId >> _Magnitude) * inv_texSize;
 				//half value = _MainTex.SampleLevel(sampler_MainTex, texCoords, 0).a;
-				half value = 0.0;
-				uint offset = _FrameTime * _PointsCount;
-				int maxTextureOffset = _TextureSwitchFrameNumber * _PointsCount;
+				//half value = 0.0;
+				//uint offset = _FrameTime * _PointsCount;
+				//int maxTextureOffset = _TextureSwitchFrameNumber * _PointsCount;
 
 				uint quadId = v.id / 6;
 
@@ -134,22 +135,28 @@
 					return;
 				}*/
 
-				if (offset <= maxTextureOffset) {
+				uint value = _IndicesValues.Load(quadId);
+
+				uint index = value >> 8;
+				float colorValue = (value & 0xFF) / 255.0;
+
+
+				/*if (offset <= maxTextureOffset) {
 					uint instanceId = quadId + offset;
 					uint3 texelCoords = uint3(instanceId % texSize, instanceId >> _Magnitude, 0);
 					value = _MainTex.Load(texelCoords).a;
-				}
-				else {
+				}*/
+				/*else {
 					uint instanceId = quadId + (offset % maxTextureOffset);
 					uint3 texelCoords = uint3(instanceId % texSize, instanceId >> _Magnitude, 0);
 					value = _MainTex2.Load(texelCoords).a;
-				}
+				}*/
 				//float value = tex2Dlod(_MainTex, texCoords).a;
 
 				//good for wind data (169 frames): 
-				if (value < 0.01) {
-					return;
-				}
+				//if (colorValue < 0.01) {
+				//	return;
+				//}
 
 				/*if (value > 0.01 && value < 0.2 || value > 0.3 && value < 0.33) {
 					
@@ -177,7 +184,7 @@
 				//good for fireball:
 				//o.color = tex2Dlod(_ColorTex, half4(value*2.0, 0, 0, 0)).rgb /** modifier*/;
 				//o.color = tex2Dlod(_ColorTex, half4(pow((value*5.0), .03125), 0, 0, 0)).rgb /** modifier*/;
-			    o.color = tex2Dlod(_ColorTex, half4(pow((value*2.0), .0625), 0, 0, 0)).rgb /** modifier*/;
+			    o.color = tex2Dlod(_ColorTex, half4(pow((colorValue*2.0), .0625), 0, 0, 0)).rgb /** modifier*/;
 				//o.color = tex2Dlod(_ColorTex, half4(pow((value*5.0), .0625)*0.95, 0, 0, 0)).rgb /** modifier*/;
 				//o.color = float3(value, value, value);
 				//o.color = float3(0.0, 0.0, 1.0);
@@ -185,7 +192,7 @@
 				//_Points[v.iid] += float3(0.1, 0.1, 0.1);
 
 				//Correcting the translation:
-				o.vertex = mul(model, -_Points[quadId]);
+				o.vertex = mul(model, -_Points[index]);
 				o.vertex += trans;
 				o.vertex = UnityWorldToClipPos(o.vertex.xyz);
 				
@@ -193,7 +200,7 @@
 
 				//Translating the vertices in a quad shape:
 				//half size = 0.4 * exp(1.0 - value) /** modifier*/;
-				half size = 0.04 * exp(1.0 - value) /** modifier*/;
+				half size = 0.02 /** exp(1.0 - colorValue)*/ /** modifier*/;
 				//half size = 0.15 * exp(value) /** modifier*/;
 				half2 quadSize = half2(size, size * aspect); 
 				half2 deltaSize = quadCoords[quad_vertexID] * quadSize;
@@ -216,7 +223,7 @@
 				//o.color = fixed4(/*i.color*/fixed3(0.5,0.1,0.1), albedo*0.0525);
 
 				//good for fireball:
-				o.color = fixed4(i.color, albedo*0.125);
+				o.color = fixed4(i.color, albedo/**0.125*/);
 				return o;
 			}
 			ENDCG
