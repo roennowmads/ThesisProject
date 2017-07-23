@@ -29,15 +29,15 @@
 
 			//Texture2D<float> _MainTex;
 			//sampler2D _MainTex;
-			Texture2D<float4> _MainTex;
-			Texture2D<float4> _MainTex2;
+			//Texture2D<float4> _MainTex;
+			//Texture2D<float4> _MainTex2;
 
 			sampler2D _ColorTex;
 			sampler2D _AlbedoTex;
 			
 
 			StructuredBuffer<float3> _Points;
-			ByteAddressBuffer _IndicesValues;
+			StructuredBuffer<uint> _IndicesValues;
 
 			uniform matrix model;
 			uniform float4 trans;
@@ -62,22 +62,22 @@
 				//UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 
-			SamplerState sampler_MainTex
-			{
-				Filter = MIN_MAG_MIP_POINT;
-				AddressU = Wrap;
-				AddressV = Wrap;
-			};
+			//SamplerState sampler_MainTex
+			//{
+			//	Filter = MIN_MAG_MIP_POINT;
+			//	AddressU = Wrap;
+			//	AddressV = Wrap;
+			//};
 
-			SamplerState sampler_MainTex2
-			{
-				Filter = MIN_MAG_MIP_POINT;
-				AddressU = Wrap;
-				AddressV = Wrap;
-			};
+			//SamplerState sampler_MainTex2
+			//{
+			//	Filter = MIN_MAG_MIP_POINT;
+			//	AddressU = Wrap;
+			//	AddressV = Wrap;
+			//};
 
 			//static const uint magnitude = 14;
-			static const uint texSize = 1 << _Magnitude; // 1 << 12 == 4096 
+			//static const uint texSize = 1 << _Magnitude; // 1 << 12 == 4096 
 			//static const float inv_texSize = 1.0 / texSize;
 
 			static const half2 quadCoords[6] = {
@@ -113,21 +113,13 @@
 			{
 				UNITY_INITIALIZE_OUTPUT(v2f, o)
 				//UNITY_SETUP_INSTANCE_ID(v); 
-				//UNITY_TRANSFER_INSTANCE_ID(v, o);
-
-				
+				//UNITY_TRANSFER_INSTANCE_ID(v, o);				
 				
 				// http://http.developer.nvidia.com/GPUGems2/gpugems2_chapter33.html
 				// "It may also be possible to eliminate the frac instruction from Listing 33-2 by using the repeating-tiled addressing mode (such as GL_REPEAT)."
 				// This means I might not need the modulus operation, since it will do it automatically.
 
 				//Division by 4096 == instanceId << 12 
-				
-				//float2 texCoords = float2(instanceId, instanceId >> _Magnitude) * inv_texSize;
-				//half value = _MainTex.SampleLevel(sampler_MainTex, texCoords, 0).a;
-				//half value = 0.0;
-				//uint offset = _FrameTime * _PointsCount;
-				//int maxTextureOffset = _TextureSwitchFrameNumber * _PointsCount;
 
 				uint quadId = v.id / 6;
 
@@ -139,47 +131,6 @@
 
 				uint index = value >> 8;
 				float colorValue = (value & 0xFF) / 255.0;
-
-
-				/*if (offset <= maxTextureOffset) {
-					uint instanceId = quadId + offset;
-					uint3 texelCoords = uint3(instanceId % texSize, instanceId >> _Magnitude, 0);
-					value = _MainTex.Load(texelCoords).a;
-				}*/
-				/*else {
-					uint instanceId = quadId + (offset % maxTextureOffset);
-					uint3 texelCoords = uint3(instanceId % texSize, instanceId >> _Magnitude, 0);
-					value = _MainTex2.Load(texelCoords).a;
-				}*/
-				//float value = tex2Dlod(_MainTex, texCoords).a;
-
-				//good for wind data (169 frames): 
-				//if (colorValue < 0.01) {
-				//	return;
-				//}
-
-				/*if (value > 0.01 && value < 0.2 || value > 0.3 && value < 0.33) {
-					
-				}
-				else {
-					return;
-				}*/
-
-				//good for fireball:
-				/*if (value < 0.05) {
-					return;
-				}*/
-				
-				//float modifier = (sign(value - 0.01) * 0.5) + 0.5; //sign returns -1.0 or 1.0. Tranformed to return 0.0 or 1.0.
-
-				/*if (value < 0.001)
-				{
-					return;
-				}*/
-				/*if (value < 0.5 || value > 0.9999)
-				{
-					return;
-				}*/
 
 				//good for fireball:
 				//o.color = tex2Dlod(_ColorTex, half4(value*2.0, 0, 0, 0)).rgb /** modifier*/;

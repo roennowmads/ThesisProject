@@ -347,6 +347,10 @@ Prefab:
       propertyPath: m_valueDataPath
       value: OilRigDataIndexed
       objectReference: {fileID: 0}
+    - target: {fileID: 1297566764698224, guid: 94b76e50c03828949a1995c8df14f660, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 94b76e50c03828949a1995c8df14f660, type: 2}
   m_IsPrefabParent: 0

@@ -115,9 +115,9 @@ public class PointCloud : MonoBehaviour {
             TextAsset ta = Resources.Load(m_valueDataPath + "/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
             byte[] bytes = ta.bytes;
 
-            uint i = BitConverter.ToUInt32(bytes, 0);
-            uint o = i >> 8;
-            uint v = i & 0xFF;
+            //uint i = BitConverter.ToUInt32(bytes, 0);
+            //uint o = i >> 8;
+            //uint v = i & 0xFF;
 
             ComputeBuffer indexComputeBuffer = new ComputeBuffer(bytes.Length / 4, Marshal.SizeOf(typeof(int)), ComputeBufferType.Raw);
 
@@ -297,7 +297,7 @@ public class PointCloud : MonoBehaviour {
 	void Update () {
         //Debug.Log(Time.fixedTime);
 
-        m_frameIndex = ((int)(Time.fixedTime * m_frameSpeed)) % m_lastFrameIndex;
+        m_frameIndex = 2;//((int)(Time.fixedTime * m_frameSpeed)) % m_lastFrameIndex;
 
         pointRenderer.material.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
 
@@ -334,7 +334,7 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.material.SetPass(0);
         pointRenderer.material.SetMatrix("model", transform.localToWorldMatrix);
         //Graphics.DrawProcedural(MeshTopology.Points, 1, m_pointsCount);
-        Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count*6*4);  // index buffer.
+        Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count*6);  // index buffer.
     }
 
     void OnDestroy() {
