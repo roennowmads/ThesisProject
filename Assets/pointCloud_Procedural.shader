@@ -100,6 +100,9 @@
 				float2(0.0, 0.0)
 			};
 
+			static const float inv6 = 1.0 / 6.0;
+			static const float inv255 = 1.0 / 255.0;
+
 			// Declare instanced properties inside a cbuffer.
 			// Each instanced property is an array of by default 500(D3D)/128(GL) elements. Since D3D and GL imposes a certain limitation
 			// of 64KB and 16KB respectively on the size of a cubffer, the default array size thus allows two matrix arrays in one cbuffer.
@@ -121,16 +124,20 @@
 
 				//Division by 4096 == instanceId << 12 
 
-				uint quadId = v.id / 6;
+				float quadId = v.id * inv6;
+				//uint quad_vertexID = v.id % 6;
+				//uint quad_vertexID = -6.0 * floor(quadId) + v.id;
+				uint quad_vertexID = mad(-6.0, floor(quadId), v.id);
 
 				/*if (quadId % 2 != 0) {
 					return;
 				}*/
 
+
 				uint value = _IndicesValues.Load(quadId);
 
 				uint index = value >> 8;
-				float colorValue = (value & 0xFF) / 255.0;
+				float colorValue = (value & 0xFF) * inv255;
 
 				//good for fireball:
 				//o.color = tex2Dlod(_ColorTex, half4(value*2.0, 0, 0, 0)).rgb /** modifier*/;
@@ -147,7 +154,7 @@
 				o.vertex += trans;
 				o.vertex = UnityWorldToClipPos(o.vertex.xyz);
 				
-				uint quad_vertexID = v.id % 6;
+				
 
 				//Translating the vertices in a quad shape:
 				//half size = 0.4 * exp(1.0 - value) /** modifier*/;
