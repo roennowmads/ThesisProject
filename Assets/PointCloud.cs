@@ -279,18 +279,26 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.material.SetInt("_TextureSwitchFrameNumber", m_textureSwitchFrameNumber);
 
 
-        float[] bufIn = { 5, 10, 2, 1, 0, 20, 30, 45, 12, 63, 48, 3, 6, 32, 87, 39};
-        float[] bufOut = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
+        float[] bufIn = new float[262144 * 2];
+        float[] bufOut = new float[262144 * 2];
+
+        for (int i = 0; i < bufIn.Length; i++)
+        {
+            bufIn[i] = bufIn.Length - i;
+        } 
+
+        //float[] bufIn = { 5, 10, 2, 1, 0, 20, 30, 45, 12, 63, 48, 3, 6, 32, 87, 39};
+        //float[] bufOut = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 
 
         //m_kernel = m_computeShader.FindKernel("main");
         
 
-        ComputeBuffer computeBufferIn = new ComputeBuffer(16, Marshal.SizeOf(typeof(float)), ComputeBufferType.Default);
+        ComputeBuffer computeBufferIn = new ComputeBuffer(262144*2, Marshal.SizeOf(typeof(float)), ComputeBufferType.Default);
         computeBufferIn.SetData(bufIn);
         //m_computeShader.SetBuffer(m_kernel, "Input", computeBufferIn);
 
-        ComputeBuffer computeBufferTemp = new ComputeBuffer(16, Marshal.SizeOf(typeof(float)), ComputeBufferType.Default);
+        ComputeBuffer computeBufferTemp = new ComputeBuffer(262144 * 2, Marshal.SizeOf(typeof(float)), ComputeBufferType.Default);
         computeBufferTemp.SetData(bufOut);
         //m_computeShader.SetBuffer(m_kernel, "Output", computeBufferOut);
 
@@ -309,12 +317,16 @@ public class PointCloud : MonoBehaviour {
         tempBuffer = new ComputeBuffer(inArray.Length, 4);*/
 
         //inBuffer.SetData(bufIn);
+
+        float timeBefore = Time.realtimeSinceStartup;        
+
         GpuSort.BitonicSort32(computeBufferIn, computeBufferTemp);
-        computeBufferIn.GetData(bufOut);
+        //computeBufferIn.GetData(bufOut);
 
+        float timeAfter = Time.realtimeSinceStartup; //be aware, the dispatch is probably async? it seems to be just the time it takes to go through the for loops and set the buffers.
+        print("Time in milliseconds: " + (timeAfter - timeBefore) * 1000.0f);
 
-
-
+        //print(bufOut[262144]);
 
         //One down-side to storing and loading a texture is that we are storing all channels, as well as any unused parts of the texture.
         //TextAsset ta = Resources.Load("fireAtriumTex", typeof(TextAsset)) as TextAsset;

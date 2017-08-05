@@ -9,7 +9,7 @@
 //--------------------------------------------------------------------------------------
 // Pragmas
 //--------------------------------------------------------------------------------------
-
+/*
 #pragma kernel BitonicSort
 #pragma kernel MatrixTranspose
 
@@ -75,3 +75,4 @@ void MatrixTranspose(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, u
 	uint2 XY = DTid.yx - GTid.yx + GTid.xy;
 	Data[XY.y * g_iHeight + XY.x] = transpose_shared_data[GTid.x * TRANSPOSE_BLOCK_SIZE + GTid.y];
 }
+*/
