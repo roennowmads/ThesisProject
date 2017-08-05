@@ -84,7 +84,7 @@ public class FPSCounter : MonoBehaviour
         if (m_tangoApplication.HasRequiredPermissions)
         {
             Color oldColor = GUI.color;
-            GUI.color = Color.black;
+            GUI.color = Color.white;
 
             GUI.Label(new Rect(m_FPSLabelOffsetX, m_FPSLabelOffsetY,
                                UI_FPS_LABEL_SIZE_X,

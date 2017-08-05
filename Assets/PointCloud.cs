@@ -28,8 +28,12 @@ public class PointCloud : MonoBehaviour {
 
     private List<ComputeBuffer> m_indexComputeBuffers;
 
+    public ComputeShader m_computeShader;
+
     private float m_currentTime = 0;
     private int m_frameIndex = 0;
+
+    private int m_kernel;
 
     Texture2D createColorLookupTexture() {
         int numberOfValues = m_lookupTextureSize;
@@ -261,7 +265,7 @@ public class PointCloud : MonoBehaviour {
         //pointRenderer.material.SetTexture("_MainTex2", texture2);
         pointRenderer.material.SetTexture("_ColorTex", colorTexture);
 
-        m_computeBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.GPUMemory);
+        m_computeBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
         m_computeBuffer.SetData(points);
         pointRenderer.material.SetBuffer ("_Points", m_computeBuffer);
         pointRenderer.material.SetBuffer("_IndicesValues", m_indexComputeBuffers[0]);
@@ -274,7 +278,42 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.material.SetInt("_Magnitude", m_textureSideSizePower);
         pointRenderer.material.SetInt("_TextureSwitchFrameNumber", m_textureSwitchFrameNumber);
 
+
+        float[] bufIn = { 5, 10, 2, 1, 0, 20, 30, 45, 12, 63, 48, 3, 6, 32, 87, 39};
+        float[] bufOut = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
+
+
+        //m_kernel = m_computeShader.FindKernel("main");
         
+
+        ComputeBuffer computeBufferIn = new ComputeBuffer(16, Marshal.SizeOf(typeof(float)), ComputeBufferType.Default);
+        computeBufferIn.SetData(bufIn);
+        //m_computeShader.SetBuffer(m_kernel, "Input", computeBufferIn);
+
+        ComputeBuffer computeBufferTemp = new ComputeBuffer(16, Marshal.SizeOf(typeof(float)), ComputeBufferType.Default);
+        computeBufferTemp.SetData(bufOut);
+        //m_computeShader.SetBuffer(m_kernel, "Output", computeBufferOut);
+
+        //m_computeShader.Dispatch(m_kernel, 1, 1, 1);
+
+        //computeBufferOut.GetData(bufOut);
+
+
+
+        /*uint[] inArray = new uint[512 * 4];
+
+        for (int i = 0; i < inArray.Length; i++)
+            inArray[i] = (uint)(inArray.Length - 1 - i);
+        
+        inBuffer = new ComputeBuffer(inArray.Length, 4);
+        tempBuffer = new ComputeBuffer(inArray.Length, 4);*/
+
+        //inBuffer.SetData(bufIn);
+        GpuSort.BitonicSort32(computeBufferIn, computeBufferTemp);
+        computeBufferIn.GetData(bufOut);
+
+
+
 
 
         //One down-side to storing and loading a texture is that we are storing all channels, as well as any unused parts of the texture.
@@ -296,6 +335,8 @@ public class PointCloud : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
         //Debug.Log(Time.fixedTime);
+
+        //m_computeShader.Dispatch(m_kernel, 1, 1, 1);
 
         m_frameIndex = 2;//((int)(Time.fixedTime * m_frameSpeed)) % m_lastFrameIndex;
 
