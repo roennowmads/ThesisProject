@@ -13,6 +13,8 @@
 #pragma kernel BitonicSort
 #pragma kernel MatrixTranspose
 
+#include "UnityCG.cginc"
+
 //--------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------
@@ -31,28 +33,67 @@ cbuffer CB
     uint g_iHeight;
 };
 
+/*cbuffer modelMatrix
+{
+	float4 row0;
+	float4 row0;
+	float4 row0;
+	float4 row0;
+};*/
+
 //--------------------------------------------------------------------------------------
 // Structured Buffers
 //--------------------------------------------------------------------------------------
-StructuredBuffer<uint> Input : register( t0 );
-RWStructuredBuffer<uint> Data : register( u0 );
+//StructuredBuffer<uint> Input : register( t0 );
+//RWStructuredBuffer<uint> Data : register( u0 );
+
+StructuredBuffer<float> Input : register(t0);
+RWStructuredBuffer<float> Data : register(u0);
+
+
+/*StructuredBuffer<float3> _Points;
+
+StructuredBuffer<uint> _IndicesValues;
+RWStructuredBuffer<uint> _IndicesValuesOut;
+
+float4x4 model;
+float4 trans;*/
 
 //--------------------------------------------------------------------------------------
 // Bitonic Sort Compute Shader
 //--------------------------------------------------------------------------------------
-groupshared uint shared_data[BITONIC_BLOCK_SIZE];
+groupshared float shared_data[BITONIC_BLOCK_SIZE];
+//groupshared uint shared_data[BITONIC_BLOCK_SIZE];
+
+//groupshared float shared_dataDepth[BITONIC_BLOCK_SIZE];
 
 [numthreads(BITONIC_BLOCK_SIZE, 1, 1)]
 void BitonicSort( uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID,  uint3 GTid : SV_GroupThreadID,  uint GI : SV_GroupIndex )
 {
     // Load shared data
-    shared_data[GI] = Data[DTid.x];
+	/*uint value = _IndicesValues.Load(DTid.x);
+	uint index = value >> 8;
+	//shared_data[GI] = Data[DTid.x];
+	shared_data[GI] = index;
+
+	float4 vertexPos = mul(model, -_Points[index]);
+	vertexPos += trans;
+	vertexPos = UnityWorldToClipPos(vertexPos.xyz);
+	float depth = vertexPos.z;
+
+	shared_dataDepth[GI] = depth;*/
+
+	shared_data[GI] = Data[DTid.x];
+
     GroupMemoryBarrierWithGroupSync();
     
     // Sort the shared data
     for (uint j = g_iLevel >> 1 ; j > 0 ; j >>= 1)
     {
-        uint result = ((shared_data[GI & ~j] <= shared_data[GI | j]) == (bool)(g_iLevelMask & DTid.x))? shared_data[GI ^ j] : shared_data[GI];
+        //uint result = ((shared_data[GI & ~j] <= shared_data[GI | j]) == (bool)(g_iLevelMask & DTid.x)) ? shared_data[GI ^ j] : shared_data[GI];
+		float result = ((shared_data[GI & ~j] <= shared_data[GI | j]) == (bool)(g_iLevelMask & DTid.x)) ? shared_data[GI ^ j] : shared_data[GI];
+
+		//uint result = ((shared_dataDepth[GI & ~j] <= shared_dataDepth[GI | j]) == (bool)(g_iLevelMask & DTid.x)) ? shared_data[GI ^ j] : shared_data[GI];
         GroupMemoryBarrierWithGroupSync();
         shared_data[GI] = result;
         GroupMemoryBarrierWithGroupSync();
@@ -65,7 +106,8 @@ void BitonicSort( uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID,  uin
 //--------------------------------------------------------------------------------------
 // Matrix Transpose Compute Shader
 //--------------------------------------------------------------------------------------
-groupshared uint transpose_shared_data[TRANSPOSE_BLOCK_SIZE * TRANSPOSE_BLOCK_SIZE];
+groupshared float transpose_shared_data[TRANSPOSE_BLOCK_SIZE * TRANSPOSE_BLOCK_SIZE];
+//groupshared uint transpose_shared_data[TRANSPOSE_BLOCK_SIZE * TRANSPOSE_BLOCK_SIZE];
 
 [numthreads(TRANSPOSE_BLOCK_SIZE, TRANSPOSE_BLOCK_SIZE, 1)]
 void MatrixTranspose( uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, uint3 GTid : SV_GroupThreadID, uint GI : SV_GroupIndex )

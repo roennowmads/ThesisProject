@@ -52,19 +52,19 @@ static public class GpuSort
         init = true;
     }
 
-    static public void BitonicSort32(ComputeBuffer inBuffer, ComputeBuffer tmpBuffer)
+    static public void BitonicSort32(ComputeBuffer inBuffer, ComputeBuffer tmpBuffer, Vector4 trans, Matrix4x4 transMatrix)
     {
         if (!init) Init();
-        BitonicSortGeneric(sort32, kSort32, kTranspose32, inBuffer, tmpBuffer);   
+        BitonicSortGeneric(sort32, kSort32, kTranspose32, inBuffer, tmpBuffer, trans, transMatrix);   
     }
 
-    static public void BitonicSort64(ComputeBuffer inBuffer, ComputeBuffer tmpBuffer)
+    static public void BitonicSort64(ComputeBuffer inBuffer, ComputeBuffer tmpBuffer, Vector4 trans, Matrix4x4 transMatrix)
     {
         if (!init) Init();
-        BitonicSortGeneric(sort64, kSort64, kTranspose64, inBuffer, tmpBuffer);
+        BitonicSortGeneric(sort64, kSort64, kTranspose64, inBuffer, tmpBuffer, trans, transMatrix);
     }
 
-    static private void BitonicSortGeneric(ComputeShader shader, int kSort, int kTranspose, ComputeBuffer inBuffer, ComputeBuffer tmpBuffer)
+    static private void BitonicSortGeneric(ComputeShader shader, int kSort, int kTranspose, ComputeBuffer inBuffer, ComputeBuffer tmpBuffer, Vector4 trans, Matrix4x4 transMatrix)
     {
         // Determine if valid.
         if ((inBuffer.count % BITONIC_BLOCK_SIZE) != 0)
@@ -74,6 +74,19 @@ static public class GpuSort
         uint NUM_ELEMENTS = (uint) inBuffer.count;
         uint MATRIX_WIDTH = BITONIC_BLOCK_SIZE;
         uint MATRIX_HEIGHT = NUM_ELEMENTS / BITONIC_BLOCK_SIZE;
+
+
+        /*shader.SetVector("row0", transMatrix.GetRow(0));
+        shader.SetVector("row1", transMatrix.GetRow(1));
+        shader.SetVector("row2", transMatrix.GetRow(2));
+        shader.SetVector("row3", transMatrix.GetRow(3));*/
+
+        shader.SetVector("trans", trans);
+
+        shader.SetFloats("model", transMatrix[0], transMatrix[1], transMatrix[2], transMatrix[3], 
+                                  transMatrix[4], transMatrix[5], transMatrix[6], transMatrix[7],
+                                  transMatrix[8], transMatrix[9], transMatrix[10], transMatrix[11],
+                                  transMatrix[12], transMatrix[13], transMatrix[14], transMatrix[15]);
 
         // Sort the data
         // First sort the rows for the levels <= to the block size
