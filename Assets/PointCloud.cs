@@ -24,7 +24,7 @@ public class PointCloud : MonoBehaviour {
 
     private int m_textureSwitchFrameNumber = -1;
 
-    private ComputeBuffer m_computeBuffer;
+    private ComputeBuffer m_pointsBuffer;
 
     private List<ComputeBuffer> m_indexComputeBuffers;
 
@@ -265,9 +265,10 @@ public class PointCloud : MonoBehaviour {
         //pointRenderer.material.SetTexture("_MainTex2", texture2);
         pointRenderer.material.SetTexture("_ColorTex", colorTexture);
 
-        m_computeBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
-        m_computeBuffer.SetData(points);
-        pointRenderer.material.SetBuffer ("_Points", m_computeBuffer);
+        float[] pointDepths = { 5.1f, 10.1f, 2.5f, 1.4f, 0.3f, 20.5f, 30.7f, 45.1f, 12.6f, 63.9f, 48.8f, 3.6f, 6.3f, 32.8f, 87.9f, 39.4f};
+        m_pointsBuffer = new ComputeBuffer (pointDepths.Length, Marshal.SizeOf(typeof(float)), ComputeBufferType.Default);
+        m_pointsBuffer.SetData(pointDepths);
+        //pointRenderer.material.SetBuffer ("_Points", m_pointsBuffer);
         pointRenderer.material.SetBuffer("_IndicesValues", m_indexComputeBuffers[0]);
 
         pointRenderer.material.SetInt("_PointsCount", m_pointsCount);
@@ -279,26 +280,26 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.material.SetInt("_TextureSwitchFrameNumber", m_textureSwitchFrameNumber);
 
 
-        float[] bufIn = new float[262144];
-        float[] bufOut = new float[262144];
+        uint[] bufIn = new uint[16];
+        //uint[] bufOut = new uint[16];
 
-        for (int i = 0; i < bufIn.Length; i++)
+        for (uint i = 0; i < bufIn.Length; i++)
         {
-            bufIn[i] = bufIn.Length - i + 0.5f;
+            bufIn[i] = /*(uint)bufIn.Length - */i;
         } 
 
         //float[] bufIn = { 5, 10, 2, 1, 0, 20, 30, 45, 12, 63, 48, 3, 6, 32, 87, 39};
-        //float[] bufOut = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
+        uint[] bufOut = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 
 
         //m_kernel = m_computeShader.FindKernel("main");
         
 
-        ComputeBuffer computeBufferIn = new ComputeBuffer(262144, Marshal.SizeOf(typeof(float)), ComputeBufferType.Default);
+        ComputeBuffer computeBufferIn = new ComputeBuffer(16, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
         computeBufferIn.SetData(bufIn);
         //m_computeShader.SetBuffer(m_kernel, "Input", computeBufferIn);
 
-        ComputeBuffer computeBufferTemp = new ComputeBuffer(262144, Marshal.SizeOf(typeof(float)), ComputeBufferType.Default);
+        ComputeBuffer computeBufferTemp = new ComputeBuffer(16, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
         computeBufferTemp.SetData(bufOut);
         //m_computeShader.SetBuffer(m_kernel, "Output", computeBufferOut);
 
@@ -320,13 +321,13 @@ public class PointCloud : MonoBehaviour {
 
         float timeBefore = Time.realtimeSinceStartup;        
 
-        GpuSort.BitonicSort32(computeBufferIn, computeBufferTemp, trans, transform.localToWorldMatrix);
+        GpuSort.BitonicSort32(computeBufferIn, computeBufferTemp, m_pointsBuffer, trans, transform.localToWorldMatrix);
         computeBufferIn.GetData(bufOut);
 
         float timeAfter = Time.realtimeSinceStartup; //be aware, the dispatch is probably async? it seems to be just the time it takes to go through the for loops and set the buffers.
         print("Time in milliseconds: " + (timeAfter - timeBefore) * 1000.0f);
 
-        print(bufOut[5000]);
+        print(bufOut[10]);
 
         //One down-side to storing and loading a texture is that we are storing all channels, as well as any unused parts of the texture.
         //TextAsset ta = Resources.Load("fireAtriumTex", typeof(TextAsset)) as TextAsset;
@@ -391,7 +392,7 @@ public class PointCloud : MonoBehaviour {
     }
 
     void OnDestroy() {
-        m_computeBuffer.Release();
+        m_pointsBuffer.Release();
 
         foreach (ComputeBuffer cb in m_indexComputeBuffers)
         {

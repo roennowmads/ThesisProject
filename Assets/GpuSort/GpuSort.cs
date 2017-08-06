@@ -14,7 +14,7 @@ static public class GpuSort
 {
     // ---- Constants ----
 
-    private const uint BITONIC_BLOCK_SIZE = 512;
+    private const uint BITONIC_BLOCK_SIZE = 16;
     private const uint TRANSPOSE_BLOCK_SIZE = 16;
 
     // ---- Members ----
@@ -52,19 +52,19 @@ static public class GpuSort
         init = true;
     }
 
-    static public void BitonicSort32(ComputeBuffer inBuffer, ComputeBuffer tmpBuffer, Vector4 trans, Matrix4x4 transMatrix)
+    static public void BitonicSort32(ComputeBuffer inBuffer, ComputeBuffer tmpBuffer, ComputeBuffer pointsBuffer, Vector4 trans, Matrix4x4 transMatrix)
     {
         if (!init) Init();
-        BitonicSortGeneric(sort32, kSort32, kTranspose32, inBuffer, tmpBuffer, trans, transMatrix);   
+        BitonicSortGeneric(sort32, kSort32, kTranspose32, inBuffer, tmpBuffer, pointsBuffer, trans, transMatrix);   
     }
 
-    static public void BitonicSort64(ComputeBuffer inBuffer, ComputeBuffer tmpBuffer, Vector4 trans, Matrix4x4 transMatrix)
+    static public void BitonicSort64(ComputeBuffer inBuffer, ComputeBuffer tmpBuffer, ComputeBuffer pointsBuffer, Vector4 trans, Matrix4x4 transMatrix)
     {
         if (!init) Init();
-        BitonicSortGeneric(sort64, kSort64, kTranspose64, inBuffer, tmpBuffer, trans, transMatrix);
+        BitonicSortGeneric(sort64, kSort64, kTranspose64, inBuffer, tmpBuffer, pointsBuffer, trans, transMatrix);
     }
 
-    static private void BitonicSortGeneric(ComputeShader shader, int kSort, int kTranspose, ComputeBuffer inBuffer, ComputeBuffer tmpBuffer, Vector4 trans, Matrix4x4 transMatrix)
+    static private void BitonicSortGeneric(ComputeShader shader, int kSort, int kTranspose, ComputeBuffer inBuffer, ComputeBuffer tmpBuffer, ComputeBuffer pointsBuffer, Vector4 trans, Matrix4x4 transMatrix)
     {
         // Determine if valid.
         if ((inBuffer.count % BITONIC_BLOCK_SIZE) != 0)
@@ -81,12 +81,14 @@ static public class GpuSort
         shader.SetVector("row2", transMatrix.GetRow(2));
         shader.SetVector("row3", transMatrix.GetRow(3));*/
 
-        shader.SetVector("trans", trans);
+        /*shader.SetVector("trans", trans);
 
         shader.SetFloats("model", transMatrix[0], transMatrix[1], transMatrix[2], transMatrix[3], 
                                   transMatrix[4], transMatrix[5], transMatrix[6], transMatrix[7],
                                   transMatrix[8], transMatrix[9], transMatrix[10], transMatrix[11],
-                                  transMatrix[12], transMatrix[13], transMatrix[14], transMatrix[15]);
+                                  transMatrix[12], transMatrix[13], transMatrix[14], transMatrix[15]);*/
+
+        shader.SetBuffer(kSort, "_Points", pointsBuffer);
 
         // Sort the data
         // First sort the rows for the levels <= to the block size
@@ -96,6 +98,7 @@ static public class GpuSort
             
             // Sort the row data
             shader.SetBuffer(kSort, "Data", inBuffer);
+            shader.SetBuffer(kSort, "_Points", pointsBuffer);
             shader.Dispatch(kSort, (int) (NUM_ELEMENTS / BITONIC_BLOCK_SIZE), 1, 1);
         }
 
@@ -110,6 +113,7 @@ static public class GpuSort
             shader.Dispatch(kTranspose, (int) (MATRIX_WIDTH / TRANSPOSE_BLOCK_SIZE), (int) (MATRIX_HEIGHT / TRANSPOSE_BLOCK_SIZE), 1);
 
             shader.SetBuffer(kSort, "Data", tmpBuffer);
+            shader.SetBuffer(kSort, "_Points", pointsBuffer);
             shader.Dispatch(kSort, (int) (NUM_ELEMENTS / BITONIC_BLOCK_SIZE), 1, 1);
 
             // Transpose the data from buffer 2 back into buffer 1
@@ -119,6 +123,7 @@ static public class GpuSort
             shader.Dispatch(kTranspose, (int) (MATRIX_HEIGHT / TRANSPOSE_BLOCK_SIZE), (int) (MATRIX_WIDTH / TRANSPOSE_BLOCK_SIZE), 1);
 
             shader.SetBuffer(kSort, "Data", inBuffer);
+            shader.SetBuffer(kSort, "_Points", pointsBuffer);
             shader.Dispatch(kSort, (int) (NUM_ELEMENTS / BITONIC_BLOCK_SIZE), 1, 1);
         }
     }
