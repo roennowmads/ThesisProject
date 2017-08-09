@@ -9,7 +9,7 @@
 	SubShader {
 		Tags{ "Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent" }
 		//Tags{"RenderType" = "Opaque"}
-		//Blend SrcAlpha OneMinusSrcAlpha
+		Blend SrcAlpha OneMinusSrcAlpha
 		//Cull Off
 		ZWrite Off
 		//LOD 200
@@ -30,6 +30,7 @@
 			StructuredBuffer<uint> _IndicesValues;
 
 			uniform matrix model;
+			//uniform matrix mvp;
 			uniform float4 trans;
 			uniform float aspect;
 			uniform int _PointsCount;
@@ -106,16 +107,22 @@
 				//o.color = tex2Dlod(_ColorTex, half4(pow((colorValue*2.0), .0625), 0, 0, 0)).rgb /** modifier*/;
 				//o.color = tex2Dlod(_ColorTex, half4(pow((value*5.0), .0625)*0.95, 0, 0, 0)).rgb /** modifier*/;
 				//o.color = float3(value, value, value);
-				o.color = float3(0.0, 0.0, quadId / 16.0);
+				
+				o.color = float3(0.0, 0.0, quadId / 512.0);
 
 				//_Points[v.iid] += float3(0.1, 0.1, 0.1);
 
 				//Correcting the translation:
-				o.vertex = mul(model, -_Points[index]);
-				o.vertex += trans;
-				o.vertex = UnityWorldToClipPos(o.vertex.xyz);
+				//o.vertex = mul(model, -_Points[index]);
+				//o.vertex += trans;
+				//o.vertex = UnityWorldToClipPos(o.vertex.xyz);
+
+				//o.vertex = mul(UNITY_MATRIX_MVP, _Points[index]);
+
+				o.vertex = UnityObjectToClipPos(_Points[index]);
 
 
+				//o.vertex = mul(mvp, _Points[index]);
 
 				//Translating the vertices in a quad shape:
 				//half size = 0.4 * exp(1.0 - value) /** modifier*/;

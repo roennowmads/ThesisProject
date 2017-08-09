@@ -14,7 +14,7 @@ static public class GpuSort
 {
     // ---- Constants ----
 
-    private const uint BITONIC_BLOCK_SIZE = 16;
+    private const uint BITONIC_BLOCK_SIZE = 512;
     private const uint TRANSPOSE_BLOCK_SIZE = 16;
 
     // ---- Members ----
@@ -75,15 +75,18 @@ static public class GpuSort
         uint MATRIX_WIDTH = BITONIC_BLOCK_SIZE;
         uint MATRIX_HEIGHT = NUM_ELEMENTS / BITONIC_BLOCK_SIZE;
 
+        
 
-        /*shader.SetVector("row0", transMatrix.GetRow(0));
+        shader.SetVector("row0", transMatrix.GetRow(0));
         shader.SetVector("row1", transMatrix.GetRow(1));
         shader.SetVector("row2", transMatrix.GetRow(2));
-        shader.SetVector("row3", transMatrix.GetRow(3));*/
+        shader.SetVector("row3", transMatrix.GetRow(3));
 
-        /*shader.SetVector("trans", trans);
+        shader.SetVector("trans", trans);
 
-        shader.SetFloats("model", transMatrix[0], transMatrix[1], transMatrix[2], transMatrix[3], 
+        shader.SetVector("camPos", Camera.main.transform.position);
+
+        /*shader.SetFloats("model", transMatrix[0], transMatrix[1], transMatrix[2], transMatrix[3], 
                                   transMatrix[4], transMatrix[5], transMatrix[6], transMatrix[7],
                                   transMatrix[8], transMatrix[9], transMatrix[10], transMatrix[11],
                                   transMatrix[12], transMatrix[13], transMatrix[14], transMatrix[15]);*/

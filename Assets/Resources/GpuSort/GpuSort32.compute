@@ -33,13 +33,13 @@ cbuffer CB
     uint g_iHeight;
 };
 
-/*cbuffer modelMatrix
+cbuffer modelMatrix
 {
 	float4 row0;
-	float4 row0;
-	float4 row0;
-	float4 row0;
-};*/
+	float4 row1;
+	float4 row2;
+	float4 row3;
+};
 
 struct indexDepth {
 	uint index;
@@ -57,13 +57,14 @@ RWStructuredBuffer<uint> Data : register(u0);
 
 
 //StructuredBuffer<float3> _Points;
-StructuredBuffer<float> _Points;
+StructuredBuffer<float3> _Points;
 
 //StructuredBuffer<uint> _IndicesValues;
 //RWStructuredBuffer<uint> _IndicesValuesOut;
 
-float4x4 model;
+//float4x4 model;
 float4 trans;
+float3 camPos;
 
 //--------------------------------------------------------------------------------------
 // Bitonic Sort Compute Shader
@@ -79,14 +80,30 @@ void BitonicSort( uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID,  uin
 	uint index = value;  // >> 8;
 	shared_data[GI].index = index;
 
-	/*float4 vertexPos = mul(model, -_Points[index]);
-	vertexPos += trans;
-	vertexPos = UnityWorldToClipPos(vertexPos.xyz);
-	float depth = vertexPos.z;
+	matrix model = matrix(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	model[0] = row0;
+	model[1] = row1;
+	model[2] = row2;
+	model[3] = row3;
 
-	shared_data[GI].depth = depth;*/
+	//matrix a = matrix(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	//float3 b = float3(0, 0, 0);
 
-	shared_data[GI].depth = _Points[index];
+	//float4 vertexPos = float4(_Points[index], 1.0);
+	//float depth = vertexPos.x;
+
+	//float4 vertexPos = mul(model, -_Points[index]);
+	//vertexPos += trans;
+	//vertexPos = UnityWorldToClipPos(vertexPos.xyz);
+	
+	//float4 vertexPos = mul(UNITY_MATRIX_MV, _Points[index]);
+	//float4 vertexPos = float4(_Points[index], 1.0);//UnityObjectToClipPos(_Points[index]);
+
+	//float depth = length(_Points[index]);//vertexPos.z;
+
+	shared_data[GI].depth = -distance(camPos, _Points[index]);//depth;
+
+	//shared_data[GI].depth = _Points[index];
 
 	//shared_data[GI] = Data[DTid.x];
 
