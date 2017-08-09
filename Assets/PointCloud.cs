@@ -136,7 +136,7 @@ public class PointCloud : MonoBehaviour {
             uint[] newVals = new uint[bufferSize];
 
             for (int i = 0; i < zeroedBytes.Length; i++) {
-                newVals[i] = zeroedBytes[i] >> 8;
+                newVals[i] = zeroedBytes[i]; //>> 8;
             }
 
             //uint a = zeroedBytes[10] >> 8;
@@ -368,7 +368,7 @@ public class PointCloud : MonoBehaviour {
 
         float timeBefore = Time.realtimeSinceStartup;        
 
-        GpuSort.BitonicSort32(m_indexComputeBuffers[2], m_computeBufferTemp, m_pointsBuffer, trans, transform.localToWorldMatrix);
+        //GpuSort.BitonicSort32(m_indexComputeBuffers[2], m_computeBufferTemp, m_pointsBuffer, trans, transform.localToWorldMatrix);
         m_indexComputeBuffers[2].GetData(bufOut);
 
         float timeAfter = Time.realtimeSinceStartup; //be aware, the dispatch is probably async? it seems to be just the time it takes to go through the for loops and set the buffers.
@@ -415,7 +415,7 @@ public class PointCloud : MonoBehaviour {
         }*/
 
         Vector4 trans = transform.position;
-        //GpuSort.BitonicSort32(m_indexComputeBuffers[m_frameIndex], m_computeBufferTemp, m_pointsBuffer, trans, pointRenderer.localToWorldMatrix);
+        GpuSort.BitonicSort32(m_indexComputeBuffers[m_frameIndex], m_computeBufferTemp, m_pointsBuffer, trans, pointRenderer.localToWorldMatrix);
         
         uint[] bufOut = new uint[/*m_pointsCount*//*262144*/m_indexComputeBuffers[m_frameIndex].count];
         m_indexComputeBuffers[m_frameIndex].GetData(bufOut);

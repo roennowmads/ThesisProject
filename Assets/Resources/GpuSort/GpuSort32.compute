@@ -42,7 +42,7 @@ cbuffer modelMatrix
 };
 
 struct indexDepth {
-	uint index;
+	uint indexAndColor;
 	float depth;
 };
 
@@ -76,8 +76,8 @@ groupshared indexDepth shared_data[BITONIC_BLOCK_SIZE];
 void BitonicSort( uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID,  uint3 GTid : SV_GroupThreadID,  uint GI : SV_GroupIndex )
 {
     // Load shared data
-	uint value = Data.Load(DTid.x);
-	uint index = value;//value / 256;//(value >> 8);
+	uint indexAndColor = Data.Load(DTid.x);
+	//uint index = value;//value / 256;//(value >> 8);
 	/*shared_data[GI].index = index;*/
 
 	/*matrix model = matrix(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -101,8 +101,10 @@ void BitonicSort( uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID,  uin
 
 	//float depth = length(_Points[index]);//vertexPos.z;
 
-	shared_data[GI].index = index;
-	shared_data[GI].depth = -distance(camPos, _Points[index]);//float(DTid.x);//_Points[index].z;//;//depth;
+	//float3 transVert = mul(model, -_Points[indexAndColor >> 8]).xyz;
+
+	shared_data[GI].indexAndColor = indexAndColor;
+	shared_data[GI].depth = -distance(camPos, _Points[indexAndColor >> 8]);//float(DTid.x);//_Points[index].z;//;//depth;
 
 	//shared_data[GI].depth = _Points[index];
 
@@ -129,7 +131,7 @@ void BitonicSort( uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID,  uin
     
     // Store shared data
 	//Data[DTid.x] = shared_data[GI];
-    Data[DTid.x] = shared_data[GI].index;
+    Data[DTid.x] = shared_data[GI].indexAndColor;
 }
 
 //--------------------------------------------------------------------------------------
