@@ -77,14 +77,14 @@ void BitonicSort( uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID,  uin
 {
     // Load shared data
 	uint value = Data.Load(DTid.x);
-	uint index = value;  // >> 8;
-	shared_data[GI].index = index;
+	uint index = value;//value / 256;//(value >> 8);
+	/*shared_data[GI].index = index;*/
 
-	matrix model = matrix(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	/*matrix model = matrix(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 	model[0] = row0;
 	model[1] = row1;
 	model[2] = row2;
-	model[3] = row3;
+	model[3] = row3;*/
 
 	//matrix a = matrix(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 	//float3 b = float3(0, 0, 0);
@@ -101,7 +101,8 @@ void BitonicSort( uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID,  uin
 
 	//float depth = length(_Points[index]);//vertexPos.z;
 
-	shared_data[GI].depth = -distance(camPos, _Points[index]);//depth;
+	shared_data[GI].index = index;
+	shared_data[GI].depth = -distance(camPos, _Points[index]);//float(DTid.x);//_Points[index].z;//;//depth;
 
 	//shared_data[GI].depth = _Points[index];
 

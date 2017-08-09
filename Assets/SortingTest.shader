@@ -108,25 +108,26 @@
 				//o.color = tex2Dlod(_ColorTex, half4(pow((value*5.0), .0625)*0.95, 0, 0, 0)).rgb /** modifier*/;
 				//o.color = float3(value, value, value);
 				
-				o.color = float3(0.0, 0.0, quadId / 512.0);
+				//o.color = float3(0.0, 0.0, 1.0);
+				o.color = float3(0.0, 1.0, quadId / 65536.0);
 
 				//_Points[v.iid] += float3(0.1, 0.1, 0.1);
 
 				//Correcting the translation:
-				//o.vertex = mul(model, -_Points[index]);
-				//o.vertex += trans;
-				//o.vertex = UnityWorldToClipPos(o.vertex.xyz);
+				o.vertex = mul(model, -_Points[index]);
+				o.vertex += trans;
+				o.vertex = UnityWorldToClipPos(o.vertex.xyz);
 
 				//o.vertex = mul(UNITY_MATRIX_MVP, _Points[index]);
 
-				o.vertex = UnityObjectToClipPos(_Points[index]);
+				//o.vertex = UnityObjectToClipPos(_Points[index]*1000.0);
 
 
 				//o.vertex = mul(mvp, _Points[index]);
 
 				//Translating the vertices in a quad shape:
 				//half size = 0.4 * exp(1.0 - value) /** modifier*/;
-				half size = 0.2 /** exp(1.0 - colorValue)*/ /** modifier*/;
+				half size = 0.02 /** exp(1.0 - colorValue)*/ /** modifier*/;
 				//half size = 0.15 * exp(value) /** modifier*/;
 				half2 quadSize = half2(size, size * aspect);
 				half2 deltaSize = quadCoords[quad_vertexID] * quadSize;

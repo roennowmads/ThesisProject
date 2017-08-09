@@ -24,7 +24,7 @@ public class PointCloud : MonoBehaviour {
 
     private int m_textureSwitchFrameNumber = -1;
 
-    private ComputeBuffer m_pointsBuffer, m_computeBufferIn, m_computeBufferTemp;
+    private ComputeBuffer m_pointsBuffer, /*m_computeBufferIn,*/ m_computeBufferTemp;
 
     private List<ComputeBuffer> m_indexComputeBuffers;
 
@@ -113,17 +113,45 @@ public class PointCloud : MonoBehaviour {
         //byte[] vals = new byte[m_textureSize];
         for (int k = 0; k < m_lastFrameIndex; k++)
         {
+            
+            
             //TextAsset ta = Resources.Load("AtriumData/binaryDataFull/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
             TextAsset ta = Resources.Load(m_valueDataPath + "/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
             byte[] bytes = ta.bytes;
 
-            //uint i = BitConverter.ToUInt32(bytes, 0);
+            int bufferSize = bytes.Length / 4; //131072; //4096;//bytes.Length / 4;
+            while(bufferSize % 512 != 0) {
+                bufferSize++;
+            }
+
+            uint[] zeroedBytes = new uint[bufferSize];
+
+            Buffer.BlockCopy(bytes, 0, zeroedBytes, 0, bytes.Length);
+
+
+            //uint i = BitConverter.ToUInt32(bytes, 64);
             //uint o = i >> 8;
             //uint v = i & 0xFF;
 
-            ComputeBuffer indexComputeBuffer = new ComputeBuffer(bytes.Length / 4, Marshal.SizeOf(typeof(int)), ComputeBufferType.Raw);
+            uint[] newVals = new uint[bufferSize];
 
-            indexComputeBuffer.SetData(bytes);
+            for (int i = 0; i < zeroedBytes.Length; i++) {
+                newVals[i] = zeroedBytes[i] >> 8;
+            }
+
+            //uint a = zeroedBytes[10] >> 8;
+            //uint b = zeroedBytes[10] / 256;
+
+
+
+
+
+
+            //try to cut the size to something like 4096
+            
+            ComputeBuffer indexComputeBuffer = new ComputeBuffer(bufferSize, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
+
+            indexComputeBuffer.SetData(/*zeroedBytes*//*bytes*/newVals);
 
             computeBuffers.Add(indexComputeBuffer);
 
@@ -270,7 +298,7 @@ public class PointCloud : MonoBehaviour {
         //    new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 0.0f),
         //    new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 0.0f)};
 
-        Vector3[] pointPositions = new Vector3[512];
+       /* Vector3[] pointPositions = new Vector3[512];
 
         for (int i = 0; i < pointPositions.Length; i++) {
             pointPositions[i] = new Vector3(0, 0, 0);
@@ -279,15 +307,16 @@ public class PointCloud : MonoBehaviour {
 
         m_pointsBuffer = new ComputeBuffer (pointPositions.Length, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
         m_pointsBuffer.SetData(pointPositions);
-        pointRenderer.material.SetBuffer ("_Points", m_pointsBuffer);
-
-
-        /*pointRenderer.material.SetBuffer("_IndicesValues", m_indexComputeBuffers[0]);
-        m_pointsBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
-        m_pointsBuffer.SetData(points);
         pointRenderer.material.SetBuffer ("_Points", m_pointsBuffer);*/
 
-        pointRenderer.material.SetInt("_PointsCount", /*m_pointsCount*/pointPositions.Length);
+
+        
+        m_pointsBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
+        m_pointsBuffer.SetData(points);
+        pointRenderer.material.SetBuffer ("_Points", m_pointsBuffer);
+
+        //pointRenderer.material.SetInt("_PointsCount", /*m_pointsCount*/pointPositions.Length);
+        pointRenderer.material.SetInt("_PointsCount", m_pointsCount);
         float aspect = Camera.main.GetComponent<Camera>().aspect;
         pointRenderer.material.SetFloat("aspect", aspect);
         Vector4 trans = transform.position;
@@ -296,28 +325,28 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.material.SetInt("_TextureSwitchFrameNumber", m_textureSwitchFrameNumber);
 
 
-        uint[] bufIn = new uint[pointPositions.Length];
+        /*uint[] bufIn = new uint[pointPositions.Length];
         //uint[] bufOut = new uint[16];
 
         for (uint i = 0; i < bufIn.Length; i++)
         {
-            bufIn[i] = /*(uint)bufIn.Length - */i;
+            bufIn[i] = i;
         }
 
         //float[] bufIn = { 5, 10, 2, 1, 0, 20, 30, 45, 12, 63, 48, 3, 6, 32, 87, 39};
-        uint[] bufOut = new uint[pointPositions.Length]; //{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
+        uint[] bufOut = new uint[pointPositions.Length]; //{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };*/
 
 
-        
+        uint[] bufOut = new uint[/*m_pointsCount*//*262144*/m_indexComputeBuffers[2].count];
 
         //m_kernel = m_computeShader.FindKernel("main");
         
 
-        m_computeBufferIn = new ComputeBuffer(pointPositions.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
-        m_computeBufferIn.SetData(bufIn);
+        //m_computeBufferIn = new ComputeBuffer(m_pointsCount, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
+        //m_computeBufferIn.SetData(bufIn);
         //m_computeShader.SetBuffer(m_kernel, "Input", computeBufferIn);
 
-        m_computeBufferTemp = new ComputeBuffer(pointPositions.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
+        m_computeBufferTemp = new ComputeBuffer(bufOut.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
         m_computeBufferTemp.SetData(bufOut);
         //m_computeShader.SetBuffer(m_kernel, "Output", computeBufferOut);
 
@@ -325,7 +354,7 @@ public class PointCloud : MonoBehaviour {
 
         //computeBufferOut.GetData(bufOut);
 
-        pointRenderer.material.SetBuffer("_IndicesValues", m_computeBufferIn);
+        //pointRenderer.material.SetBuffer("_IndicesValues", m_computeBufferIn);
 
         /*uint[] inArray = new uint[512 * 4];
 
@@ -339,8 +368,8 @@ public class PointCloud : MonoBehaviour {
 
         float timeBefore = Time.realtimeSinceStartup;        
 
-        GpuSort.BitonicSort32(m_computeBufferIn, m_computeBufferTemp, m_pointsBuffer, trans, transform.localToWorldMatrix);
-        //computeBufferIn.GetData(bufOut);
+        GpuSort.BitonicSort32(m_indexComputeBuffers[2], m_computeBufferTemp, m_pointsBuffer, trans, transform.localToWorldMatrix);
+        m_indexComputeBuffers[2].GetData(bufOut);
 
         float timeAfter = Time.realtimeSinceStartup; //be aware, the dispatch is probably async? it seems to be just the time it takes to go through the for loops and set the buffers.
         print("Time in milliseconds: " + (timeAfter - timeBefore) * 1000.0f);
@@ -371,7 +400,7 @@ public class PointCloud : MonoBehaviour {
 
         m_frameIndex = 2;//((int)(Time.fixedTime * m_frameSpeed)) % m_lastFrameIndex;
 
-        //pointRenderer.material.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
+        pointRenderer.material.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
 
         //t = 29;
 
@@ -386,8 +415,11 @@ public class PointCloud : MonoBehaviour {
         }*/
 
         Vector4 trans = transform.position;
-        GpuSort.BitonicSort32(m_computeBufferIn, m_computeBufferTemp, m_pointsBuffer, trans, pointRenderer.localToWorldMatrix);
+        //GpuSort.BitonicSort32(m_indexComputeBuffers[m_frameIndex], m_computeBufferTemp, m_pointsBuffer, trans, pointRenderer.localToWorldMatrix);
         
+        uint[] bufOut = new uint[/*m_pointsCount*//*262144*/m_indexComputeBuffers[m_frameIndex].count];
+        m_indexComputeBuffers[m_frameIndex].GetData(bufOut);
+        print(bufOut[10]);
 
         //Debug.Log(t);
         pointRenderer.material.SetInt("_FrameTime", m_frameIndex);
@@ -401,9 +433,11 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.material.SetPass(0);
         pointRenderer.material.SetMatrix("model", pointRenderer.localToWorldMatrix);
 
+        //Debug.Log(m_indexComputeBuffers[m_frameIndex].count);
+
         //Graphics.DrawProcedural(MeshTopology.Points, 1, m_pointsCount);
         //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count*6);  // index buffer.
-        Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/m_computeBufferIn.count*6 );  // index buffer.
+        Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/(m_indexComputeBuffers[m_frameIndex].count)*6 );  // index buffer.
 
         //Maybe this rendering stuff is supposed to be attached to the camera?
     }
