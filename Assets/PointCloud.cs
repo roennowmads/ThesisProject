@@ -273,7 +273,7 @@ public class PointCloud : MonoBehaviour {
 
         for (int i = 0; i < pointPositions.Length; i++) {
             pointPositions[i].x = i;
-            pointPositions[i].y = i % 2; 
+            //pointPositions[i].y = i % 2; 
         }
 
         m_pointsBuffer = new ComputeBuffer (pointPositions.Length, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);

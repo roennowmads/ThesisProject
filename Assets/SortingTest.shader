@@ -11,7 +11,7 @@
 		//Tags{"RenderType" = "Opaque"}
 		//Blend SrcAlpha OneMinusSrcAlpha
 		//Cull Off
-		//ZWrite Off
+		ZWrite Off
 		//LOD 200
 
 		Pass {
