@@ -14,8 +14,8 @@ static public class GpuSort
 {
     // ---- Constants ----
 
-    private const uint BITONIC_BLOCK_SIZE = 256;
-    private const uint TRANSPOSE_BLOCK_SIZE = 16;
+    private const uint BITONIC_BLOCK_SIZE = 512;
+    private const uint TRANSPOSE_BLOCK_SIZE = 32;
 
     // ---- Members ----
 

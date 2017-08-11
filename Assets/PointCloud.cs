@@ -111,7 +111,8 @@ public class PointCloud : MonoBehaviour {
     void readIndicesAndValues(List<ComputeBuffer> computeBuffers)
     {
         //byte[] vals = new byte[m_textureSize];
-        for (int k = 0; k < m_lastFrameIndex; k++)
+        //for (int k = 0; k < m_lastFrameIndex; k++)
+        int k = 2;
         {
             
             
@@ -119,12 +120,12 @@ public class PointCloud : MonoBehaviour {
             TextAsset ta = Resources.Load(m_valueDataPath + "/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
             byte[] bytes = ta.bytes;
 
-            /*int bufferSize = bytes.Length / 4; //131072; //4096;//bytes.Length / 4;
-            while(bufferSize % 512 != 0) {
-                bufferSize++;
-            }*/
+            //int bufferSize = bytes.Length / 4; //131072; //4096;//bytes.Length / 4;
+            //while(bufferSize % 512 != 0) {
+            //    bufferSize--;
+            //}
 
-            int bufferSize = 4096 * 4 * 4;
+            int bufferSize = 4096 * 4 * 4 * 2;
 
             uint[] zeroedBytes = new uint[bufferSize];
 
@@ -339,7 +340,7 @@ public class PointCloud : MonoBehaviour {
         uint[] bufOut = new uint[pointPositions.Length]; //{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };*/
 
 
-        uint[] bufOut = new uint[/*m_pointsCount*//*262144*/m_indexComputeBuffers[2].count];
+        uint[] bufOut = new uint[/*m_pointsCount*//*262144*/m_indexComputeBuffers[m_frameIndex].count];
 
         //m_kernel = m_computeShader.FindKernel("main");
         
@@ -371,7 +372,7 @@ public class PointCloud : MonoBehaviour {
         float timeBefore = Time.realtimeSinceStartup;        
 
         //GpuSort.BitonicSort32(m_indexComputeBuffers[2], m_computeBufferTemp, m_pointsBuffer, trans, transform.localToWorldMatrix);
-        m_indexComputeBuffers[2].GetData(bufOut);
+        m_indexComputeBuffers[m_frameIndex].GetData(bufOut);
 
         float timeAfter = Time.realtimeSinceStartup; //be aware, the dispatch is probably async? it seems to be just the time it takes to go through the for loops and set the buffers.
         print("Time in milliseconds: " + (timeAfter - timeBefore) * 1000.0f);
@@ -400,7 +401,7 @@ public class PointCloud : MonoBehaviour {
 
         //m_computeShader.Dispatch(m_kernel, 1, 1, 1);
 
-        m_frameIndex = 2;//((int)(Time.fixedTime * m_frameSpeed)) % m_lastFrameIndex;
+        //m_frameIndex = 2;//((int)(Time.fixedTime * m_frameSpeed)) % m_lastFrameIndex;
 
         pointRenderer.material.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
 
