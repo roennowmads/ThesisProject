@@ -119,25 +119,27 @@ public class PointCloud : MonoBehaviour {
             TextAsset ta = Resources.Load(m_valueDataPath + "/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
             byte[] bytes = ta.bytes;
 
-            int bufferSize = bytes.Length / 4; //131072; //4096;//bytes.Length / 4;
+            /*int bufferSize = bytes.Length / 4; //131072; //4096;//bytes.Length / 4;
             while(bufferSize % 512 != 0) {
                 bufferSize++;
-            }
+            }*/
+
+            int bufferSize = 4096 * 4 * 4;
 
             uint[] zeroedBytes = new uint[bufferSize];
 
-            Buffer.BlockCopy(bytes, 0, zeroedBytes, 0, bytes.Length);
+            Buffer.BlockCopy(bytes, 0, zeroedBytes, 0, /*bytes.Length*/ bufferSize*4);
 
 
             //uint i = BitConverter.ToUInt32(bytes, 64);
             //uint o = i >> 8;
             //uint v = i & 0xFF;
 
-            uint[] newVals = new uint[bufferSize];
+            /*uint[] newVals = new uint[bufferSize];
 
             for (int i = 0; i < zeroedBytes.Length; i++) {
                 newVals[i] = zeroedBytes[i]; //>> 8;
-            }
+            }*/
 
             //uint a = zeroedBytes[10] >> 8;
             //uint b = zeroedBytes[10] / 256;
@@ -151,7 +153,7 @@ public class PointCloud : MonoBehaviour {
             
             ComputeBuffer indexComputeBuffer = new ComputeBuffer(bufferSize, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
 
-            indexComputeBuffer.SetData(/*zeroedBytes*//*bytes*/newVals);
+            indexComputeBuffer.SetData(/*zeroedBytes*//*bytes*/zeroedBytes);
 
             computeBuffers.Add(indexComputeBuffer);
 
@@ -418,7 +420,7 @@ public class PointCloud : MonoBehaviour {
         GpuSort.BitonicSort32(m_indexComputeBuffers[m_frameIndex], m_computeBufferTemp, m_pointsBuffer, trans, pointRenderer.localToWorldMatrix);
         
         uint[] bufOut = new uint[/*m_pointsCount*//*262144*/m_indexComputeBuffers[m_frameIndex].count];
-        m_indexComputeBuffers[m_frameIndex].GetData(bufOut);
+        //m_indexComputeBuffers[m_frameIndex].GetData(bufOut);
         print(bufOut[10]);
 
         //Debug.Log(t);
