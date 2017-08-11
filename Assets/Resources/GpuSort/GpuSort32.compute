@@ -94,11 +94,11 @@ void BitonicSort( uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID,  uin
 	model[2] = row2;
 	model[3] = row3;
 
-	matrix view = matrix(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	/*matrix view = matrix(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 	view[0] = rowView0;
 	view[1] = rowView1;
 	view[2] = rowView2;
-	view[3] = rowView3;
+	view[3] = rowView3;*/
 
 	//matrix a = matrix(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 	//float3 b = float3(0, 0, 0);
@@ -124,7 +124,7 @@ void BitonicSort( uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID,  uin
 
 
 	float4 transVert = mul(model, float4(-_Points[indexAndColor >> 8], 1.0));
-	transVert += trans;
+	//transVert += trans;
 	//transVert = mul(view, transVert);
 
 

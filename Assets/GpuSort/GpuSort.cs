@@ -80,10 +80,10 @@ static public class GpuSort
         shader.SetVector("row2", transMatrix.GetRow(2));
         shader.SetVector("row3", transMatrix.GetRow(3));
 
-        shader.SetVector("rowView0", viewMatrix.GetRow(0));
+        /*shader.SetVector("rowView0", viewMatrix.GetRow(0));
         shader.SetVector("rowView1", viewMatrix.GetRow(1));
         shader.SetVector("rowView2", viewMatrix.GetRow(2));
-        shader.SetVector("rowView3", viewMatrix.GetRow(3));
+        shader.SetVector("rowView3", viewMatrix.GetRow(3));*/
 
         shader.SetVector("trans", trans);
 

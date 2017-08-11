@@ -417,14 +417,15 @@ public class PointCloud : MonoBehaviour {
             m_currentTime = 0;
         }*/
 
-        Vector4 trans = transform.position;
+        
         //GpuSort.BitonicSort32(m_indexComputeBuffers[m_frameIndex], m_computeBufferTemp, m_pointsBuffer, trans, pointRenderer.localToWorldMatrix);
         
-        uint[] bufOut = new uint[/*m_pointsCount*//*262144*/m_indexComputeBuffers[m_frameIndex].count];
+        //uint[] bufOut = new uint[/*m_pointsCount*//*262144*/m_indexComputeBuffers[m_frameIndex].count];
         //m_indexComputeBuffers[m_frameIndex].GetData(bufOut);
-        print(bufOut[10]);
+        //print(bufOut[10]);
 
         //Debug.Log(t);
+        Vector4 trans = transform.position;
         pointRenderer.material.SetInt("_FrameTime", m_frameIndex);
         float aspect = Camera.main.GetComponent<Camera>().aspect;
         pointRenderer.material.SetFloat("aspect", aspect);
@@ -436,27 +437,27 @@ public class PointCloud : MonoBehaviour {
 
         Matrix4x4 M = transform.localToWorldMatrix;
         Matrix4x4 V = Camera.main.worldToCameraMatrix;
-        Matrix4x4 P = Camera.main.projectionMatrix;
+        //Matrix4x4 P = Camera.main.projectionMatrix;
 
-        Matrix4x4 P2 = GL.GetGPUProjectionMatrix(Camera.main.projectionMatrix, false);
+        //Matrix4x4 P2 = GL.GetGPUProjectionMatrix(Camera.main.projectionMatrix, false);
 
         // Scale and bias from OpenGL -> D3D depth range
        /* for (int i = 0; i < 4; i++) {
             P[2,i] = P[2,i]*0.5f + P[3,i]*0.5f;
         }*/
         
-        Matrix4x4 MVP = /*P2*V**/M;
+        //Matrix4x4 MVP = /*P2*V**/M;
 
 
-        uint[] bufOut = new uint[/*m_pointsCount*//*262144*/m_indexComputeBuffers[m_frameIndex].count];
+        //uint[] bufOut = new uint[/*m_pointsCount*//*262144*/m_indexComputeBuffers[m_frameIndex].count];
 
         Vector4 trans = transform.position;
         GpuSort.BitonicSort32(m_indexComputeBuffers[m_frameIndex], m_computeBufferTemp, m_pointsBuffer, trans, pointRenderer.localToWorldMatrix, Camera.main.worldToCameraMatrix);
-        m_indexComputeBuffers[m_frameIndex].GetData(bufOut);
+        //m_indexComputeBuffers[m_frameIndex].GetData(bufOut);
 
 
         pointRenderer.material.SetPass(0);
-        pointRenderer.material.SetMatrix("model", /*pointRenderer.localToWorldMatrix*/MVP);
+        pointRenderer.material.SetMatrix("model", /*pointRenderer.localToWorldMatrix*/M);
 
         //Debug.Log(m_indexComputeBuffers[m_frameIndex].count);
 

@@ -15,7 +15,7 @@ Shader "Unlit/SortingTest" {
 	SubShader {
 		Tags{ "Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent" }
 		//Tags{"RenderType" = "Opaque"}
-		//Blend SrcAlpha OneMinusSrcAlpha
+		Blend SrcAlpha OneMinusSrcAlpha
 		//Cull Off
 		ZWrite Off
 		//LOD 200
@@ -126,7 +126,7 @@ Shader "Unlit/SortingTest" {
 
 				//o.vertex = mul(UNITY_MATRIX_M, float4(-_Points[index], 1.0));
 				o.vertex = mul(model, float4(-_Points[index], 1.0));
-				o.vertex += trans;
+				//o.vertex += trans;
 				o.vertex = mul(UNITY_MATRIX_VP, o.vertex);
 
 				//float4 vertWorld = mul(UNITY_MATRIX_M, float4(-_Points[index], 1.0)); //these three work
@@ -161,7 +161,7 @@ Shader "Unlit/SortingTest" {
 				//o.color = fixed4(/*i.color*/fixed3(0.5,0.1,0.1), albedo*0.0525);
 
 				//good for fireball:
-				o.color = fixed4(i.color, albedo/**0.125*/);
+				o.color = fixed4(i.color, albedo*0.25);
 				return o;
 			}
 			ENDCG
