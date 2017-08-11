@@ -41,6 +41,14 @@ cbuffer modelMatrix
 	float4 row3;
 };
 
+cbuffer viewMatrix
+{
+	float4 rowView0;
+	float4 rowView1;
+	float4 rowView2;
+	float4 rowView3;
+};
+
 struct indexDepth {
 	uint indexAndColor;
 	float depth;
@@ -80,11 +88,17 @@ void BitonicSort( uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID,  uin
 	//uint index = value;//value / 256;//(value >> 8);
 	/*shared_data[GI].index = index;*/
 
-	/*matrix model = matrix(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	matrix model = matrix(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 	model[0] = row0;
 	model[1] = row1;
 	model[2] = row2;
-	model[3] = row3;*/
+	model[3] = row3;
+
+	matrix view = matrix(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	view[0] = rowView0;
+	view[1] = rowView1;
+	view[2] = rowView2;
+	view[3] = rowView3;
 
 	//matrix a = matrix(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 	//float3 b = float3(0, 0, 0);
@@ -101,10 +115,25 @@ void BitonicSort( uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID,  uin
 
 	//float depth = length(_Points[index]);//vertexPos.z;
 
-	//float3 transVert = mul(model, -_Points[indexAndColor >> 8]).xyz;
+	//float4 transVert = mul(model, -_Points[indexAndColor >> 8]);
+
+	//transVert += trans;
+	//o.vertex = UnityWorldToClipPos(-_Points[index]);
+
+	//transVert = UnityObjectToClipPos(transVert.xyz);
+
+
+	float4 transVert = mul(model, float4(-_Points[indexAndColor >> 8], 1.0));
+	transVert += trans;
+	//transVert = mul(view, transVert);
+
+
+	//transVert = mul(UNITY_MATRIX_VP, transVert);
+
+	//float3 transVert = -_Points[indexAndColor >> 8];//mul(UNITY_MATRIX_MVP, float4(-_Points[indexAndColor >> 8], 1.0));
 
 	shared_data[GI].indexAndColor = indexAndColor;
-	shared_data[GI].depth = -distance(camPos, -_Points[indexAndColor >> 8]);//float(DTid.x);//_Points[index].z;//;//depth;
+	shared_data[GI].depth = -distance(camPos, /*-_Points[indexAndColor >> 8]*/transVert.xyz);//float(DTid.x);//_Points[index].z;//;//depth;
 
 	//shared_data[GI].depth = _Points[index];
 

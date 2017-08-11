@@ -1,5 +1,9 @@
 ﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
 
+// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
 Shader "Unlit/SortingTest" {
 	Properties{
 		_MainTex("Texture", 2D) = "white" {}
@@ -116,20 +120,25 @@ Shader "Unlit/SortingTest" {
 				//_Points[v.iid] += float3(0.1, 0.1, 0.1);
 
 				//Correcting the translation:
-				//o.vertex = mul(model, -_Points[index]);
+				//o.vertex = mul(model, float4(-_Points[index], 1.0));
 				//o.vertex += trans;
 				//o.vertex = UnityWorldToClipPos(-_Points[index]);
 
-				o.vertex = UnityObjectToClipPos(-_Points[index]);
+				//o.vertex = mul(UNITY_MATRIX_M, float4(-_Points[index], 1.0));
+				o.vertex = mul(model, float4(-_Points[index], 1.0));
+				o.vertex += trans;
+				o.vertex = mul(UNITY_MATRIX_VP, o.vertex);
 
-				//o.vertex = UnityObjectToClipPos(_Points[index]*1000.0);
+				//float4 vertWorld = mul(UNITY_MATRIX_M, float4(-_Points[index], 1.0)); //these three work
+				//float4 vertView = mul(UNITY_MATRIX_V, vertWorld);						//these three work
+				//o.vertex = mul(UNITY_MATRIX_P, vertView);								//these three work (vector needs to be float4!)
 
-
-				//o.vertex = mul(mvp, _Points[index]);
+				//float3 vertWorld = UnityObjectToViewPos(-_Points[index]); //these two work
+				//o.vertex = mul(UNITY_MATRIX_P, float4(vertWorld, 1.0));  //these two work (vector needs to be float4!)
 
 				//Translating the vertices in a quad shape:
 				//half size = 0.4 * exp(1.0 - value) /** modifier*/;
-				half size = 0.4 /** exp(1.0 - colorValue)*/ /** modifier*/;
+				half size = 0.02 /** exp(1.0 - colorValue)*/ /** modifier*/;
 				//half size = 0.15 * exp(value) /** modifier*/;
 				half2 quadSize = half2(size, size * aspect);
 				half2 deltaSize = quadCoords[quad_vertexID] * quadSize;

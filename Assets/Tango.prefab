@@ -191,7 +191,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &1333494861756472
 GameObject:
   m_ObjectHideFlags: 1
@@ -471,7 +471,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &1892828764589226
 GameObject:
   m_ObjectHideFlags: 0
@@ -642,8 +642,8 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1892828764589226}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 1.75}
-  m_LocalScale: {x: 0.05, y: 0.05, z: 0.05}
+  m_LocalPosition: {x: -5.3, y: 0, z: -11}
+  m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
   m_Children:
   - {fileID: 4528505032372560}
   - {fileID: 4186584974033402}
@@ -771,7 +771,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1690685582529020}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.5, y: 0.01, z: 4.48}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
   m_Children:
   - {fileID: 4554318442976844}
@@ -860,13 +860,13 @@ Transform:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1673527247082710}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: 0.055434883, y: 0.7721751, z: -0.06801833, w: 0.62932205}
+  m_LocalPosition: {x: -10.937, y: -0.314, z: -22.078}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 4444389419694198}
   m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 10.068, y: 101.64, z: 0}
 --- !u!4 &4819734311546432
 Transform:
   m_ObjectHideFlags: 1
@@ -939,7 +939,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.05
-  far clip plane: 10
+  far clip plane: 1000
   field of view: 37.8
   orthographic: 0
   orthographic size: 5
@@ -1542,7 +1542,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 50532afcd60979e4a9ed65ebf634d2af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_valueDataPath: OilRigData
+  m_valueDataPath: OilRigDataIndexed
   m_lastFrameIndex: 29
   m_frameSpeed: 5
   m_textureSideSizePower: 12
@@ -1613,7 +1613,7 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1673527247082710}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 290e164cc36e44fb594568b2910f8a67, type: 3}
   m_Name: 
@@ -1654,7 +1654,7 @@ MonoBehaviour:
   m_enableVideoOverlay: 1
   m_videoOverlayUseTextureMethod: 1
   m_videoOverlayUseYUVTextureIdMethod: 0
-  m_videoOverlayUseByteBufferMethod: 1
+  m_videoOverlayUseByteBufferMethod: 0
   m_keepScreenAwake: 1
   m_adjustScreenResolution: 1
   m_targetResolution: 720
