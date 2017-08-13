@@ -1,0 +1,110 @@
+//--------------------------------------------------------------------------------------
+// File: ComputeShaderSort11.hlsl
+//
+// This file contains the compute shaders to perform GPU sorting using DirectX 11.
+// 
+// Copyright (c) Microsoft Corporation. All rights reserved.
+//--------------------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------------
+// Pragmas
+//--------------------------------------------------------------------------------------
+
+GLSLPROGRAM
+
+	#pragma kernel GLSLBitonicSort
+
+	#version 310 es
+
+	#define BITONIC_BLOCK_SIZE 512
+	#define TRANSPOSE_BLOCK_SIZE 32
+
+	layout(std140) uniform CB {
+		uint g_iLevel;
+		uint g_iLevelMask;
+		uint g_iWidth;
+		uint g_iHeight;
+	};
+
+	layout(std140) uniform CGlobals {
+		mat4 hlslcc_mtx4x4model;
+		vec3 camPos; 
+	};
+
+	//--------------------------------------------------------------------------------------
+	// Structured Buffers
+	//--------------------------------------------------------------------------------------
+	struct _Points_type {
+		float[3] value;
+	};
+
+	layout(std430, binding = 1) readonly buffer _Points {
+		_Points_type _Points_buf[];
+	};
+
+	layout(std430, binding = 0) buffer Data {
+		uint Data_buf[];
+	};
+
+
+	//--------------------------------------------------------------------------------------
+	// Bitonic Sort Compute Shader
+	//--------------------------------------------------------------------------------------
+	//shared indexDepth shared_data[BITONIC_BLOCK_SIZE]; 
+
+	shared struct indexDepth {
+		uint indexAndColor;
+		float depth;
+	} shared_data[BITONIC_BLOCK_SIZE];
+
+
+	layout(local_size_x = BITONIC_BLOCK_SIZE, local_size_y = 1, local_size_z = 1) in;
+	void main() {
+		uint globalID = gl_GlobalInvocationID.x;
+		uint GI = gl_LocalInvocationIndex;
+
+		// Load shared data
+		uint indexAndColor = Data_buf[globalID]; 
+
+		float[3] bla = _Points_buf[indexAndColor >> 8].value;
+		vec3 toFloat = vec3(bla[0], bla[1], bla[2]);
+
+		vec4 transVert = hlslcc_mtx4x4model *  vec4(-toFloat, 1.0);
+
+		shared_data[GI].indexAndColor = indexAndColor;
+		shared_data[GI].depth = -distance(camPos, transVert.xyz);
+
+		memoryBarrierShared();
+		barrier();
+
+		//Desktop:
+		//barrier();
+
+		// Sort the shared data
+		for (uint j = g_iLevel >> 1; j > 0u; j >>= 1)
+		{
+			bool Test = (shared_data[GI & ~j].depth <= shared_data[GI | j].depth) == bool(g_iLevelMask & globalID);
+			indexDepth result = shared_data[GI ^ j];
+
+			memoryBarrierShared();
+			barrier();
+			
+			//Desktop:
+			//memoryBarrierShared();
+
+			if (Test) {
+				shared_data[GI].indexAndColor = result.indexAndColor;
+				shared_data[GI].depth = result.depth;
+			}
+
+			memoryBarrierShared();
+			barrier();
+
+			//Desktop:
+			//barrier();
+		}
+
+		// Store shared data
+		Data_buf[globalID] = shared_data[GI].indexAndColor;
+	}
+ENDGLSL
