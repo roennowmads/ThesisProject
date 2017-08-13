@@ -31,7 +31,10 @@ public class PointCloud : MonoBehaviour {
     private float m_currentTime = 0;
     private int m_frameIndex = 0;
 
+    public ComputeShader m_radixShader;
     private int m_kernel;
+
+    private RadixSort radixSort;
 
     Texture2D createColorLookupTexture() {
         int numberOfValues = m_lookupTextureSize;
@@ -327,6 +330,38 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.material.SetInt("_Magnitude", m_textureSideSizePower);
         pointRenderer.material.SetInt("_TextureSwitchFrameNumber", m_textureSwitchFrameNumber);
 
+        m_kernel = m_radixShader.FindKernel("CSMain");
+
+        uint[] bufInRadix = new uint[16];
+
+        //uint[] bufInRadix = { 5, 10, 2, 1, 0, 20, 30, 45, 12, 63, 48, 3, 6, 32, 87, 39 };
+
+        for (uint i = 0; i < bufInRadix.Length; i++)
+        {
+            bufInRadix[i] = (uint)bufInRadix.Length - i;
+        }
+
+        uint[] bufOutRadix = new uint[bufInRadix.Length];
+
+        ComputeBuffer m_computeBufferIn = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
+        m_computeBufferIn.SetData(bufInRadix);
+
+        ComputeBuffer m_computeBufferOut = new ComputeBuffer(bufOutRadix.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
+        m_computeBufferOut.SetData(bufOutRadix);
+
+        //Vector3 viewDir = new Vector3();
+        //radixSort = new RadixSort(16, 128);
+
+        //radixSort.sort(m_computeBufferIn, m_computeBufferOut, -viewDir, -2.0f, 2.0f);
+
+         m_radixShader.SetBuffer(m_kernel, "Input", m_computeBufferIn);
+         m_radixShader.SetBuffer(m_kernel, "Result", m_computeBufferOut);
+         m_radixShader.Dispatch(m_kernel, 2, 1, 1);
+         m_radixShader.SetBuffer(m_kernel, "Input", m_computeBufferOut);
+         m_radixShader.SetBuffer(m_kernel, "Result", m_computeBufferIn);
+         m_radixShader.Dispatch(m_kernel, 2, 1, 1);
+
+         m_computeBufferIn.GetData(bufOutRadix);
 
         /*uint[] bufIn = new uint[pointPositions.Length];
         //uint[] bufOut = new uint[16];

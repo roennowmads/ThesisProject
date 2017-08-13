@@ -372,6 +372,11 @@ Prefab:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 114084143669072776, guid: 94b76e50c03828949a1995c8df14f660,
+        type: 2}
+      propertyPath: m_radixShader
+      value: 
+      objectReference: {fileID: 7200000, guid: 1b1d0e2d23f5cfb4db95e9777bb6315e, type: 3}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 94b76e50c03828949a1995c8df14f660, type: 2}
   m_IsPrefabParent: 0
