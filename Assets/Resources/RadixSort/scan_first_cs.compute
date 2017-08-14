@@ -106,10 +106,6 @@ GLSLPROGRAM
 		Particle in_points[];
 	};
 
-	layout(std430, binding = 1) readonly buffer _Points {
-		float[3] _Points_buf[];
-	};
-
 	layout(binding = 1, std430) writeonly buffer OutData
 	{
 		uvec4 outbuf[];
@@ -123,6 +119,18 @@ GLSLPROGRAM
 	layout(binding = 3, std430) writeonly buffer FlagsData
 	{
 		uvec4 flags[];
+	};
+
+	struct _Points_type {
+		float[3] value;
+	};
+
+	layout(std430, binding = 4) readonly buffer _Points {
+		_Points_type _Points_buf[];
+	};
+
+	layout(std430, binding = 5) buffer Indices {
+		uint Index_buf[];
 	};
 
 	shared uvec4 sharedData[gl_WorkGroupSize.x];
@@ -155,10 +163,10 @@ GLSLPROGRAM
 		uint indexAndColor3 = Index_buf[globalID + 3u];
 
 
-		float[3] vertPosArr0 = _Points_buf[indexAndColor0 >> 8];
-		float[3] vertPosArr1 = _Points_buf[indexAndColor1 >> 8];
-		float[3] vertPosArr2 = _Points_buf[indexAndColor2 >> 8];
-		float[3] vertPosArr3 = _Points_buf[indexAndColor3 >> 8];
+		float[3] vertPosArr0 = _Points_buf[indexAndColor0 >> 8].value;
+		float[3] vertPosArr1 = _Points_buf[indexAndColor1 >> 8].value;
+		float[3] vertPosArr2 = _Points_buf[indexAndColor2 >> 8].value;
+		float[3] vertPosArr3 = _Points_buf[indexAndColor3 >> 8].value;
 
 		vec4 vertPos0 = vec4(vertPosArr0[0], vertPosArr0[1], vertPosArr0[2], -1.0);
 		vec4 vertPos1 = vec4(vertPosArr1[0], vertPosArr1[1], vertPosArr1[2], -1.0);

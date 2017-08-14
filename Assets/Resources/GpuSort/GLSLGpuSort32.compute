@@ -34,12 +34,12 @@ GLSLPROGRAM
 	//--------------------------------------------------------------------------------------
 	// Structured Buffers
 	//--------------------------------------------------------------------------------------
-	/*struct _Points_type {
+	struct _Points_type {
 		float[3] value;
-	};*/
+	};
 
 	layout(std430, binding = 1) readonly buffer _Points {
-		float[3] _Points_buf[];
+		_Points_type _Points_buf[];
 	};
 
 	layout(std430, binding = 0) buffer Data {
@@ -66,7 +66,7 @@ GLSLPROGRAM
 		// Load shared data
 		uint indexAndColor = Data_buf[globalID]; 
 
-		float[3] vertPosArr = _Points_buf[indexAndColor >> 8];
+		float[3] vertPosArr = _Points_buf[indexAndColor >> 8].value;
 		vec4 vertPos = vec4(vertPosArr[0], vertPosArr[1], vertPosArr[2], -1.0);
 		vec3 transVert = (hlslcc_mtx4x4model * -vertPos).xyz;
 
