@@ -62,7 +62,8 @@ void BitonicSort( uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID,  uin
 	float4 transVert = mul(model, float4(-_Points[indexAndColor >> 8], 1.0));
 
 	shared_data[GI].indexAndColor = indexAndColor;
-	shared_data[GI].depth = -distance(camPos, transVert.xyz);
+	//shared_data[GI].depth = -distance(camPos, transVert.xyz);
+	shared_data[GI].depth = dot(camPos, transVert.xyz);
 
     GroupMemoryBarrierWithGroupSync();
     

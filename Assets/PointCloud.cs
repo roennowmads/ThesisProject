@@ -319,7 +319,7 @@ public class PointCloud : MonoBehaviour {
         
         m_pointsBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
         m_pointsBuffer.SetData(points);
-        pointRenderer.material.SetBuffer ("_Points", m_pointsBuffer);
+        pointRenderer.material.SetBuffer("_Points", m_pointsBuffer);
 
         //pointRenderer.material.SetInt("_PointsCount", /*m_pointsCount*/pointPositions.Length);
         pointRenderer.material.SetInt("_PointsCount", m_pointsCount);
@@ -332,7 +332,7 @@ public class PointCloud : MonoBehaviour {
 
         m_kernel = m_radixShader.FindKernel("CSMain");
 
-        uint[] bufInRadix = new uint[16];
+        uint[] bufInRadix = new uint[256];
 
         //uint[] bufInRadix = { 5, 10, 2, 1, 0, 20, 30, 45, 12, 63, 48, 3, 6, 32, 87, 39 };
 
@@ -349,10 +349,12 @@ public class PointCloud : MonoBehaviour {
         ComputeBuffer m_computeBufferOut = new ComputeBuffer(bufOutRadix.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
         m_computeBufferOut.SetData(bufOutRadix);
 
-        //Vector3 viewDir = new Vector3();
-        //radixSort = new RadixSort(16, 128);
+        Vector3 viewDir = new Vector3(0.0f, 0.0f, 1.0f);
+        radixSort = new RadixSort(256, 128);
 
-        //radixSort.sort(m_computeBufferIn, m_computeBufferOut, -viewDir, -2.0f, 2.0f);
+        radixSort.sort(m_computeBufferIn, m_computeBufferOut, -viewDir, -2.0f, 2.0f);
+        m_computeBufferIn.GetData(bufInRadix);
+        m_computeBufferOut.GetData(bufOutRadix);
 
          m_radixShader.SetBuffer(m_kernel, "Input", m_computeBufferIn);
          m_radixShader.SetBuffer(m_kernel, "Result", m_computeBufferOut);

@@ -81,8 +81,10 @@ static public class GpuSort
         shader.SetVector("row1", transMatrix.GetRow(1));
         shader.SetVector("row2", transMatrix.GetRow(2));
         shader.SetVector("row3", transMatrix.GetRow(3));*/
-
-        shader.SetVector("camPos", Camera.main.transform.position);
+        
+        //Debug.Log(viewDir);
+        //shader.SetVector("camPos", Camera.main.transform.position);
+        shader.SetVector("camPos", -Camera.main.transform.forward);     //camera view direction DOT point position == distance to camera.
 
         shader.SetFloats("model", transMatrix[0], transMatrix[1], transMatrix[2], transMatrix[3], 
                                   transMatrix[4], transMatrix[5], transMatrix[6], transMatrix[7],
@@ -99,7 +101,6 @@ static public class GpuSort
             
             // Sort the row data
             shader.SetBuffer(kSort, "Data", inBuffer);
-            shader.SetBuffer(kSort, "_Points", pointsBuffer);
             shader.Dispatch(kSort, (int) (NUM_ELEMENTS / BITONIC_BLOCK_SIZE), 1, 1);
         }
 
@@ -114,7 +115,6 @@ static public class GpuSort
             shader2.Dispatch(kTranspose, (int) (MATRIX_WIDTH / TRANSPOSE_BLOCK_SIZE), (int) (MATRIX_HEIGHT / TRANSPOSE_BLOCK_SIZE), 1);
 
             shader.SetBuffer(kSort, "Data", tmpBuffer);
-            shader.SetBuffer(kSort, "_Points", pointsBuffer);
             shader.Dispatch(kSort, (int) (NUM_ELEMENTS / BITONIC_BLOCK_SIZE), 1, 1);
 
             // Transpose the data from buffer 2 back into buffer 1
@@ -124,7 +124,6 @@ static public class GpuSort
             shader2.Dispatch(kTranspose, (int) (MATRIX_HEIGHT / TRANSPOSE_BLOCK_SIZE), (int) (MATRIX_WIDTH / TRANSPOSE_BLOCK_SIZE), 1);
 
             shader.SetBuffer(kSort, "Data", inBuffer);
-            shader.SetBuffer(kSort, "_Points", pointsBuffer);
             shader.Dispatch(kSort, (int) (NUM_ELEMENTS / BITONIC_BLOCK_SIZE), 1, 1);
         }
     }

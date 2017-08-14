@@ -5,7 +5,7 @@ using UnityEngine;
 public class RadixSort  {
 
     ComputeShader scanProg, scanFirstProg, resolveProg, reorderProg;
-    int elemCount, blockSize, scanLevelCount;
+    int m_elemCount, m_blockSize, m_scanLevelCount;
     ComputeBuffer sortedBuffer, flagsBuffer;
 
     List<ComputeBuffer> scanBuffers, sumBuffers;
@@ -13,13 +13,15 @@ public class RadixSort  {
 
     public RadixSort (int elemCount, int blockSize)
     {
-
+        m_elemCount = elemCount;
+        m_blockSize = blockSize;
         //auto fmt = gl::GlslProg::Format();
 
         scanProg = (ComputeShader)Resources.Load("RadixSort/scan_cs", typeof(ComputeShader));
         scanFirstProg = (ComputeShader)Resources.Load("RadixSort/scan_first_cs", typeof(ComputeShader));
         resolveProg = (ComputeShader)Resources.Load("RadixSort/scan_resolve_cs", typeof(ComputeShader));
         reorderProg = (ComputeShader)Resources.Load("RadixSort/scan_reorder_cs", typeof(ComputeShader));
+        
 
         scanKernel = scanProg.FindKernel("scan");
         scanFirstKernel = scanFirstProg.FindKernel("scanFirst");
@@ -27,12 +29,12 @@ public class RadixSort  {
         reorderKernel = reorderProg.FindKernel("scanReorder");
 
         {
-            scanLevelCount = 0;
+            m_scanLevelCount = 0;
 
             int size = elemCount;
             while (size > 1)
             {
-                scanLevelCount++;
+                m_scanLevelCount++;
                 size = (size + blockSize - 1) / blockSize;
             }
         }
@@ -41,24 +43,24 @@ public class RadixSort  {
         flagsBuffer = new ComputeBuffer(elemCount, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);//gl::Ssbo::create(elemCount * sizeof(GLuint), nullptr, GL_DYNAMIC_COPY);
 
         {
-            scanBuffers = new List<ComputeBuffer>(scanLevelCount);
-            sumBuffers = new List<ComputeBuffer>(scanLevelCount);
+            scanBuffers = new List<ComputeBuffer>(/*scanLevelCount*/);
+            sumBuffers = new List<ComputeBuffer>(/*scanLevelCount*/);
 
             int blockCount = elemCount / blockSize;
-            for (uint i = 0; i < scanLevelCount; ++i)
+            for (uint i = 0; i < m_scanLevelCount; ++i)
             {
-                scanBuffers.Add(new ComputeBuffer(blockCount * blockSize * 4, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default));
+                scanBuffers.Add(new ComputeBuffer(blockCount * blockSize, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default));
                 blockCount = (blockCount + blockSize - 1) / blockSize;
-                sumBuffers.Add(new ComputeBuffer(blockCount * blockSize * 4, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default));
+                sumBuffers.Add(new ComputeBuffer(blockCount * blockSize, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default));
             }
         }
     }
 
     void sortBits(ComputeBuffer inputBuf, ComputeBuffer outputBuf, int bitOffset, Vector3 axis, float zMin, float zMax) {
       // Keep track of which dispatch sizes we used to make the resolve steps simpler.
-      List<int> dispatchSizes = new List<int>(scanLevelCount);
+      List<int> dispatchSizes = new List<int>();
 
-      int blockCount = elemCount / blockSize;
+      int blockCount = m_elemCount / m_blockSize;
 
       {
             // First pass. Compute 16-bit unsigned depth and apply first pass of scan algorithm.
@@ -78,7 +80,7 @@ public class RadixSort  {
             scanFirstProg.SetFloat("zMin", zMin);
             scanFirstProg.SetFloat("zMax", zMax);
 
-            dispatchSizes[0] = blockCount;
+            dispatchSizes.Add(blockCount);
             scanFirstProg.Dispatch(scanFirstKernel, blockCount, 1, 1);
 
             //scanFirstProg->bind();
@@ -98,9 +100,9 @@ public class RadixSort  {
 
             //scanProg->bind();
 
-            for (int i = 1; i<scanLevelCount; ++i) {
-                blockCount = (blockCount + blockSize - 1) / blockSize;
-                dispatchSizes[i] = blockCount;
+            for (int i = 1; i < m_scanLevelCount; ++i) {
+                blockCount = (blockCount + m_blockSize - 1) / m_blockSize;
+                dispatchSizes.Add(blockCount);
 
                 scanProg.SetBuffer(scanKernel, "Data", sumBuffers[i - 1]);
 
@@ -139,7 +141,7 @@ public class RadixSort  {
 
             //resolveProg->bind();
 
-            for (int i = scanLevelCount - 1; i > 0; --i) {
+            for (int i = m_scanLevelCount - 1; i > 0; --i) {
                 if (dispatchSizes[i] <= 1) { // No need to resolve, buf_sums[i - 1] is already correct
                     continue;
                 }
@@ -170,7 +172,7 @@ public class RadixSort  {
             reorderProg.SetBuffer(reorderKernel, "OutSortData", outputBuf);
             reorderProg.SetBuffer(reorderKernel, "FlagsData", flagsBuffer);
 
-            reorderProg.Dispatch(reorderKernel, elemCount / blockSize, 1, 1);
+            reorderProg.Dispatch(reorderKernel, m_elemCount / m_blockSize, 1, 1);
 
             //glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, inputBufId);
             //glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, scanBuffers[0]->getId());
