@@ -47,7 +47,7 @@ GLSLPROGRAM
 	 */
 
 	struct Particle {
-		vec4 pos, rest;
+		vec4 pos;
 	};
 
 	layout(local_size_x = 32) in; // We work on 4 items at once, so this value should be BLOCK_SIZE / 4.

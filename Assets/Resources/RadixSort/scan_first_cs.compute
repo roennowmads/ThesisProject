@@ -96,7 +96,7 @@ GLSLPROGRAM
 	 */
 
 	struct Particle {
-		vec4 pos, rest;
+		vec4 pos;
 	};
 
 	layout(local_size_x = 32) in; // We work on 4 items at once, so this value should be BLOCK_SIZE / 4.
@@ -104,6 +104,10 @@ GLSLPROGRAM
 	layout(binding = 0, std430) readonly buffer Data
 	{
 		Particle in_points[];
+	};
+
+	layout(std430, binding = 1) readonly buffer _Points {
+		float[3] _Points_buf[];
 	};
 
 	layout(binding = 1, std430) writeonly buffer OutData
@@ -128,6 +132,11 @@ GLSLPROGRAM
 	uniform float zMin;
 	uniform float zMax;
 
+	layout(std140) uniform CGlobals{
+		mat4 hlslcc_mtx4x4model;
+		vec3 camPos;
+	};
+
 	/*
 	 * The particles are sorted by increasing distance along the sorting axis.
 	 * We find the distance by a simple dot product. The sorting algorithm
@@ -139,12 +148,44 @@ GLSLPROGRAM
 	 */
 	uvec4 decodeKeys(uint index)
 	{
+		uint globalID = gl_GlobalInvocationID.x;
+		uint indexAndColor0 = Index_buf[globalID + 0u];
+		uint indexAndColor1 = Index_buf[globalID + 1u];
+		uint indexAndColor2 = Index_buf[globalID + 2u];
+		uint indexAndColor3 = Index_buf[globalID + 3u];
+
+
+		float[3] vertPosArr0 = _Points_buf[indexAndColor0 >> 8];
+		float[3] vertPosArr1 = _Points_buf[indexAndColor1 >> 8];
+		float[3] vertPosArr2 = _Points_buf[indexAndColor2 >> 8];
+		float[3] vertPosArr3 = _Points_buf[indexAndColor3 >> 8];
+
+		vec4 vertPos0 = vec4(vertPosArr0[0], vertPosArr0[1], vertPosArr0[2], -1.0);
+		vec4 vertPos1 = vec4(vertPosArr1[0], vertPosArr1[1], vertPosArr1[2], -1.0);
+		vec4 vertPos2 = vec4(vertPosArr2[0], vertPosArr2[1], vertPosArr2[2], -1.0);
+		vec4 vertPos3 = vec4(vertPosArr3[0], vertPosArr3[1], vertPosArr3[2], -1.0);
+
+		vec3 transVert0 = (hlslcc_mtx4x4model * -vertPos0).xyz;
+		vec3 transVert1 = (hlslcc_mtx4x4model * -vertPos1).xyz;
+		vec3 transVert2 = (hlslcc_mtx4x4model * -vertPos2).xyz; 
+		vec3 transVert3 = (hlslcc_mtx4x4model * -vertPos3).xyz;
+
+		//shared_data[GI].depths.x = dot(camPos, transVert0);
+		//shared_data[GI].depths.y = dot(camPos, transVert1);
+		//shared_data[GI].depths.z = dot(camPos, transVert2);
+		//shared_data[GI].depths.w = dot(camPos, transVert3);
+
 		vec4 z = vec4(
-				dot(in_points[4u * index + 0u].pos.xyz, axis),
-				dot(in_points[4u * index + 1u].pos.xyz, axis),
-				dot(in_points[4u * index + 2u].pos.xyz, axis),
-				dot(in_points[4u * index + 3u].pos.xyz, axis));
-		z = 65535.0 * clamp((z - zMin) / (zMax - zMin), vec4(0.0), vec4(1.0));
+			dot(camPos, transVert0),
+			dot(camPos, transVert1),
+			dot(camPos, transVert2),
+			dot(camPos, transVert3));
+				//dot(in_points[4u * index + 0u].pos.xyz, axis), //each of these four lines is a particle
+				//dot(in_points[4u * index + 1u].pos.xyz, axis),
+				//dot(in_points[4u * index + 2u].pos.xyz, axis),
+				//dot(in_points[4u * index + 3u].pos.xyz, axis));
+
+		z = 65535.0 * clamp((z - zMin) / (zMax - zMin), vec4(0.0), vec4(1.0)); //translate and scale values and clamp them between 0 and 1, then multiply by 65535.
 		return bitfieldExtract(uvec4(z), bitOffset, 2);
 	}
 
@@ -153,7 +194,8 @@ GLSLPROGRAM
 		uint ident = gl_GlobalInvocationID.x;
 		uint local_ident = gl_LocalInvocationID.x;
 
-		uvec4 flagdata = decodeKeys(ident);
+		uvec4 flagdata = decodeKeys(ident); // it uses ident to look up four particles, how does this not overlap? AH, they multiply by 4u in decodeKeys.
+
 		// Save the flags data for later. Will be used in scan_reorder.cs.
 		// We could recompute in scan_reorder.cs of course if we wanted.
 		flags[ident] = flagdata;

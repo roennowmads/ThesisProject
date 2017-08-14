@@ -2,6 +2,10 @@
 using System.Runtime.InteropServices;
 using UnityEngine;
 
+
+//source:
+//https://github.com/notlion/Splat
+
 public class RadixSort  {
 
     ComputeShader scanProg, scanFirstProg, resolveProg, reorderProg;

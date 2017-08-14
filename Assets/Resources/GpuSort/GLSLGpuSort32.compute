@@ -68,7 +68,6 @@ GLSLPROGRAM
 
 		float[3] vertPosArr = _Points_buf[indexAndColor >> 8];
 		vec4 vertPos = vec4(vertPosArr[0], vertPosArr[1], vertPosArr[2], -1.0);
-
 		vec3 transVert = (hlslcc_mtx4x4model * -vertPos).xyz;
 
 		shared_data[GI].indexAndColor = indexAndColor;
