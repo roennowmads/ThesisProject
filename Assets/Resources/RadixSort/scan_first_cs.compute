@@ -2,7 +2,7 @@ GLSLPROGRAM
 
 	#pragma kernel scanFirst
 
-	#version 430 core
+	#version 310 es
 
 	/*
 	 * This proprietary software may be used only as
@@ -95,54 +95,58 @@ GLSLPROGRAM
 	 * The difference between these is trivially resolved in scan_reorder.cs.
 	 */
 
-	struct Particle {
+	/*struct Particle {
 		vec4 pos;
-	};
+	};*/
 
 	layout(local_size_x = 32) in; // We work on 4 items at once, so this value should be BLOCK_SIZE / 4.
 	#define NUM_STEPS 4u
-	layout(binding = 0, std430) readonly buffer Data
+
+	/*struct _Points_type {
+		float[3] value;
+	};
+
+	layout(binding = 0, std430) readonly buffer _Points {
+		_Points_type _Points_buf[];
+	};*/
+
+	layout(binding = 0, std430) buffer IndicesIn {
+		uint Index_buf[];
+	};
+
+	/*layout(binding = 0, std430) readonly buffer Data
 	{
 		Particle in_points[];
+	};*/
+
+	struct _Uint4_type {
+		uint[4] value;
 	};
 
 	layout(binding = 1, std430) writeonly buffer OutData
 	{
-		uvec4 outbuf[];
+		_Uint4_type outbuf[];
 	};
 
 	layout(binding = 2, std430) writeonly buffer BlockSumData
 	{
-		uvec4 blocksum[];
+		_Uint4_type blocksum[];
 	};
 
 	layout(binding = 3, std430) writeonly buffer FlagsData
 	{
-		uvec4 flags[];
-	};
-
-	struct _Points_type {
-		float[3] value;
-	};
-
-	layout(std430, binding = 4) readonly buffer _Points {
-		_Points_type _Points_buf[];
-	};
-
-	layout(std430, binding = 5) buffer Indices {
-		uint Index_buf[];
+		_Uint4_type flags[];
 	};
 
 	shared uvec4 sharedData[gl_WorkGroupSize.x];
 
-	uniform int bitOffset;
-	uniform vec3 axis;
-	uniform float zMin;
-	uniform float zMax;
-
 	layout(std140) uniform CGlobals{
 		mat4 hlslcc_mtx4x4model;
 		vec3 camPos;
+		int bitOffset;
+		vec3 axis;
+		float zMin;
+		float zMax;
 	};
 
 	/*
@@ -157,13 +161,13 @@ GLSLPROGRAM
 	uvec4 decodeKeys(uint index)
 	{
 		uint globalID = gl_GlobalInvocationID.x;
-		uint indexAndColor0 = Index_buf[globalID + 0u];
-		uint indexAndColor1 = Index_buf[globalID + 1u];
-		uint indexAndColor2 = Index_buf[globalID + 2u];
-		uint indexAndColor3 = Index_buf[globalID + 3u];
+		uint indexAndColor0 = Index_buf[4u * globalID + 0u]; // we use ident to look up four particles, how does this not overlap? AH, multiply by 4u in decodeKeys.
+		uint indexAndColor1 = Index_buf[4u * globalID + 1u];
+		uint indexAndColor2 = Index_buf[4u * globalID + 2u];
+		uint indexAndColor3 = Index_buf[4u * globalID + 3u];
 
 
-		float[3] vertPosArr0 = _Points_buf[indexAndColor0 >> 8].value;
+		/*float[3] vertPosArr0 = _Points_buf[indexAndColor0 >> 8].value;
 		float[3] vertPosArr1 = _Points_buf[indexAndColor1 >> 8].value;
 		float[3] vertPosArr2 = _Points_buf[indexAndColor2 >> 8].value;
 		float[3] vertPosArr3 = _Points_buf[indexAndColor3 >> 8].value;
@@ -178,59 +182,72 @@ GLSLPROGRAM
 		vec3 transVert2 = (hlslcc_mtx4x4model * -vertPos2).xyz; 
 		vec3 transVert3 = (hlslcc_mtx4x4model * -vertPos3).xyz;
 
-		//shared_data[GI].depths.x = dot(camPos, transVert0);
-		//shared_data[GI].depths.y = dot(camPos, transVert1);
-		//shared_data[GI].depths.z = dot(camPos, transVert2);
-		//shared_data[GI].depths.w = dot(camPos, transVert3);
-
 		vec4 z = vec4(
-			dot(camPos, transVert0),
-			dot(camPos, transVert1),
-			dot(camPos, transVert2),
-			dot(camPos, transVert3));
+			dot(transVert0, camPos),  //each of these four lines is a particle
+			dot(transVert1, camPos),
+			dot(transVert2, camPos),
+			dot(transVert3, camPos));
+
 				//dot(in_points[4u * index + 0u].pos.xyz, axis), //each of these four lines is a particle
 				//dot(in_points[4u * index + 1u].pos.xyz, axis),
 				//dot(in_points[4u * index + 2u].pos.xyz, axis),
 				//dot(in_points[4u * index + 3u].pos.xyz, axis));
+				 
+		uvec4 zInt = floatBitsToUint(z);*/
 
-		z = 65535.0 * clamp((z - zMin) / (zMax - zMin), vec4(0.0), vec4(1.0)); //translate and scale values and clamp them between 0 and 1, then multiply by 65535.
-		return bitfieldExtract(uvec4(z), bitOffset, 2);
+		uvec4 zInt = uvec4(indexAndColor0 * 256u, indexAndColor1 * 256u, indexAndColor2 * 256u, indexAndColor3 * 256u);		//we simply sort the indices as a test.
+
+		//z = 65535.0 * clamp((z - zMin) / (zMax - zMin), vec4(0.0), vec4(1.0)); //translate and scale values and clamp them between 0 and 1, then multiply by 65535.
+		//return bitfieldExtract(uvec4(z), bitOffset, 2);
+		return bitfieldExtract(zInt, bitOffset, 2);
 	}
 
 	void main()
 	{
 		uint ident = gl_GlobalInvocationID.x;
-		uint local_ident = gl_LocalInvocationID.x;
+		uint local_ident = gl_LocalInvocationID.x;		//thread index in the thread group.
 
-		uvec4 flagdata = decodeKeys(ident); // it uses ident to look up four particles, how does this not overlap? AH, they multiply by 4u in decodeKeys.
-
+		uvec4 flagdata = decodeKeys(ident); 
+		
 		// Save the flags data for later. Will be used in scan_reorder.cs.
 		// We could recompute in scan_reorder.cs of course if we wanted.
-		flags[ident] = flagdata;
+		flags[ident].value[0] = flagdata.x;												//the flags are 2 bits of the depth integer value. Starting at bit 0 and remaining there for the entire iteration.
+		flags[ident].value[1] = flagdata.y;
+		flags[ident].value[2] = flagdata.z;
+		flags[ident].value[3] = flagdata.w;
+
+
+		//Now let's consider a series of 2-bit numbers as our input that we wish to sort. For each possible digit, 
+		//we need to count the number of numbers less than it, that have appeared earlier in the sequence. 
+		//To do this we construct four flag arrays, one for each possible digit, 
+		//that have a 1 where the number in the input matches the digit, and 0 elsewhere:
+		//see https://arm-software.github.io/opengl-es-sdk-for-android/computeParticles.html
 
 		// Create flags by comparing against the possible 2-bit values.
-		uvec4 miniblock0 = uvec4(equal(flagdata.xxxx, uvec4(0u, 1u, 2u, 3u)));
+		uvec4 miniblock0 = uvec4(equal(flagdata.xxxx, uvec4(0u, 1u, 2u, 3u)));  //what happens here? we're determining if the flagdata[0] is a 0, 1, 2 or a 3. It can only be one of those values, since it's 2 bits.
 		uvec4 miniblock1 = uvec4(equal(flagdata.yyyy, uvec4(0u, 1u, 2u, 3u)));
 		uvec4 miniblock2 = uvec4(equal(flagdata.zzzz, uvec4(0u, 1u, 2u, 3u)));
-		uvec4 miniblock3 = uvec4(equal(flagdata.wwww, uvec4(0u, 1u, 2u, 3u)));
+		uvec4 miniblock3 = uvec4(equal(flagdata.wwww, uvec4(0u, 1u, 2u, 3u)));  //each miniblock represents the flag results for one 2 bit value (a column in the flag table on the website).
+
+		//"If we do an exclusive prefix sum over the flags, and carry over the total sum from each array to the next, we get:" (we do inclusive scan instead)
 
 		// First we want to do the scan in registers to reduce shared memory pressure a bit.
-		miniblock1 += miniblock0;
-		miniblock2 += miniblock1;
+		miniblock1 += miniblock0;		//perform postfix sum (inclusive scan) on the four values we have.
+		miniblock2 += miniblock1;		//since this is a uvec4 addition it will add the components together, which is equivalent to adding together the columns of the flag table, as we're supposed to.
 		miniblock3 += miniblock2;
 
 		// We have now done inclusive scan for our "miniblock".
 		// We only share our accumulated sum (miniblock3) with other threads.
 
 		// Share miniblock sum with other threads
-		sharedData[local_ident] = miniblock3;
+		sharedData[local_ident] = miniblock3; //this is the accumulated prefix sum of the four values we have access to in this thread. 
 		memoryBarrierShared();
 		barrier();
 
-		for (uint step = 0u; step < NUM_STEPS; step++) {
+		for (uint step = 0u; step < NUM_STEPS; step++) {						//4 iterations, step takes on values: {0,1,2,3}
 			// Half the threads will have something useful to do every step.
 			// Branching like this is a not an issue on Mali Midgard as long as we keep enough threads busy doing something useful.
-			if ((local_ident & (1u << step)) != 0u) {
+			if ((local_ident & (1u << step)) != 0u) {		//(1u << step) takes on values: {1, 2, 4, 8}. local_ident will take on values 0-31. (local_ident & (1u << step)) will be != 0u
 				// Get previous index. This value will be the same for every thread within this "block".
 				uint prev = ((local_ident >> step) << step) - 1u;
 
@@ -262,14 +279,33 @@ GLSLPROGRAM
 		}
 
 		// Write out inclusive scan results.
-		outbuf[4u * ident + 0u] = miniblock0;
-		outbuf[4u * ident + 1u] = miniblock1;
-		outbuf[4u * ident + 2u] = miniblock2;
-		outbuf[4u * ident + 3u] = miniblock3;
+		outbuf[4u * ident + 0u].value[0] = miniblock0.x;
+		outbuf[4u * ident + 0u].value[1] = miniblock0.y;
+		outbuf[4u * ident + 0u].value[2] = miniblock0.z;
+		outbuf[4u * ident + 0u].value[3] = miniblock0.w;
+
+		outbuf[4u * ident + 1u].value[0] = miniblock1.x;
+		outbuf[4u * ident + 1u].value[1] = miniblock1.y;
+		outbuf[4u * ident + 1u].value[2] = miniblock1.z;
+		outbuf[4u * ident + 1u].value[3] = miniblock1.w;
+
+		outbuf[4u * ident + 2u].value[0] = miniblock2.x;
+		outbuf[4u * ident + 2u].value[1] = miniblock2.y;
+		outbuf[4u * ident + 2u].value[2] = miniblock2.z;
+		outbuf[4u * ident + 2u].value[3] = miniblock2.w;
+
+		outbuf[4u * ident + 3u].value[0] = miniblock3.x;
+		outbuf[4u * ident + 3u].value[1] = miniblock3.y;
+		outbuf[4u * ident + 3u].value[2] = miniblock3.z;
+		outbuf[4u * ident + 3u].value[3] = miniblock3.w;
 
 		// Last thread knows the inclusive scan for this work group, so write out to blocksum.
-		if (local_ident == (gl_WorkGroupSize.x - 1u))
-			blocksum[gl_WorkGroupID.x] = miniblock3;
+		if (local_ident == (gl_WorkGroupSize.x - 1u)) {
+			blocksum[gl_WorkGroupID.x].value[0] = miniblock3.x;
+			blocksum[gl_WorkGroupID.x].value[1] = miniblock3.y;
+			blocksum[gl_WorkGroupID.x].value[2] = miniblock3.z;
+			blocksum[gl_WorkGroupID.x].value[3] = miniblock3.w;
+		}
 	}
 
 ENDGLSL

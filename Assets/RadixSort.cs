@@ -43,8 +43,8 @@ public class RadixSort  {
             }
         }
 
-        sortedBuffer = new ComputeBuffer(elemCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);//gl::Ssbo::create(elemCount * sizeof(Particle), nullptr, GL_DYNAMIC_COPY);
-        flagsBuffer = new ComputeBuffer(elemCount, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);//gl::Ssbo::create(elemCount * sizeof(GLuint), nullptr, GL_DYNAMIC_COPY);
+        sortedBuffer = new ComputeBuffer(elemCount, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);//gl::Ssbo::create(elemCount * sizeof(Particle), nullptr, GL_DYNAMIC_COPY);
+        flagsBuffer = new ComputeBuffer(elemCount, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);//gl::Ssbo::create(elemCount * sizeof(GLuint), nullptr, GL_DYNAMIC_COPY);
 
         {
             scanBuffers = new List<ComputeBuffer>(/*scanLevelCount*/);
@@ -69,7 +69,7 @@ public class RadixSort  {
       {
             // First pass. Compute 16-bit unsigned depth and apply first pass of scan algorithm.
 
-            scanFirstProg.SetBuffer(scanFirstKernel, "Data", inputBuf);
+            scanFirstProg.SetBuffer(scanFirstKernel, "IndicesIn", inputBuf);
             scanFirstProg.SetBuffer(scanFirstKernel, "OutData", scanBuffers[0]);
             scanFirstProg.SetBuffer(scanFirstKernel, "BlockSumData", sumBuffers[0]);
             scanFirstProg.SetBuffer(scanFirstKernel, "FlagsData", flagsBuffer);
@@ -170,10 +170,15 @@ public class RadixSort  {
 
             //reorderProg->bind();
 
-            reorderProg.SetBuffer(reorderKernel, "SortData", inputBuf);
+            /*uint[] scandat = new uint[scanBuffers[0].count*4];
+            scanBuffers[0].GetData(scandat);
+            uint[] dat = new uint[sumBuffers[0].count*4];
+            sumBuffers[0].GetData(dat);*/
+
+            reorderProg.SetBuffer(reorderKernel, "IndicesIn", inputBuf);
             reorderProg.SetBuffer(reorderKernel, "Data", scanBuffers[0]);
             reorderProg.SetBuffer(reorderKernel, "BlockSumData", sumBuffers[0]);
-            reorderProg.SetBuffer(reorderKernel, "OutSortData", outputBuf);
+            reorderProg.SetBuffer(reorderKernel, "IndicesOut", outputBuf);
             reorderProg.SetBuffer(reorderKernel, "FlagsData", flagsBuffer);
 
             reorderProg.Dispatch(reorderKernel, m_elemCount / m_blockSize, 1, 1);
@@ -206,13 +211,13 @@ public class RadixSort  {
         inputBuf = sortedBuffer;
         sortedBuffer = temp;
 
-        for (int i = 1; i < 8; ++i)
+        for (int i = 1; i < /*8*//*16*//*8*/8; ++i)
         {
             sortBits(inputBuf, outputBuf, i * 2, axis, zMin, zMax);
             //std::swap(inputBuf, outputBuf);
             temp = inputBuf;
-            inputBuf = sortedBuffer;
-            sortedBuffer = temp;
+            inputBuf = outputBuf;
+            outputBuf = temp;
         }
 
         // We use the position data to draw the particles afterwards

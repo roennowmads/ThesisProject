@@ -2,7 +2,7 @@ GLSLPROGRAM
 
 	#pragma kernel scan
 
-	#version 430 core
+	#version 310 es
 
 	/*
 	 * This proprietary software may be used only as
@@ -22,19 +22,23 @@ GLSLPROGRAM
 	layout(local_size_x = 32) in; // We work on 4 items at once, so this value should be BLOCK_SIZE / 4.
 	#define NUM_STEPS 4u
 
+	struct _Uint4_type {
+		uint[4] value;
+	};
+
 	layout(binding = 0, std430) readonly buffer Data
 	{
-		uvec4 buf[];
+		_Uint4_type buf[];
 	};
 
 	layout(binding = 1, std430) writeonly buffer OutData
 	{
-		uvec4 outbuf[];
+		_Uint4_type outbuf[];
 	};
 
 	layout(binding = 2, std430) writeonly buffer BlockSumData
 	{
-		uvec4 blocksum[];
+		_Uint4_type blocksum[];
 	};
 
 	shared uvec4 sharedData[gl_WorkGroupSize.x];
@@ -45,10 +49,36 @@ GLSLPROGRAM
 		uint local_ident = gl_LocalInvocationID.x;
 
 		// First we want to do the scan in registers to reduce shared memory pressure a bit.
-		uvec4 miniblock0 = buf[4u * ident + 0u];
-		uvec4 miniblock1 = buf[4u * ident + 1u];
-		uvec4 miniblock2 = buf[4u * ident + 2u];
-		uvec4 miniblock3 = buf[4u * ident + 3u];
+		//uvec4 miniblock0 = buf[4u * ident + 0u];
+		//uvec4 miniblock1 = buf[4u * ident + 1u];
+		//uvec4 miniblock2 = buf[4u * ident + 2u];
+		//uvec4 miniblock3 = buf[4u * ident + 3u];
+
+		uvec4 miniblock0;
+		uvec4 miniblock1;
+		uvec4 miniblock2;
+		uvec4 miniblock3;
+
+		miniblock0.x = buf[4u * ident + 0u].value[0];
+		miniblock0.y = buf[4u * ident + 0u].value[1];
+		miniblock0.z = buf[4u * ident + 0u].value[2];
+		miniblock0.w = buf[4u * ident + 0u].value[3];
+
+		miniblock1.x = buf[4u * ident + 1u].value[0];
+		miniblock1.y = buf[4u * ident + 1u].value[1];
+		miniblock1.z = buf[4u * ident + 1u].value[2];
+		miniblock1.w = buf[4u * ident + 1u].value[3];
+
+		miniblock2.x = buf[4u * ident + 2u].value[0];
+		miniblock2.y = buf[4u * ident + 2u].value[1];
+		miniblock2.z = buf[4u * ident + 2u].value[2];
+		miniblock2.w = buf[4u * ident + 2u].value[3];
+		 
+		miniblock3.x = buf[4u * ident + 3u].value[0];
+		miniblock3.y = buf[4u * ident + 3u].value[1];
+		miniblock3.z = buf[4u * ident + 3u].value[2];
+		miniblock3.w = buf[4u * ident + 3u].value[3];
+
 		miniblock1 += miniblock0;
 		miniblock2 += miniblock1;
 		miniblock3 += miniblock2;
@@ -98,15 +128,34 @@ GLSLPROGRAM
 			miniblock3 += sum_prev;
 		}
 
-		// Write out inclusive scan results.
-		outbuf[4u * ident + 0u] = miniblock0;
-		outbuf[4u * ident + 1u] = miniblock1;
-		outbuf[4u * ident + 2u] = miniblock2;
-		outbuf[4u * ident + 3u] = miniblock3;
+		// Write out inclusive scan results. 
+		outbuf[4u * ident + 0u].value[0] = miniblock0.x;
+		outbuf[4u * ident + 0u].value[1] = miniblock0.y;
+		outbuf[4u * ident + 0u].value[2] = miniblock0.z;
+		outbuf[4u * ident + 0u].value[3] = miniblock0.w;
+
+		outbuf[4u * ident + 1u].value[0] = miniblock1.x;
+		outbuf[4u * ident + 1u].value[1] = miniblock1.y;
+		outbuf[4u * ident + 1u].value[2] = miniblock1.z;
+		outbuf[4u * ident + 1u].value[3] = miniblock1.w;
+
+		outbuf[4u * ident + 2u].value[0] = miniblock2.x;
+		outbuf[4u * ident + 2u].value[1] = miniblock2.y;
+		outbuf[4u * ident + 2u].value[2] = miniblock2.z;
+		outbuf[4u * ident + 2u].value[3] = miniblock2.w;
+
+		outbuf[4u * ident + 3u].value[0] = miniblock3.x;
+		outbuf[4u * ident + 3u].value[1] = miniblock3.y;
+		outbuf[4u * ident + 3u].value[2] = miniblock3.z;
+		outbuf[4u * ident + 3u].value[3] = miniblock3.w;
 
 		// Last thread knows the inclusive scan for this work group, so write out to blocksum.
-		if (local_ident == (gl_WorkGroupSize.x - 1u))
-			blocksum[gl_WorkGroupID.x] = miniblock3;
+		if (local_ident == (gl_WorkGroupSize.x - 1u)) {
+			blocksum[gl_WorkGroupID.x].value[0] = miniblock3.x;
+			blocksum[gl_WorkGroupID.x].value[1] = miniblock3.y;
+			blocksum[gl_WorkGroupID.x].value[2] = miniblock3.z;
+			blocksum[gl_WorkGroupID.x].value[3] = miniblock3.w;
+		}
 	}
 
 ENDGLSL

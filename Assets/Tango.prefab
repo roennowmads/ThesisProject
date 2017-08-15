@@ -1546,6 +1546,7 @@ MonoBehaviour:
   m_lastFrameIndex: 29
   m_frameSpeed: 5
   m_textureSideSizePower: 12
+  m_radixShader: {fileID: 0}
 --- !u!114 &114116868975665934
 MonoBehaviour:
   m_ObjectHideFlags: 1

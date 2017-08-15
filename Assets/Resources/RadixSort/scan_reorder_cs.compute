@@ -2,7 +2,7 @@ GLSLPROGRAM
 
 	#pragma kernel scanReorder
 
-	#version 430 core
+	#version 310 es
 
 	/*
 	 * This proprietary software may be used only as
@@ -46,37 +46,48 @@ GLSLPROGRAM
 	 * So the first element should be reordered to position 2 in the sorted array.
 	 */
 
-	struct Particle {
+	/*struct Particle {
 		vec4 pos;
-	};
+	};*/
 
 	layout(local_size_x = 32) in; // We work on 4 items at once, so this value should be BLOCK_SIZE / 4.
-	layout(binding = 0, std430) readonly buffer SortData
+	/*layout(binding = 0, std430) readonly buffer SortData
 	{
 		Particle sort_buf[];
+	};*/
+
+	struct _Uint4_type {
+		uint[4] value;
+	};
+
+	layout(binding = 0, std430) buffer IndicesIn {
+		uint IndexIn_buf[];
 	};
 
 	layout(binding = 1, std430) readonly buffer Data
 	{
-		uvec4 buf[];
+		_Uint4_type buf[];
 	};
 
 	layout(binding = 2, std430) readonly buffer BlockSumData
 	{
-		uvec4 blocksum[];
+		_Uint4_type blocksum[];
 	};
 
-	layout(binding = 3, std430) writeonly buffer OutSortData
+	/*layout(binding = 3, std430) writeonly buffer OutSortData
 	{
 		Particle out_sort_buf[];
+	};*/
+
+	layout(binding = 3, std430) buffer IndicesOut {
+		uint IndexOut_buf[];
 	};
 
 	layout(binding = 4, std430) readonly buffer FlagsData
 	{
-		uvec4 flags[];
+		_Uint4_type flags[];
 	};
 
-	layout(location = 0) uniform int uShift;
 
 	void main()
 	{
@@ -85,14 +96,22 @@ GLSLPROGRAM
 
 		// The last blocksum in our buffer contains the count of values which are 0, 1, 2, and 3 respectively
 		// since it's an inclusive scan.
-		uvec4 carry = blocksum[gl_NumWorkGroups.x - 1u];
+		uvec4 carry;
+		carry.x = blocksum[gl_NumWorkGroups.x - 1u].value[0];
+		carry.y = blocksum[gl_NumWorkGroups.x - 1u].value[1];
+		carry.z = blocksum[gl_NumWorkGroups.x - 1u].value[2];
+		carry.w = blocksum[gl_NumWorkGroups.x - 1u].value[3];
 
 		// Do an exclusive scan over the carry values.
 		// We can now figure out the base offset for all the different values.
 		carry = uvec4(0u, carry.x, carry.x + carry.y, carry.x + carry.y + carry.z);
 
 		// Cached results computed in scan_first.cs.
-		uvec4 lookups = flags[ident];
+		uvec4 lookups;
+		lookups.x = flags[ident].value[0];
+		lookups.y = flags[ident].value[1];
+		lookups.z = flags[ident].value[2];
+		lookups.w = flags[ident].value[3];
 
 		// Swizzle the carry vector so we know the base offset for our data.
 		// Subtract -1 on the carry to get exclusive scan instead of inclusive scan.
@@ -100,27 +119,27 @@ GLSLPROGRAM
 		carry = uvec4(carry[lookups.x], carry[lookups.y], carry[lookups.z], carry[lookups.w]) - 1u;
 
 		// Add in per-digit inclusive scan results.
-		carry.x += buf[4u * ident + 0u][lookups.x];
-		carry.y += buf[4u * ident + 1u][lookups.y];
-		carry.z += buf[4u * ident + 2u][lookups.z];
-		carry.w += buf[4u * ident + 3u][lookups.w];
+		carry.x += buf[4u * ident + 0u].value[lookups.x];
+		carry.y += buf[4u * ident + 1u].value[lookups.y];
+		carry.z += buf[4u * ident + 2u].value[lookups.z];
+		carry.w += buf[4u * ident + 3u].value[lookups.w];
 
 		// We also have to add in blocksum for the previous block.
 		// If we're the first block, there is nothing to add.
 		if (wg_ident != 0u) {
-			uvec4 prev_sum = blocksum[wg_ident - 1u];
-			carry.x += prev_sum[lookups.x];
-			carry.y += prev_sum[lookups.y];
-			carry.z += prev_sum[lookups.z];
-			carry.w += prev_sum[lookups.w];
+			//uvec4 prev_sum = blocksum[wg_ident - 1u];
+			carry.x += blocksum[wg_ident - 1u].value[lookups.x];
+			carry.y += blocksum[wg_ident - 1u].value[lookups.y];
+			carry.z += blocksum[wg_ident - 1u].value[lookups.z];
+			carry.w += blocksum[wg_ident - 1u].value[lookups.w];
 		}
 
 		// Reorder data since we now know the output indices.
 		// Not the most cache friendly operation.
-		out_sort_buf[carry.x] = sort_buf[4u * ident + 0u];
-		out_sort_buf[carry.y] = sort_buf[4u * ident + 1u];
-		out_sort_buf[carry.z] = sort_buf[4u * ident + 2u];
-		out_sort_buf[carry.w] = sort_buf[4u * ident + 3u];
+		IndexOut_buf[carry.x] = IndexIn_buf[4u * ident + 0u];
+		IndexOut_buf[carry.y] = IndexIn_buf[4u * ident + 1u];
+		IndexOut_buf[carry.z] = IndexIn_buf[4u * ident + 2u];
+		IndexOut_buf[carry.w] = IndexIn_buf[4u * ident + 3u];
 	}
 
 ENDGLSL
