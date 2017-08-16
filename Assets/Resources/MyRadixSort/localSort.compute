@@ -1,0 +1,55 @@
+#pragma kernel LocalSort
+
+#define GROUP_SIZE 256
+
+StructuredBuffer<uint> KeysIn;
+RWStructuredBuffer<uint4> BucketsOut;
+
+groupshared int sharedBuffer[GROUP_SIZE];
+
+int bitshift;
+
+[numthreads(GROUP_SIZE, 1, 1)]
+void LocalSort(uint3 groupThreadId : SV_GroupThreadID, uint3 dispatchThreadId : SV_DispatchThreadID, uint3 groupId : SV_GroupID)
+{
+	uint DTid = dispatchThreadId.x;
+    //take first four bits of every input element.
+    uint key = KeysIn[DTid];
+    uint keyBits = (key >> bitshift) & 0xF;	//take the 4 least significant bits.
+    
+	//if we're doing 4 bits (16 values) we need compare the 16 values to all values between 0-15 and return 0 or 1 depending on whether they are equal.
+
+	uint4 miniBlock0 = uint4(keyBits.xxxx == uint4(0u, 1u, 2u, 3u));
+	uint4 miniBlock1 = uint4(keyBits.xxxx == uint4(4u, 5u, 6u, 7u));
+	uint4 miniBlock2 = uint4(keyBits.xxxx == uint4(8u, 9u, 10u, 11u));
+	uint4 miniBlock3 = uint4(keyBits.xxxx == uint4(12u, 13u, 14u, 15u));
+    
+	//thread local scan:
+
+	miniBlock1 += miniBlock0;
+	miniBlock2 += miniBlock1;
+	miniBlock3 += miniBlock2;
+
+	BucketsOut[4 * DTid + 0] = miniBlock0;
+	BucketsOut[4 * DTid + 1] = miniBlock1;
+	BucketsOut[4 * DTid + 2] = miniBlock2;
+	BucketsOut[4 * DTid + 3] = miniBlock3;
+
+
+
+
+	GroupMemoryBarrierWithGroupSync();
+
+
+
+}
+
+
+
+
+
+
+
+
+
+

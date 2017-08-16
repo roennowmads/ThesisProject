@@ -341,15 +341,28 @@ public class PointCloud : MonoBehaviour {
             bufInRadix[i] = (uint)bufInRadix.Length - i;
         }
 
-        uint[] bufOutRadix = new uint[bufInRadix.Length];
+        uint[] bufOutRadix = new uint[bufInRadix.Length*4];
 
         ComputeBuffer m_computeBufferIn = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
         m_computeBufferIn.SetData(bufInRadix);
 
-        ComputeBuffer m_computeBufferOut = new ComputeBuffer(bufOutRadix.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
+        ComputeBuffer m_computeBufferOut = new ComputeBuffer(bufOutRadix.Length, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
         m_computeBufferOut.SetData(bufOutRadix);
 
-        Vector3 viewDir = new Vector3(0.0f, 0.0f, 1.0f);
+
+        ComputeShader m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort", typeof(ComputeShader));
+        int localSortKernel = m_myRadixSort.FindKernel("LocalSort");
+
+        m_myRadixSort.SetBuffer(localSortKernel, "KeysIn", m_computeBufferIn);
+        m_myRadixSort.SetBuffer(localSortKernel, "BucketsOut", m_computeBufferOut);
+
+        m_myRadixSort.SetInt("bitshift", 0);
+
+        m_myRadixSort.Dispatch(localSortKernel, 1, 1, 1);
+
+        m_computeBufferOut.GetData(bufOutRadix);
+
+        /*Vector3 viewDir = new Vector3(0.0f, 0.0f, 1.0f);
         radixSort = new RadixSort(256, 128);
 
         radixSort.sort(m_computeBufferIn, m_computeBufferOut, -viewDir, -2.0f, 2.0f);
@@ -363,7 +376,7 @@ public class PointCloud : MonoBehaviour {
          m_radixShader.SetBuffer(m_kernel, "Result", m_computeBufferIn);
          m_radixShader.Dispatch(m_kernel, 2, 1, 1);
 
-         m_computeBufferIn.GetData(bufOutRadix);
+         m_computeBufferIn.GetData(bufOutRadix);*/
 
         /*uint[] bufIn = new uint[pointPositions.Length];
         //uint[] bufOut = new uint[16];

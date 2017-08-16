@@ -148,6 +148,8 @@ GLSLPROGRAM
 		float zMin;
 		float zMax;
 	};
+    
+    //based on: https://arm-software.github.io/opengl-es-sdk-for-android/computeParticles.html
 
 	/*
 	 * The particles are sorted by increasing distance along the sorting axis.

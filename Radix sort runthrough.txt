@@ -1,0 +1,58 @@
+
+Parallel radix sort with prefix sum (based on: Fast Data Parallel Radix Sort Implementation in DirectX 11 Compute Shader to Accelerate Ray Tracing Algorithms)
+
+Keys represented in base-R notation (could be base 10 or for most implementations base 2) are sorted. 
+For computers it's very efficient to use R = 2 or R = 2^s. 
+It also helps if the keys are aligned with integer boundaries that match the size of the GPU registers (fx. 32 bit keys)
+Most sorting applications use Least Significant Digit (from right to left) radix sort, as will we.
+
+The algorthim works as follows (for R = 10 and 2 digit values):
+
+We sort on the least significant digit first:
+
+Input: {21, 03, 74, 65, 11, 98, 62, 27, 38}
+
+We need Input.Length buckets:
+                                                      sum[i] + index#
+          index 0 | index 1  |  count   |   sum  |  destination
+bucket 0:                       0           0       -      
+bucket 1: 21        11          2           0       0 1
+bucket 2: 62                    1           2       3
+bucket 3: 03                    1           3       4    
+bucket 4: 74                    1           4       5
+bucket 5: 65                    1           5       6
+bucket 6:                       0           6       -
+bucket 7: 27                    1           6       7
+bucket 8: 98        38          2           7       8 9
+
+We do a prefix sum (scan) on the bucket lengths. The result of the scan 
+
+Output: {21, 11, 62, 03, 74, 65, 27, 98, 38}
+
+Do the same for the second digit, using the last output as input:
+
+Output: {03, 11, 21, 27, 38, 62, 65, 74, 98}
+
+
+In our implementation we will will sort 32 bit numbers decomposed in 4 bit keys of integers resulting in R = 2^4 = 16.
+The input array is divided into parts (blocks) that can be processed independently on processing core.
+
+GPU implementation:
+
+Steps:
+
+1. Local sort (in a block)
+2. Prefix sum over global buckets
+3. Compute destination index into the global array
+
+Local sort:
+Each thread processes one 4-bit key in LSD order. The process uses local scan in shared memory. Basically the local sort is a R = 2 radix sort in each block.
+
+
+
+
+
+
+
+
+
