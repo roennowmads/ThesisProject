@@ -334,12 +334,15 @@ public class PointCloud : MonoBehaviour {
 
         ComputeShader m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort", typeof(ComputeShader));
         int localSortKernel = m_myRadixSort.FindKernel("LocalPrefixSum");
+        int GlobalPrefixSum = m_myRadixSort.FindKernel("GlobalPrefixSum");
 
         uint x, y, z;
         m_myRadixSort.GetKernelThreadGroupSizes(localSortKernel, out x, out y, out z);
         int m_threadGroupSize = (int)x;
 
-        uint[] bufInRadix = new uint[m_threadGroupSize*4];
+        int threadGroupsNeeded = 8;
+
+        uint[] bufInRadix = new uint[m_threadGroupSize * 4 * threadGroupsNeeded];
 
         //uint[] bufInRadix = { 5, 10, 2, 1, 0, 20, 30, 45, 12, 63, 48, 3, 6, 32, 87, 39 };
 
@@ -350,21 +353,33 @@ public class PointCloud : MonoBehaviour {
 
         uint[] bufOutRadix = new uint[4 * bufInRadix.Length / m_threadGroupSize];
 
+        uint[] bufOutPrefixSum = new uint[16]; //the size represents the 16 possible values with 4 bits.
+
         ComputeBuffer m_computeBufferIn = new ComputeBuffer(bufInRadix.Length/4, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
         m_computeBufferIn.SetData(bufInRadix);
 
         ComputeBuffer m_computeBufferOut = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
         m_computeBufferOut.SetData(bufOutRadix);
-        
+
+        ComputeBuffer m_computeBufferOutPrefixSum = new ComputeBuffer(4, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
+        m_computeBufferOut.SetData(bufOutPrefixSum);
+
 
         m_myRadixSort.SetBuffer(localSortKernel, "KeysIn", m_computeBufferIn);
         m_myRadixSort.SetBuffer(localSortKernel, "BucketsOut", m_computeBufferOut);
 
+        m_myRadixSort.SetBuffer(GlobalPrefixSum, "KeysIn", m_computeBufferIn);
+        m_myRadixSort.SetBuffer(GlobalPrefixSum, "PrefixSumOut", m_computeBufferOutPrefixSum);
+
         m_myRadixSort.SetInt("bitshift", 0);
 
-        m_myRadixSort.Dispatch(localSortKernel, 1, 1, 1);
+        m_myRadixSort.Dispatch(localSortKernel, bufInRadix.Length / m_threadGroupSize / 4, 1, 1);
 
         m_computeBufferOut.GetData(bufOutRadix);
+
+        m_myRadixSort.Dispatch(GlobalPrefixSum, 1, 1, 1);
+
+        m_computeBufferOutPrefixSum.GetData(bufOutPrefixSum);
 
         /*Vector3 viewDir = new Vector3(0.0f, 0.0f, 1.0f);
         radixSort = new RadixSort(256, 128);

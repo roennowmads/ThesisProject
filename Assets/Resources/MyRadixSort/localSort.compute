@@ -1,9 +1,12 @@
 #pragma kernel LocalPrefixSum
+#pragma kernel GlobalPrefixSum
 
 #define GROUP_SIZE 512
 
 StructuredBuffer<uint4> KeysIn;
 RWStructuredBuffer<uint4> BucketsOut;
+
+RWStructuredBuffer<uint4> PrefixSumOut;
 
 groupshared uint4x4 sharedBuffer[GROUP_SIZE];
 
@@ -13,7 +16,7 @@ int bitshift;
 void LocalPrefixSum(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
 {
     //take first four bits of every input element.
-    uint4 keyBits = (KeysIn[DTid.x] >> bitshift) & 0xF;	//take the 4 least significant bits.
+    uint4 keyBits = (KeysIn[DTid.x] >> bitshift) & 0xF;	//take the 4 least significant bits.  //hey this is only 16 bits, but it takes up 128 bits! ah we'll use it for counting so we need it to be potentially large.
     
 	//if we're doing 4 bits (16 values) we need compare the 16 values to all values between 0-15 and return 0 or 1 depending on whether they are equal.
 
@@ -64,20 +67,48 @@ void LocalPrefixSum(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Disp
 		BucketsOut[4u * groupId.x + 2u] = sharedBuffer[GI][2];	//counts of 8u, 9u, 10u, 11u
 		BucketsOut[4u * groupId.x + 3u] = sharedBuffer[GI][3];	//counts of 12u, 13u, 14u, 15u
 	}
-
-
-
-
-	
-
-
-
 }
 
+//the number of thread groups will for most of our cases be at least as large as the thread group size. So we need to parallelize the global prefix sum as well.
 
+//4 x uvec4 x NUMBER_OF_THREADGROUPS values. IF the number of values is higher than 4 x uvec4 x GROUP_SIZE, we have to do this global prefix sum in multiple steps, since all the values won't fit in a block.
 
+[numthreads(GROUP_SIZE, 1, 1)]
+void GlobalPrefixSum(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
+{
+	uint dispatchThreadId = DTid.x * 4u;
 
+	//get the last element of each group:
+	sharedBuffer[GI][0] = BucketsOut[dispatchThreadId + 0u]; //counts of 0u, 1u, 2u, 3u, counts of 4u, 5u, 6u, 7u, counts of 8u, 9u, 10u, 11u, counts of 12u, 13u, 14u, 15u
+	sharedBuffer[GI][1] = BucketsOut[dispatchThreadId + 1u];
+	sharedBuffer[GI][2] = BucketsOut[dispatchThreadId + 2u];
+	sharedBuffer[GI][3] = BucketsOut[dispatchThreadId + 3u];
 
+	GroupMemoryBarrierWithGroupSync();
+
+	//block local scan:
+	//if we know how many threads there are in a group, we know how many times we need to do this step (this is probably not the fastest way to do intra block scan). 
+
+	for (uint i = 0u; i < uint(log2(GROUP_SIZE)); i++) {		//log2(256) == 8
+		uint4x4 temp = sharedBuffer[GI];
+
+		uint sumOffset = 1 << i;
+		if (GI >= sumOffset) { //step0: ignore first elem, step1: ignore first 2 elems, step1: ignore first 4 elems, etc.
+			temp += sharedBuffer[GI - sumOffset];
+		}
+		GroupMemoryBarrierWithGroupSync();
+		sharedBuffer[GI] = temp;
+		GroupMemoryBarrierWithGroupSync();
+	}
+
+	if (groupId.x == 0 && GI == (GROUP_SIZE - 1u)) {
+		PrefixSumOut[4u * groupId.x + 0u] = sharedBuffer[GI][0];	//counts of 0u, 1u, 2u, 3u
+		PrefixSumOut[4u * groupId.x + 1u] = sharedBuffer[GI][1];	//counts of 4u, 5u, 6u, 7u
+		PrefixSumOut[4u * groupId.x + 2u] = sharedBuffer[GI][2];	//counts of 8u, 9u, 10u, 11u
+		PrefixSumOut[4u * groupId.x + 3u] = sharedBuffer[GI][3];	//counts of 12u, 13u, 14u, 15u
+	}
+
+}
 
 
 
