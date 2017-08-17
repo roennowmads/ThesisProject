@@ -1,12 +1,14 @@
 #pragma kernel LocalPrefixSum
 #pragma kernel GlobalPrefixSum
+#pragma kernel RadixReorder
+
 
 #define GROUP_SIZE 512
 
 StructuredBuffer<uint4> KeysIn;
 RWStructuredBuffer<uint4> BucketsOut;
-
 RWStructuredBuffer<uint4> PrefixSumOut;
+RWStructuredBuffer<uint4> KeysOut;
 
 groupshared uint4x4 sharedBuffer[GROUP_SIZE];
 
@@ -107,8 +109,26 @@ void GlobalPrefixSum(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Dis
 		PrefixSumOut[4u * groupId.x + 2u] = sharedBuffer[GI][2];	//counts of 8u, 9u, 10u, 11u
 		PrefixSumOut[4u * groupId.x + 3u] = sharedBuffer[GI][3];	//counts of 12u, 13u, 14u, 15u
 	}
-
 }
+
+
+[numthreads(GROUP_SIZE, 1, 1)]
+void RadixReorder(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
+{
+	uint4 key = KeysIn[DTid.x];
+	uint4 bucket = (key >> bitshift) & 0xF;
+	uint4 newIndex0 = PrefixSumOut[bucket.x]; //+ g_HistogramBuffer[bucket * g_Limit + id.x];
+	uint4 newIndex1 = PrefixSumOut[bucket.y]; //+ g_HistogramBuffer[bucket * g_Limit + id.x];
+	uint4 newIndex2 = PrefixSumOut[bucket.z]; //+ g_HistogramBuffer[bucket * g_Limit + id.x];
+	uint4 newIndex3 = PrefixSumOut[bucket.w]; //+ g_HistogramBuffer[bucket * g_Limit + id.x]; 
+	KeysOut[newIndex0.x] = key;
+	KeysOut[newIndex0.y] = key;
+	KeysOut[newIndex0.z] = key;
+	KeysOut[newIndex0.w] = key;
+}
+
+
+
 
 
 
