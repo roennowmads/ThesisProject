@@ -333,7 +333,7 @@ public class PointCloud : MonoBehaviour {
         m_kernel = m_radixShader.FindKernel("CSMain");
 
         ComputeShader m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort", typeof(ComputeShader));
-        int localSortKernel = m_myRadixSort.FindKernel("LocalSort");
+        int localSortKernel = m_myRadixSort.FindKernel("LocalPrefixSum");
 
         uint x, y, z;
         m_myRadixSort.GetKernelThreadGroupSizes(localSortKernel, out x, out y, out z);

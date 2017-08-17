@@ -1,122 +1,69 @@
-#pragma kernel LocalSort
+#pragma kernel LocalPrefixSum
 
 #define GROUP_SIZE 512
 
 StructuredBuffer<uint4> KeysIn;
 RWStructuredBuffer<uint4> BucketsOut;
 
-groupshared uint4 sharedBuffer[GROUP_SIZE][4];
+groupshared uint4x4 sharedBuffer[GROUP_SIZE];
 
 int bitshift;
 
 [numthreads(GROUP_SIZE, 1, 1)]
-void LocalSort(uint3 groupThreadId : SV_GroupThreadID, uint3 dispatchThreadId : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
+void LocalPrefixSum(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
 {
-	uint DTid = dispatchThreadId.x;
     //take first four bits of every input element.
-    uint4 keyBits = (KeysIn[DTid] >> bitshift) & 0xF;	//take the 4 least significant bits.
+    uint4 keyBits = (KeysIn[DTid.x] >> bitshift) & 0xF;	//take the 4 least significant bits.
     
 	//if we're doing 4 bits (16 values) we need compare the 16 values to all values between 0-15 and return 0 or 1 depending on whether they are equal.
 
-	//uint4x4 miniBlock0 = uint4x4(keyBits.xxxx == uint4(0u, 1u, 2u, 3u), keyBits.xxxx == uint4(4u, 5u, 6u, 7u), keyBits.xxxx == uint4(8u, 9u, 10u, 11u), keyBits.xxxx == uint4(12u, 13u, 14u, 15u));
-	//uint4x4 miniBlock1 = uint4x4(keyBits.yyyy == uint4(0u, 1u, 2u, 3u), keyBits.yyyy == uint4(4u, 5u, 6u, 7u), keyBits.yyyy == uint4(8u, 9u, 10u, 11u), keyBits.yyyy == uint4(12u, 13u, 14u, 15u));
-	//uint4x4 miniBlock2 = uint4x4(keyBits.zzzz == uint4(0u, 1u, 2u, 3u), keyBits.zzzz == uint4(4u, 5u, 6u, 7u), keyBits.zzzz == uint4(8u, 9u, 10u, 11u), keyBits.zzzz == uint4(12u, 13u, 14u, 15u));
-	//uint4x4 miniBlock3 = uint4x4(keyBits.wwww == uint4(0u, 1u, 2u, 3u), keyBits.wwww == uint4(4u, 5u, 6u, 7u), keyBits.wwww == uint4(8u, 9u, 10u, 11u), keyBits.wwww == uint4(12u, 13u, 14u, 15u));
+	uint4x4 miniBlock0 = uint4x4(
+		keyBits.xxxx == uint4(0u, 1u, 2u, 3u), keyBits.xxxx == uint4(4u, 5u, 6u, 7u), 
+		keyBits.xxxx == uint4(8u, 9u, 10u, 11u), keyBits.xxxx == uint4(12u, 13u, 14u, 15u));
 
-	uint4 miniBlock0a = uint4(keyBits.xxxx == uint4(0u, 1u, 2u, 3u));
-	uint4 miniBlock0b = uint4(keyBits.xxxx == uint4(4u, 5u, 6u, 7u));
-	uint4 miniBlock0c = uint4(keyBits.xxxx == uint4(8u, 9u, 10u, 11u));
-	uint4 miniBlock0d = uint4(keyBits.xxxx == uint4(12u, 13u, 14u, 15u));
+	uint4x4 miniBlock1 = uint4x4(
+		keyBits.yyyy == uint4(0u, 1u, 2u, 3u), keyBits.yyyy == uint4(4u, 5u, 6u, 7u), 
+		keyBits.yyyy == uint4(8u, 9u, 10u, 11u), keyBits.yyyy == uint4(12u, 13u, 14u, 15u));
 
-	uint4 miniBlock1a = uint4(keyBits.yyyy == uint4(0u, 1u, 2u, 3u));
-	uint4 miniBlock1b = uint4(keyBits.yyyy == uint4(4u, 5u, 6u, 7u));
-	uint4 miniBlock1c = uint4(keyBits.yyyy == uint4(8u, 9u, 10u, 11u));
-	uint4 miniBlock1d = uint4(keyBits.yyyy == uint4(12u, 13u, 14u, 15u));
+	uint4x4 miniBlock2 = uint4x4(
+		keyBits.zzzz == uint4(0u, 1u, 2u, 3u), keyBits.zzzz == uint4(4u, 5u, 6u, 7u), 
+		keyBits.zzzz == uint4(8u, 9u, 10u, 11u), keyBits.zzzz == uint4(12u, 13u, 14u, 15u));
 
-	uint4 miniBlock2a = uint4(keyBits.zzzz == uint4(0u, 1u, 2u, 3u));
-	uint4 miniBlock2b = uint4(keyBits.zzzz == uint4(4u, 5u, 6u, 7u));
-	uint4 miniBlock2c = uint4(keyBits.zzzz == uint4(8u, 9u, 10u, 11u));
-	uint4 miniBlock2d = uint4(keyBits.zzzz == uint4(12u, 13u, 14u, 15u));
-
-	uint4 miniBlock3a = uint4(keyBits.wwww == uint4(0u, 1u, 2u, 3u));
-	uint4 miniBlock3b = uint4(keyBits.wwww == uint4(4u, 5u, 6u, 7u));
-	uint4 miniBlock3c = uint4(keyBits.wwww == uint4(8u, 9u, 10u, 11u));
-	uint4 miniBlock3d = uint4(keyBits.wwww == uint4(12u, 13u, 14u, 15u));
+	uint4x4 miniBlock3 = uint4x4(
+		keyBits.wwww == uint4(0u, 1u, 2u, 3u), keyBits.wwww == uint4(4u, 5u, 6u, 7u), 
+		keyBits.wwww == uint4(8u, 9u, 10u, 11u), keyBits.wwww == uint4(12u, 13u, 14u, 15u));
     
 	//thread local scan: (sequential)
 
-	//miniBlock1 += miniBlock0;
-	//miniBlock2 += miniBlock1;
-	//miniBlock3 += miniBlock2;
+	miniBlock1 += miniBlock0;
+	miniBlock2 += miniBlock1;
+	miniBlock3 += miniBlock2;
 
-
-	miniBlock1a += miniBlock0a;
-	miniBlock2a += miniBlock1a;
-	miniBlock3a += miniBlock2a;
-
-	miniBlock1b += miniBlock0b;
-	miniBlock2b += miniBlock1b;
-	miniBlock3b += miniBlock2b;
-
-	miniBlock1c += miniBlock0c;
-	miniBlock2c += miniBlock1c;
-	miniBlock3c += miniBlock2c;
-
-	miniBlock1d += miniBlock0d;
-	miniBlock2d += miniBlock1d;
-	miniBlock3d += miniBlock2d;
-
-	sharedBuffer[GI][0] = miniBlock3a; //counts of 0u, 1u, 2u, 3u
-	sharedBuffer[GI][1] = miniBlock3b; //counts of 4u, 5u, 6u, 7u
-	sharedBuffer[GI][2] = miniBlock3c; //counts of 8u, 9u, 10u, 11u
-	sharedBuffer[GI][3] = miniBlock3d; //counts of 12u, 13u, 14u, 15u
-
-	//sharedBuffer[GI][0] = miniBlock3[0]; //counts of 0u, 1u, 2u, 3u
-	//sharedBuffer[GI][1] = miniBlock3[1]; //counts of 4u, 5u, 6u, 7u
-	//sharedBuffer[GI][2] = miniBlock3[2]; //counts of 8u, 9u, 10u, 11u
-	//sharedBuffer[GI][3] = miniBlock3[3]; //counts of 12u, 13u, 14u, 15u
+	sharedBuffer[GI] = miniBlock3; //counts of 0u, 1u, 2u, 3u, counts of 4u, 5u, 6u, 7u, counts of 8u, 9u, 10u, 11u, counts of 12u, 13u, 14u, 15u
 
 	GroupMemoryBarrierWithGroupSync();
 
 	//block local scan:
-	//if we know how many threads there are in a group, we know how many times we need to do this step (this is probably not (by far) the fastest way to do intra block scan). 
+	//if we know how many threads there are in a group, we know how many times we need to do this step (this is probably not the fastest way to do intra block scan). 
 
 	for (uint i = 0u; i < uint(log2(GROUP_SIZE)); i++) {		//log2(256) == 8
-		uint4 temp[4];
-		temp[0] = sharedBuffer[GI][0];
-		temp[1] = sharedBuffer[GI][1];
-		temp[2] = sharedBuffer[GI][2];
-		temp[3] = sharedBuffer[GI][3];
+		uint4x4 temp = sharedBuffer[GI];
 
 		uint sumOffset = 1 << i;
 		if (GI >= sumOffset) { //step0: ignore first elem, step1: ignore first 2 elems, step1: ignore first 4 elems, etc.
-			temp[0] += sharedBuffer[GI - sumOffset][0];
-			temp[1] += sharedBuffer[GI - sumOffset][1];
-			temp[2] += sharedBuffer[GI - sumOffset][2];
-			temp[3] += sharedBuffer[GI - sumOffset][3];
+			temp += sharedBuffer[GI - sumOffset];
 		}
-
 		GroupMemoryBarrierWithGroupSync();
-
-		sharedBuffer[GI][0] = temp[0];
-		sharedBuffer[GI][1] = temp[1];
-		sharedBuffer[GI][2] = temp[2];
-		sharedBuffer[GI][3] = temp[3];
-
+		sharedBuffer[GI] = temp;
 		GroupMemoryBarrierWithGroupSync();
 	}
 
 	if (GI == (GROUP_SIZE - 1u)) {
-		BucketsOut[4u * groupId.x + 0u] = sharedBuffer[GI][0];//miniBlock3a; //counts of 0u, 1u, 2u, 3u
-		BucketsOut[4u * groupId.x + 1u] = sharedBuffer[GI][1];//miniBlock3b; //counts of 4u, 5u, 6u, 7u
-		BucketsOut[4u * groupId.x + 2u] = sharedBuffer[GI][2];//miniBlock3c; //counts of 8u, 9u, 10u, 11u
-		BucketsOut[4u * groupId.x + 3u] = sharedBuffer[GI][3];//miniBlock3d; //counts of 12u, 13u, 14u, 15u
+		BucketsOut[4u * groupId.x + 0u] = sharedBuffer[GI][0];	//counts of 0u, 1u, 2u, 3u
+		BucketsOut[4u * groupId.x + 1u] = sharedBuffer[GI][1];	//counts of 4u, 5u, 6u, 7u
+		BucketsOut[4u * groupId.x + 2u] = sharedBuffer[GI][2];	//counts of 8u, 9u, 10u, 11u
+		BucketsOut[4u * groupId.x + 3u] = sharedBuffer[GI][3];	//counts of 12u, 13u, 14u, 15u
 	}
-
-	//BucketsOut[DTid + 0u] = sharedBuffer[GI][0];//miniBlock3a; //counts of 0u, 1u, 2u, 3u
-	//BucketsOut[DTid + 1u] = sharedBuffer[GI][1];//miniBlock3b; //counts of 4u, 5u, 6u, 7u
-	//BucketsOut[DTid + 2u] = sharedBuffer[GI][2];//miniBlock3c; //counts of 8u, 9u, 10u, 11u
-	//BucketsOut[DTid + 3u] = sharedBuffer[GI][3];//miniBlock3d; //counts of 12u, 13u, 14u, 15u
 
 
 
