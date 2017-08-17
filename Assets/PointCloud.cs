@@ -332,26 +332,30 @@ public class PointCloud : MonoBehaviour {
 
         m_kernel = m_radixShader.FindKernel("CSMain");
 
-        uint[] bufInRadix = new uint[256];
+        ComputeShader m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort", typeof(ComputeShader));
+        int localSortKernel = m_myRadixSort.FindKernel("LocalSort");
+
+        uint x, y, z;
+        m_myRadixSort.GetKernelThreadGroupSizes(localSortKernel, out x, out y, out z);
+        int m_threadGroupSize = (int)x;
+
+        uint[] bufInRadix = new uint[m_threadGroupSize*4];
 
         //uint[] bufInRadix = { 5, 10, 2, 1, 0, 20, 30, 45, 12, 63, 48, 3, 6, 32, 87, 39 };
 
         for (uint i = 0; i < bufInRadix.Length; i++)
         {
-            bufInRadix[i] = (uint)bufInRadix.Length - i;
+            bufInRadix[i] = /*(uint)bufInRadix.Length -*/ i % 8;
         }
 
-        uint[] bufOutRadix = new uint[bufInRadix.Length*4];
+        uint[] bufOutRadix = new uint[4 * bufInRadix.Length / m_threadGroupSize];
 
-        ComputeBuffer m_computeBufferIn = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
+        ComputeBuffer m_computeBufferIn = new ComputeBuffer(bufInRadix.Length/4, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
         m_computeBufferIn.SetData(bufInRadix);
 
-        ComputeBuffer m_computeBufferOut = new ComputeBuffer(bufOutRadix.Length, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
+        ComputeBuffer m_computeBufferOut = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
         m_computeBufferOut.SetData(bufOutRadix);
-
-
-        ComputeShader m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort", typeof(ComputeShader));
-        int localSortKernel = m_myRadixSort.FindKernel("LocalSort");
+        
 
         m_myRadixSort.SetBuffer(localSortKernel, "KeysIn", m_computeBufferIn);
         m_myRadixSort.SetBuffer(localSortKernel, "BucketsOut", m_computeBufferOut);
