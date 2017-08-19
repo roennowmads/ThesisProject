@@ -36,6 +36,26 @@ public class PointCloud : MonoBehaviour {
 
     private RadixSort radixSort;
 
+    private ComputeShader m_myRadixSort;
+    private int localSortKernel;
+    private int GlobalPrefixSum;
+    private int RadixReorder;
+    private int inputSize;
+    private int m_threadGroupSize;
+
+    public int m_FPSLabelOffsetX = 15;
+    public int m_FPSLabelOffsetY = 250;
+
+    private float m_updateFrequency = 1.0f;
+    private string m_fpsText;
+    private int m_currentFPS;
+    private int m_framesSinceUpdate;
+    private float m_accumulation;
+
+    private const string UI_FONT_SIZE = "<size=30>";
+    private const float UI_FPS_LABEL_SIZE_X = 200.0f;
+    private const float UI_FPS_LABEL_SIZE_Y = 200.0f;
+
     Texture2D createColorLookupTexture() {
         int numberOfValues = m_lookupTextureSize;
 
@@ -332,18 +352,20 @@ public class PointCloud : MonoBehaviour {
 
         m_kernel = m_radixShader.FindKernel("CSMain");
 
-        ComputeShader m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort", typeof(ComputeShader));
-        int localSortKernel = m_myRadixSort.FindKernel("LocalPrefixSum");
-        int GlobalPrefixSum = m_myRadixSort.FindKernel("GlobalPrefixSum");
-        int RadixReorder = m_myRadixSort.FindKernel("RadixReorder");
+        m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort", typeof(ComputeShader));
+        localSortKernel = m_myRadixSort.FindKernel("LocalPrefixSum");
+        GlobalPrefixSum = m_myRadixSort.FindKernel("GlobalPrefixSum");
+        RadixReorder = m_myRadixSort.FindKernel("RadixReorder");
 
         uint x, y, z;
         m_myRadixSort.GetKernelThreadGroupSizes(localSortKernel, out x, out y, out z);
-        int m_threadGroupSize = (int)x;
+        m_threadGroupSize = (int)x;
 
-        int threadGroupsNeeded = 8;
+        int threadGroupsNeeded = 8 /** 16*/;
 
-        uint[] bufInRadix = new uint[m_threadGroupSize * 4 * threadGroupsNeeded];
+        inputSize = m_threadGroupSize * 4 * threadGroupsNeeded;
+
+        uint[] bufInRadix = new uint[inputSize];
 
         //uint[] bufInRadix = { 5, 10, 2, 1, 0, 20, 30, 45, 12, 63, 48, 3, 6, 32, 87, 39 };
 
@@ -356,6 +378,8 @@ public class PointCloud : MonoBehaviour {
 
         uint[] bufOutPrefixSum = new uint[16]; //the size represents the 16 possible values with 4 bits.
 
+        uint[] bufOutFinal = new uint[inputSize];
+
         ComputeBuffer m_computeBufferIn = new ComputeBuffer(bufInRadix.Length/4, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
         m_computeBufferIn.SetData(bufInRadix);
 
@@ -365,18 +389,17 @@ public class PointCloud : MonoBehaviour {
         ComputeBuffer m_computeBufferOutPrefixSum = new ComputeBuffer(4, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
         m_computeBufferOut.SetData(bufOutPrefixSum);
 
-
-        ComputeBuffer m_computeBufferOutFinal = new ComputeBuffer(bufInRadix.Length / 4, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
+        ComputeBuffer m_computeBufferOutFinal = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
 
         m_myRadixSort.SetBuffer(localSortKernel, "KeysIn", m_computeBufferIn);
         m_myRadixSort.SetBuffer(localSortKernel, "BucketsOut", m_computeBufferOut);
+        
+        m_myRadixSort.SetBuffer(GlobalPrefixSum, "GlobalPrefixSumOut", m_computeBufferOutPrefixSum);
+        m_myRadixSort.SetBuffer(GlobalPrefixSum, "BucketsOut", m_computeBufferOut);
 
-        m_myRadixSort.SetBuffer(GlobalPrefixSum, "KeysIn", m_computeBufferIn);
-        m_myRadixSort.SetBuffer(GlobalPrefixSum, "PrefixSumOut", m_computeBufferOutPrefixSum);
-
-        m_myRadixSort.SetBuffer(RadixReorder, "KeysIn", m_computeBufferIn);
+        m_myRadixSort.SetBuffer(RadixReorder, "KeysInReorder", m_computeBufferIn);
         m_myRadixSort.SetBuffer(RadixReorder, "KeysOut", m_computeBufferOutFinal);
-        m_myRadixSort.SetBuffer(RadixReorder, "PrefixSumOut", m_computeBufferOutPrefixSum);
+        m_myRadixSort.SetBuffer(RadixReorder, "PrefixSumIn", m_computeBufferOutPrefixSum);
 
         m_myRadixSort.SetInt("bitshift", 0);
 
@@ -388,9 +411,9 @@ public class PointCloud : MonoBehaviour {
 
         m_computeBufferOutPrefixSum.GetData(bufOutPrefixSum);
 
-        m_myRadixSort.Dispatch(RadixReorder, 1, 1, 1);
+        m_myRadixSort.Dispatch(RadixReorder, bufInRadix.Length / m_threadGroupSize, 1, 1);
 
-        m_computeBufferOutFinal.GetData(bufOutRadix);
+        m_computeBufferOutFinal.GetData(bufOutFinal);
 
         /*Vector3 viewDir = new Vector3(0.0f, 0.0f, 1.0f);
         radixSort = new RadixSort(256, 128);
@@ -497,9 +520,21 @@ public class PointCloud : MonoBehaviour {
             m_currentTime = 0;
         }*/
 
-        
+        m_currentTime += Time.deltaTime;
+        ++m_framesSinceUpdate;
+        m_accumulation += Time.timeScale / Time.deltaTime;
+        if (m_currentTime >= m_updateFrequency)
+        {
+            m_currentFPS = (int)(m_accumulation / m_framesSinceUpdate);
+            m_currentTime = 0.0f;
+            m_framesSinceUpdate = 0;
+            m_accumulation = 0.0f;
+            m_fpsText = "FPS: " + m_currentFPS;
+        }
+
+
         //GpuSort.BitonicSort32(m_indexComputeBuffers[m_frameIndex], m_computeBufferTemp, m_pointsBuffer, pointRenderer.localToWorldMatrix);
-        
+
         //uint[] bufOut = new uint[/*m_pointsCount*//*262144*/m_indexComputeBuffers[m_frameIndex].count];
         //m_indexComputeBuffers[m_frameIndex].GetData(bufOut);
         //print(bufOut[10]);
@@ -509,10 +544,28 @@ public class PointCloud : MonoBehaviour {
         float aspect = Camera.main.GetComponent<Camera>().aspect;
         pointRenderer.material.SetFloat("aspect", aspect);
     }
-    
+
+    private void OnGUI()
+    {
+        {
+            Color oldColor = GUI.color;
+            GUI.color = Color.white;
+
+            GUI.Label(new Rect(m_FPSLabelOffsetX, m_FPSLabelOffsetY,
+                               UI_FPS_LABEL_SIZE_X,
+                               UI_FPS_LABEL_SIZE_Y), UI_FONT_SIZE + m_fpsText + "</size>");
+            GUI.color = oldColor;
+        }
+    }
+
     private void OnRenderObject()
-    {        
-        GpuSort.BitonicSort32(m_indexComputeBuffers[m_frameIndex], m_computeBufferTemp, m_pointsBuffer, pointRenderer.localToWorldMatrix);
+    {
+        //GpuSort.BitonicSort32(m_indexComputeBuffers[m_frameIndex], m_computeBufferTemp, m_pointsBuffer, pointRenderer.localToWorldMatrix);
+
+        //m_myRadixSort.Dispatch(localSortKernel, inputSize / m_threadGroupSize / 4, 1, 1);
+        //m_myRadixSort.Dispatch(GlobalPrefixSum, 1, 1, 1);
+        //m_myRadixSort.Dispatch(RadixReorder, 1, 1, 1);
+
 
         pointRenderer.material.SetPass(0);
         pointRenderer.material.SetMatrix("model", pointRenderer.localToWorldMatrix);

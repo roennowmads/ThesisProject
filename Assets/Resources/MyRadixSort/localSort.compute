@@ -7,8 +7,11 @@
 
 StructuredBuffer<uint4> KeysIn;
 RWStructuredBuffer<uint4> BucketsOut;
-RWStructuredBuffer<uint4> PrefixSumOut;
-RWStructuredBuffer<uint4> KeysOut;
+RWStructuredBuffer<uint4> GlobalPrefixSumOut;
+
+StructuredBuffer<uint> KeysInReorder;
+StructuredBuffer<uint> PrefixSumIn;
+RWStructuredBuffer<uint> KeysOut;
 
 groupshared uint4x4 sharedBuffer[GROUP_SIZE];
 
@@ -81,6 +84,7 @@ void GlobalPrefixSum(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Dis
 	uint dispatchThreadId = DTid.x * 4u;
 
 	//get the last element of each group:
+	//BucketsOut contains the total sum from each block.
 	sharedBuffer[GI][0] = BucketsOut[dispatchThreadId + 0u]; //counts of 0u, 1u, 2u, 3u, counts of 4u, 5u, 6u, 7u, counts of 8u, 9u, 10u, 11u, counts of 12u, 13u, 14u, 15u
 	sharedBuffer[GI][1] = BucketsOut[dispatchThreadId + 1u];
 	sharedBuffer[GI][2] = BucketsOut[dispatchThreadId + 2u];
@@ -104,27 +108,109 @@ void GlobalPrefixSum(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Dis
 	}
 
 	if (groupId.x == 0 && GI == (GROUP_SIZE - 1u)) {
-		PrefixSumOut[4u * groupId.x + 0u] = sharedBuffer[GI][0];	//counts of 0u, 1u, 2u, 3u
-		PrefixSumOut[4u * groupId.x + 1u] = sharedBuffer[GI][1];	//counts of 4u, 5u, 6u, 7u
-		PrefixSumOut[4u * groupId.x + 2u] = sharedBuffer[GI][2];	//counts of 8u, 9u, 10u, 11u
-		PrefixSumOut[4u * groupId.x + 3u] = sharedBuffer[GI][3];	//counts of 12u, 13u, 14u, 15u
+		//this is inclusive scan (needs to be exclusive!)
+
+		sharedBuffer[GI][0].y += sharedBuffer[GI][0].x;
+		sharedBuffer[GI][0].z += sharedBuffer[GI][0].y;
+		sharedBuffer[GI][0].w += sharedBuffer[GI][0].z;
+
+		sharedBuffer[GI][1].x += sharedBuffer[GI][0].w;
+		sharedBuffer[GI][1].y += sharedBuffer[GI][1].x;
+		sharedBuffer[GI][1].z += sharedBuffer[GI][1].y;
+		sharedBuffer[GI][1].w += sharedBuffer[GI][1].z;
+
+		sharedBuffer[GI][2].x += sharedBuffer[GI][1].w;
+		sharedBuffer[GI][2].y += sharedBuffer[GI][2].x;
+		sharedBuffer[GI][2].z += sharedBuffer[GI][2].y;
+		sharedBuffer[GI][2].w += sharedBuffer[GI][2].z;
+
+		sharedBuffer[GI][3].x += sharedBuffer[GI][2].w;
+		sharedBuffer[GI][3].y += sharedBuffer[GI][3].x;
+		sharedBuffer[GI][3].z += sharedBuffer[GI][3].y;
+		sharedBuffer[GI][3].w += sharedBuffer[GI][3].z;
+
+
+		
+		/*sharedBuffer[GI][0].y += sharedBuffer[GI][0].x;
+		sharedBuffer[GI][0].z += sharedBuffer[GI][0].y;
+		sharedBuffer[GI][0].w += sharedBuffer[GI][0].z;
+
+		sharedBuffer[GI][1].x += sharedBuffer[GI][0].w;
+		sharedBuffer[GI][1].y += sharedBuffer[GI][1].x;
+		sharedBuffer[GI][1].z += sharedBuffer[GI][1].y;
+		sharedBuffer[GI][1].w += sharedBuffer[GI][1].z;
+
+		sharedBuffer[GI][2].x += sharedBuffer[GI][1].w;
+		sharedBuffer[GI][2].y += sharedBuffer[GI][2].x;
+		sharedBuffer[GI][2].z += sharedBuffer[GI][2].y;
+		sharedBuffer[GI][2].w += sharedBuffer[GI][2].z;
+
+		sharedBuffer[GI][3].x += sharedBuffer[GI][2].w;
+		sharedBuffer[GI][3].y += sharedBuffer[GI][3].x;
+		sharedBuffer[GI][3].z += sharedBuffer[GI][3].y;
+		sharedBuffer[GI][3].w += sharedBuffer[GI][3].z;*/
+
+		GlobalPrefixSumOut[4u * groupId.x + 0u] = sharedBuffer[GI][0];	//counts of 0u, 1u, 2u, 3u
+		GlobalPrefixSumOut[4u * groupId.x + 1u] = sharedBuffer[GI][1];	//counts of 4u, 5u, 6u, 7u
+		GlobalPrefixSumOut[4u * groupId.x + 2u] = sharedBuffer[GI][2];	//counts of 8u, 9u, 10u, 11u
+		GlobalPrefixSumOut[4u * groupId.x + 3u] = sharedBuffer[GI][3];	//counts of 12u, 13u, 14u, 15u
 	}
 }
+
+
+//GlobalPrefixSum returns the indiviual counts for each value 0-15, while we actually need the prefix sum of them.
+//Is this actually correct? if it is, then I just need to run a prefix sum on the result, otherwise i need to change something.
+//It is correct. It's just that the previous is "horizontal" and we need to do one last "vertical scan".
+//For a 16K input array that looks like this: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15, 0,1,2,3, ...], there will 1024 of each of the 16 elements.
+//As a last step we need to do an exclusive scan over the 16 buckets, so we get this: 
+//[0, 1024, 2048, 3072, 4096, 5120, ...], which we can use as direct index locations for the keyOut array.
+//Since there are only 16 of these, we might as well do it in one thread.
+
+//[2,3,5,4] -> [2,5,8,9], [0,2,5,8]
 
 
 [numthreads(GROUP_SIZE, 1, 1)]
 void RadixReorder(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
 {
-	uint4 key = KeysIn[DTid.x];
-	uint4 bucket = (key >> bitshift) & 0xF;
-	uint4 newIndex0 = PrefixSumOut[bucket.x]; //+ g_HistogramBuffer[bucket * g_Limit + id.x];
-	uint4 newIndex1 = PrefixSumOut[bucket.y]; //+ g_HistogramBuffer[bucket * g_Limit + id.x];
-	uint4 newIndex2 = PrefixSumOut[bucket.z]; //+ g_HistogramBuffer[bucket * g_Limit + id.x];
-	uint4 newIndex3 = PrefixSumOut[bucket.w]; //+ g_HistogramBuffer[bucket * g_Limit + id.x]; 
-	KeysOut[newIndex0.x] = key;
-	KeysOut[newIndex0.y] = key;
-	KeysOut[newIndex0.z] = key;
-	KeysOut[newIndex0.w] = key;
+	//if (DTid.x != 10) {
+	//	return;	
+	//}
+
+	//KeysOut[DTid.x] = DTid.x;
+
+	uint key = KeysInReorder[DTid.x];				  //four values that we need to place in correctly sorted index
+	uint bucket = (key >> bitshift) & 0xF;   //outputs four 0-15 numbers, each representing an input array element. GlobalPrefixSumOut is a 4 elements long array.
+	//Get counts of all 16 values:
+	uint counts0 = PrefixSumIn[bucket] - 1024;  //it doesn't really make sense that this returns four values does it? no, because we only have 4 indices to lookup because they are 4xuint4. 
+	//uint4 counts1 = PrefixSumIn[bucket.y];
+	//uint4 counts2 = PrefixSumIn[bucket.z];
+	//uint4 counts3 = PrefixSumIn[bucket.w];
+
+
+	How to get many of the same values into different indices? 
+	I'm thinking one solution would be to blend two arrays like this:
+
+	[0,1,2,3,4,5,...] + [0,1024,2048,3072,4096,5120,...] ... 
+
+	Ah that wouldn't work, because what we have to do is keep count of how many, so we can do a proper index.
+	
+	[1,5,3,1,6,1] --> PrefixSumIn[1] -> 1st:0, 2nd:1, 3rd:2. The order in which they arrive is not important. 
+	So if three threads had id's 0, 1, 2, their id's could be used as an offset. But that probably would be the case, so an atomic add of some kind is probably necessary.
+
+
+	KeysOut[counts0] = key.x;
+	//KeysOut[04_05_06_07Counts.y] = key;
+	//KeysOut[08_09_10_11Counts.z] = key;
+	//KeysOut[12_13_14_15Counts.w] = key;
+
+	//uint4 newIndex0 = PrefixSumIn[bucket.x]; //+ g_HistogramBuffer[bucket * g_Limit + id.x];
+	//uint4 newIndex1 = PrefixSumIn[bucket.y]; //+ g_HistogramBuffer[bucket * g_Limit + id.x];
+	//uint4 newIndex2 = PrefixSumIn[bucket.z]; //+ g_HistogramBuffer[bucket * g_Limit + id.x];
+	//uint4 newIndex3 = PrefixSumIn[bucket.w]; //+ g_HistogramBuffer[bucket * g_Limit + id.x]; 
+	//KeysOut[newIndex0.x] = key;
+	//KeysOut[newIndex0.y] = key;
+	//KeysOut[newIndex0.z] = key;
+	//KeysOut[newIndex0.w] = key;
 }
 
 
