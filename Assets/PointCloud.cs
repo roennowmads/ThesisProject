@@ -496,6 +496,7 @@ public class PointCloud : MonoBehaviour {
         //CompressionHelper.CompressMemToFile(texture.GetRawTextureData(), "fireAtriumTex.lzf");       
 
         Debug.Log("Number of points: " + m_pointsCount);
+
     }
 	
 	// Update is called once per frame
@@ -564,7 +565,7 @@ public class PointCloud : MonoBehaviour {
 
         //m_myRadixSort.Dispatch(localSortKernel, inputSize / m_threadGroupSize / 4, 1, 1);
         //m_myRadixSort.Dispatch(GlobalPrefixSum, 1, 1, 1);
-        //m_myRadixSort.Dispatch(RadixReorder, 1, 1, 1);
+        //m_myRadixSort.Dispatch(RadixReorder, inputSize / m_threadGroupSize, 1, 1);
 
 
         pointRenderer.material.SetPass(0);
