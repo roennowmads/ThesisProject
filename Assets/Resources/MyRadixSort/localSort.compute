@@ -162,14 +162,10 @@ void RadixReorder(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Dispat
 	//uint counts0 = PrefixSumIn[bucket] - 1024u;
 	//KeysOut[counts0] = key;
 
-	uint counts[16];
-	[unroll(16)]
+	[unroll(16)] //may not be smart to unroll if we are going to break out most of the time?
 	for (uint i = 0u; i < 16u; i++) {
-		counts[i] = PrefixSumIn[i];
-	}
-	[unroll(16)]
-	for (uint i = 0u; i < 16u; i++) {
-		if (DTid.x < counts[i]) {
+		uint count = PrefixSumIn[i];
+		if (DTid.x < count) {
 			KeysOut[DTid.x] = i;
 			break;
 		}

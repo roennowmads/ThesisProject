@@ -372,6 +372,7 @@ public class PointCloud : MonoBehaviour {
         for (uint i = 0; i < bufInRadix.Length; i++)
         {
             bufInRadix[i] = /*(uint)bufInRadix.Length -*/ i % 16;
+            bufInRadix[i] = bufInRadix[i] == 5 ? 6 : bufInRadix[i];
         }
 
         uint[] bufOutRadix = new uint[4 * bufInRadix.Length / m_threadGroupSize];
