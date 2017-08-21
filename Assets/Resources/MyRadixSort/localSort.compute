@@ -100,25 +100,21 @@ void LocalPrefixSum(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Disp
 
 	//so we still need the rest, not just the sums for the block, but every partial sum in the block as well.   //<-- READ THIS!!!
 
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 0u ] = miniBlock0[0];
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 1u ] = miniBlock0[1];
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 2u ] = miniBlock0[2]; //make sure this is an exclusive instead of inclusive scan
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 3u ] = miniBlock0[3];
-
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 4u ] = miniBlock1[0];
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 5u ] = miniBlock1[1];
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 6u ] = miniBlock1[2]; //make sure this is an exclusive instead of inclusive scan
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 7u ] = miniBlock1[3];
-
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 8u ] = miniBlock2[0];
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 9u ] = miniBlock2[1];
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 10u] = miniBlock2[2]; //make sure this is an exclusive instead of inclusive scan
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 11u] = miniBlock2[3];
-
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 12u] = sharedBuffer[GI][0];
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 13u] = sharedBuffer[GI][1];
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 14u] = sharedBuffer[GI][2]; //make sure this is an exclusive instead of inclusive scan
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 15u] = sharedBuffer[GI][3];
+	for (uint j = 0u; j < 4u; j++) {
+		ValueScans[16u * DTid.x + j] = miniBlock0[j];		//make sure this is an exclusive instead of inclusive scan
+	}
+	for (uint k = 0u; k < 4u; k++) {
+		uint index = 4u + k;
+		ValueScans[16u * DTid.x + index] = miniBlock1[k];   //make sure this is an exclusive instead of inclusive scan
+	}
+	for (uint l = 0u; l < 4u; l++) {
+		uint index = 8u + l;
+		ValueScans[16u * DTid.x + index] = miniBlock2[l];   //make sure this is an exclusive instead of inclusive scan
+	}
+	for (uint o = 0u; o < 4u; o++) {
+		uint index = 12u + o;
+		ValueScans[16u * DTid.x + index] = sharedBuffer[GI][o];  //make sure this is an exclusive instead of inclusive scan
+	}
 
 	//Maybe I should store all the values and not just the final one?
 	if (GI == (GROUP_SIZE - 1u)) {
@@ -166,11 +162,6 @@ void GlobalPrefixSum(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Dis
 		ValueScans[16u * DTid.x + 12u], ValueScans[16u * DTid.x + 13u], 
 		ValueScans[16u * DTid.x + 14u], ValueScans[16u * DTid.x + 15u]);
 
-	//thread local scan: (sequential)
-
-	//miniBlock1 += miniBlock0;
-	//miniBlock2 += miniBlock1;
-	//miniBlock3 += miniBlock2;
 
 	//Get the last element of each block (total block sums):
 	//The following four uint4's contains the total sums of the values 0-15 (each value individually) from each block:
@@ -212,25 +203,21 @@ void GlobalPrefixSum(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Dis
 
 	//miniBlock0[0].x should contain the partial sum of 0's. It appears every 16's index of the ValueScans buffer.
 
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 0u ] = miniBlock0[0];
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 1u ] = miniBlock0[1];
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 2u ] = miniBlock0[2]; //make sure this is an exclusive instead of inclusive scan
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 3u ] = miniBlock0[3];
-
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 4u ] = miniBlock1[0];
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 5u ] = miniBlock1[1];
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 6u ] = miniBlock1[2]; //make sure this is an exclusive instead of inclusive scan
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 7u ] = miniBlock1[3];
-
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 8u ] = miniBlock2[0];
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 9u ] = miniBlock2[1];
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 10u] = miniBlock2[2]; //make sure this is an exclusive instead of inclusive scan
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 11u] = miniBlock2[3];
-
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 12u] = miniBlock3[0];
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 13u] = miniBlock3[1];
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 14u] = miniBlock3[2]; //make sure this is an exclusive instead of inclusive scan
-	ValueScans[/*groupId.x * GROUP_SIZE +*/ 16u * DTid.x + 15u] = miniBlock3[3];
+	for (uint j = 0u; j < 4u; j++) {
+		ValueScans[16u * DTid.x + j] = miniBlock0[j];		//make sure this is an exclusive instead of inclusive scan
+	}
+	for (uint k = 0u; k < 4u; k++) {
+		uint index = 4u + k;
+		ValueScans[16u * DTid.x + index] = miniBlock1[k];   //make sure this is an exclusive instead of inclusive scan
+	}
+	for (uint l = 0u; l < 4u; l++) {
+		uint index = 8u + l;
+		ValueScans[16u * DTid.x + index] = miniBlock2[l];   //make sure this is an exclusive instead of inclusive scan
+	}
+	for (uint o = 0u; o < 4u; o++) {
+		uint index = 12u + o;
+		ValueScans[16u * DTid.x + index] = miniBlock3[o];  //make sure this is an exclusive instead of inclusive scan
+	}
 
 	GroupMemoryBarrierWithGroupSync();  //probably not necessary
 
@@ -282,14 +269,14 @@ void RadixReorder(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Dispat
 	uint4 buckets = (keys >> bitshift) & 0xF;
 
 	//the four 0-15 values each need to be converted from 1D 1x16 to 2D coordinates 4x4: (this is silly, but needs to be done because of the Vector4 stride on the PrefixSumIn buffer).
-	uint globalOffset0 = PrefixSumIn[buckets.x / 4][buckets.x % 4];
-	uint globalOffset1 = PrefixSumIn[buckets.y / 4][buckets.y % 4];
-	uint globalOffset2 = PrefixSumIn[buckets.z / 4][buckets.z % 4];
-	uint globalOffset3 = PrefixSumIn[buckets.w / 4][buckets.w % 4];
+	uint globalOffset0 = PrefixSumIn[buckets.x / 4u][buckets.x % 4u];
+	uint globalOffset1 = PrefixSumIn[buckets.y / 4u][buckets.y % 4u];
+	uint globalOffset2 = PrefixSumIn[buckets.z / 4u][buckets.z % 4u];
+	uint globalOffset3 = PrefixSumIn[buckets.w / 4u][buckets.w % 4u];
 
 	//ValueScansIn, every 16th value is a partial prefix sum of the same value.
 
-	uint localOffsets0 = ValueScansIn[16u * DTid.x + buckets.x][buckets.x / 4];
+	uint localOffsets0 = ValueScansIn[16u * DTid.x + buckets.x][buckets.x / 4];  //the second lookup is 0-3. 0-> 0,1,2,3. 1-> 4,5,6,7. 2-> 8,9,10,11. 3-> 12,13,14,15
 	uint localOffsets1 = ValueScansIn[16u * DTid.x + buckets.y][buckets.y / 4];
 	uint localOffsets2 = ValueScansIn[16u * DTid.x + buckets.z][buckets.z / 4];
 	uint localOffsets3 = ValueScansIn[16u * DTid.x + buckets.w][buckets.w / 4];
