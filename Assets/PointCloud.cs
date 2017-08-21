@@ -361,7 +361,7 @@ public class PointCloud : MonoBehaviour {
         m_myRadixSort.GetKernelThreadGroupSizes(LocalPrefixSum, out x, out y, out z);
         m_threadGroupSize = (int)x;
 
-        int threadGroupsNeeded = 1 /** 16*/;
+        int threadGroupsNeeded = 16 /** 16*/;
 
         inputSize = m_threadGroupSize * 4 * threadGroupsNeeded;
 
@@ -401,6 +401,7 @@ public class PointCloud : MonoBehaviour {
         
         m_myRadixSort.SetBuffer(GlobalPrefixSum, "GlobalPrefixSumOut", m_computeBufferOutPrefixSum);
         m_myRadixSort.SetBuffer(GlobalPrefixSum, "BucketsOut", m_computeBufferOut);
+        m_myRadixSort.SetBuffer(GlobalPrefixSum, "ValueScans", m_computeBufferValueScans);
 
         m_myRadixSort.SetBuffer(RadixReorder, "KeysInReorder", m_computeBufferIn);
         m_myRadixSort.SetBuffer(RadixReorder, "KeysOut", m_computeBufferOutFinal);
@@ -415,13 +416,13 @@ public class PointCloud : MonoBehaviour {
         uint[] bufOutValueScans = new uint[inputSize*16];
         m_computeBufferValueScans.GetData(bufOutValueScans);
 
-        List<uint> prefixSumOfAValue = new List<uint>();
+        List<uint> prefixSumOfAValueLocal = new List<uint>();
 
         //string bla = "";
 
         for (int i = 0; i < bufOutValueScans.Length; i++) {
             if (i % 16 == 0) {
-                prefixSumOfAValue.Add(bufOutValueScans[i + 1]);
+                prefixSumOfAValueLocal.Add(bufOutValueScans[i + 1]); // + 1 means the partial sums of 1's. 
                 //bla += " " + bufOutValueScans[i+1] /*+ ": " + i + " :"*/;
                 
             }   
@@ -429,9 +430,26 @@ public class PointCloud : MonoBehaviour {
 
         //Debug.Log(bla);
 
-        m_myRadixSort.Dispatch(GlobalPrefixSum, 1, 1, 1);
+        m_myRadixSort.Dispatch(GlobalPrefixSum, /*1*/bufInRadix.Length / m_threadGroupSize / 4, 1, 1);
 
         m_computeBufferOutPrefixSum.GetData(bufOutPrefixSum);
+
+        m_computeBufferValueScans.GetData(bufOutValueScans);
+        List<uint> prefixSumOfAValue = new List<uint>();
+
+        //string bla = "";
+
+        for (int i = 0; i < bufOutValueScans.Length; i++) {
+            if (i % 16 == 0) {
+                prefixSumOfAValue.Add(bufOutValueScans[i + 6]); // + 1 means the partial sums of 1's. 
+                //bla += " " + bufOutValueScans[i+1] /*+ ": " + i + " :"*/;
+                
+            }   
+        }
+
+        //for (int i = 0; i < bufOutValueScans.Length; )
+
+
 
         m_myRadixSort.Dispatch(RadixReorder, bufInRadix.Length / m_threadGroupSize, 1, 1);
 
