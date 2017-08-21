@@ -8,12 +8,14 @@
 StructuredBuffer<uint4> KeysIn;
 RWStructuredBuffer<uint4> BucketsOut;
 RWStructuredBuffer<uint4> GlobalPrefixSumOut;
+RWStructuredBuffer<uint4> ValueScans;
 
-StructuredBuffer<uint> KeysInReorder;
-RWStructuredBuffer<uint> PrefixSumIn;
+StructuredBuffer<uint4> KeysInReorder;
+RWStructuredBuffer<uint4> PrefixSumIn;
 RWStructuredBuffer<uint> KeysOut;
+RWStructuredBuffer<uint4> ValueScansIn; 
 
-RWStructuredBuffer<uint4> ValueScans; //this buffer is 16 times the size the KeysIn buffer. It has the consecutive scans of the counts of 0's, 1's,..., 15's in the input array, in that order.
+//this buffer is 16 times the size the KeysIn buffer. It has the consecutive scans of the counts of 0's, 1's,..., 15's in the input array, in that order.
 
 //Since one thread in LocalPrefixSum handles 4 input values, we need to output 4*16 (64) values to the ValueScan buffer per thread.
 
@@ -189,9 +191,7 @@ void GlobalPrefixSum(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Dis
 			temp += sharedBuffer[GI - sumOffset];
 		}
 		GroupMemoryBarrierWithGroupSync();
-		if (GI > 0) {
-			sharedBuffer[GI] = temp;
-		}
+		sharedBuffer[GI] = temp;
 		GroupMemoryBarrierWithGroupSync();
 	}
 
@@ -238,7 +238,7 @@ void GlobalPrefixSum(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Dis
 		//this is inclusive scan (needs to be exclusive!)
 		//Here we scan the counts of the 16 values, in order to get their base indices.
 
-		/*sharedBuffer[GI][0].y += sharedBuffer[GI][0].x;
+		sharedBuffer[GI][0].y += sharedBuffer[GI][0].x;
 		sharedBuffer[GI][0].z += sharedBuffer[GI][0].y;
 		sharedBuffer[GI][0].w += sharedBuffer[GI][0].z;
 
@@ -255,7 +255,7 @@ void GlobalPrefixSum(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Dis
 		sharedBuffer[GI][3].x += sharedBuffer[GI][2].w;
 		sharedBuffer[GI][3].y += sharedBuffer[GI][3].x;
 		sharedBuffer[GI][3].z += sharedBuffer[GI][3].y;
-		sharedBuffer[GI][3].w += sharedBuffer[GI][3].z;*/
+		sharedBuffer[GI][3].w += sharedBuffer[GI][3].z;
 
 		GlobalPrefixSumOut[4u * groupId.x + 0u] = sharedBuffer[GI][0];	//counts of 0u, 1u, 2u, 3u
 		GlobalPrefixSumOut[4u * groupId.x + 1u] = sharedBuffer[GI][1];	//counts of 4u, 5u, 6u, 7u
@@ -278,10 +278,38 @@ void GlobalPrefixSum(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Dis
 [numthreads(GROUP_SIZE, 1, 1)]
 void RadixReorder(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
 {
+	uint4 keys = KeysInReorder[DTid.x];
+	uint4 buckets = (keys >> bitshift) & 0xF;
+
+	//the four 0-15 values each need to be converted from 1D 1x16 to 2D coordinates 4x4: (this is silly, but needs to be done because of the Vector4 stride on the PrefixSumIn buffer).
+	uint globalOffset0 = PrefixSumIn[buckets.x / 4][buckets.x % 4];
+	uint globalOffset1 = PrefixSumIn[buckets.y / 4][buckets.y % 4];
+	uint globalOffset2 = PrefixSumIn[buckets.z / 4][buckets.z % 4];
+	uint globalOffset3 = PrefixSumIn[buckets.w / 4][buckets.w % 4];
+
+	//ValueScansIn, every 16th value is a partial prefix sum of the same value.
+
+	uint localOffsets0 = ValueScansIn[16u * DTid.x + buckets.x][buckets.x / 4];
+	uint localOffsets1 = ValueScansIn[16u * DTid.x + buckets.y][buckets.y / 4];
+	uint localOffsets2 = ValueScansIn[16u * DTid.x + buckets.z][buckets.z / 4];
+	uint localOffsets3 = ValueScansIn[16u * DTid.x + buckets.w][buckets.w / 4];
+
+	uint newIndex0 = (globalOffset0 - 64u) + localOffsets0;
+	uint newIndex1 = (globalOffset1 - 64u) + localOffsets1;
+	uint newIndex2 = (globalOffset2 - 64u) + localOffsets2; //Kinda works now, but there is some problems. Fx. where there is no 5's, 0's are inserted instead?
+	uint newIndex3 = (globalOffset3 - 64u) + localOffsets3;
 	
-	//uint keyBits = (KeysInReorder[DTid.x] >> bitshift) & 0xF;
-	//uint newIndex0 = PrefixSumIn[bucket];		//+ g_HistogramBuffer[bucket * g_Limit + id.x];
-	//KeysOut[newIndex0.x] = key;
+	KeysOut[newIndex0] = keys.x; 
+	KeysOut[newIndex1] = keys.y;
+	KeysOut[newIndex2] = keys.z;
+	KeysOut[newIndex3] = keys.w;
+
+	//uint newIndex0 = (offset0 - 1024u) + ValueScansIn[16u * DTid.x + buckets.x];
+	//uint newIndex1 = (offset1 - 1024u) + ValueScansIn[16u * DTid.x + buckets.y];
+	//uint newIndex2 = (offset2 - 1024u) + ValueScansIn[16u * DTid.x + buckets.z];
+	//uint newIndex3 = (offset2 - 1024u) + ValueScansIn[16u * DTid.x + buckets.w];
+
+	//KeysOut[DTid.x] = key;
 }
 
 
