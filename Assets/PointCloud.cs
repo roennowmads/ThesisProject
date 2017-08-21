@@ -384,7 +384,7 @@ public class PointCloud : MonoBehaviour {
         ComputeBuffer m_computeBufferIn = new ComputeBuffer(bufInRadix.Length/4, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
         m_computeBufferIn.SetData(bufInRadix);
 
-        ComputeBuffer m_computeBufferValueScans = new ComputeBuffer(bufInRadix.Length*4, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
+        ComputeBuffer m_computeBufferValueScans = new ComputeBuffer(bufInRadix.Length*16, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
 
 
         ComputeBuffer m_computeBufferOut = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
@@ -442,7 +442,7 @@ public class PointCloud : MonoBehaviour {
 
         for (int i = 0; i < bufOutValueScans.Length; i++) {
             if (i % 16 == 0) {
-                prefixSumOfAValue.Add(bufOutValueScans[i + 5]); // + 1 means the partial sums of 1's. 
+                prefixSumOfAValue.Add(bufOutValueScans[i + 6]); // + 1 means the partial sums of 1's. 
                 //bla += " " + bufOutValueScans[i+1] /*+ ": " + i + " :"*/;
                 
             }   

@@ -8,12 +8,12 @@
 StructuredBuffer<uint4> KeysIn;
 RWStructuredBuffer<uint4> BucketsOut;
 RWStructuredBuffer<uint4> GlobalPrefixSumOut;
-RWStructuredBuffer<uint4> ValueScans;
+RWStructuredBuffer<uint> ValueScans;
 
 StructuredBuffer<uint4> KeysInReorder;
 RWStructuredBuffer<uint4> PrefixSumIn;
 RWStructuredBuffer<uint> KeysOut;
-RWStructuredBuffer<uint4> ValueScansIn; 
+RWStructuredBuffer<uint> ValueScansIn; 
 
 //this buffer is 16 times the size the KeysIn buffer. It has the consecutive scans of the counts of 0's, 1's,..., 15's in the input array, in that order.
 
@@ -98,22 +98,33 @@ void LocalPrefixSum(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Disp
 	//sharedBuffer[GI][0].x is the block count for the 0's
 	//sharedBuffer[GI][3].w is the block count for the 15's
 
-	//so we still need the rest, not just the sums for the block, but every partial sum in the block as well.   //<-- READ THIS!!!
-
 	for (uint j = 0u; j < 4u; j++) {
-		ValueScans[16u * DTid.x + j] = miniBlock0[j];		//make sure this is an exclusive instead of inclusive scan
+		uint index = 4u * j;
+		ValueScans[64u * DTid.x + index + 0u] = miniBlock0[j].x;		//make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 1u] = miniBlock0[j].y;		//make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 2u] = miniBlock0[j].z;		//make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 3u] = miniBlock0[j].w;		//make sure this is an exclusive instead of inclusive scan
 	}
 	for (uint k = 0u; k < 4u; k++) {
-		uint index = 4u + k;
-		ValueScans[16u * DTid.x + index] = miniBlock1[k];   //make sure this is an exclusive instead of inclusive scan
+		uint index = 16u + 4u * k;
+		ValueScans[64u * DTid.x + index + 0u] = miniBlock1[k].x;   //make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 1u] = miniBlock1[k].y;   //make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 2u] = miniBlock1[k].z;   //make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 3u] = miniBlock1[k].w;   //make sure this is an exclusive instead of inclusive scan
 	}
 	for (uint l = 0u; l < 4u; l++) {
-		uint index = 8u + l;
-		ValueScans[16u * DTid.x + index] = miniBlock2[l];   //make sure this is an exclusive instead of inclusive scan
+		uint index = 32u + 4u * l;
+		ValueScans[64u * DTid.x + index + 0u] = miniBlock2[l].x;   //make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 1u] = miniBlock2[l].y;   //make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 2u] = miniBlock2[l].z;   //make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 3u] = miniBlock2[l].w;   //make sure this is an exclusive instead of inclusive scan
 	}
 	for (uint o = 0u; o < 4u; o++) {
-		uint index = 12u + o;
-		ValueScans[16u * DTid.x + index] = sharedBuffer[GI][o];  //make sure this is an exclusive instead of inclusive scan
+		uint index = 48u + 4u * o;
+		ValueScans[64u * DTid.x + index + 0u] = sharedBuffer[GI][o].x;   //make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 1u] = sharedBuffer[GI][o].y;   //make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 2u] = sharedBuffer[GI][o].z;   //make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 3u] = sharedBuffer[GI][o].w;   //make sure this is an exclusive instead of inclusive scan
 	}
 
 	//Maybe I should store all the values and not just the final one?
@@ -146,22 +157,46 @@ void GlobalPrefixSum(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Dis
 	//0 * 16 + 16 * 4 + 3 = 7
 
 	//need to make sure the values I get here are from the same block!
-	uint4x4 miniBlock0 = uint4x4(
-		ValueScans[16u * DTid.x + 0u ], ValueScans[16u * DTid.x + 1u ], 
-		ValueScans[16u * DTid.x + 2u ], ValueScans[16u * DTid.x + 3u ]);
 
-	uint4x4 miniBlock1 = uint4x4(
-		ValueScans[16u * DTid.x + 4u ], ValueScans[16u * DTid.x + 5u ], 
-		ValueScans[16u * DTid.x + 6u ], ValueScans[16u * DTid.x + 7u ]);
+	uint4x4 miniBlock0;
+	[unroll(4)]
+	for (uint j0 = 0u; j0 < 4u; j0++) {
+		[unroll(4)]
+		for (uint i0 = 0u; i0 < 4u; i0++) {
+			uint index = i0 + j0 * 4u;
+			miniBlock0[j0][i0] = ValueScans[64u * DTid.x + index];
+		}
+	}
 
-	uint4x4 miniBlock2 = uint4x4(
-		ValueScans[16u * DTid.x + 8u ], ValueScans[16u * DTid.x + 9u ], 
-		ValueScans[16u * DTid.x + 10u], ValueScans[16u * DTid.x + 11u]);
+	uint4x4 miniBlock1;
+	[unroll(4)]
+	for (uint j1 = 0u; j1 < 4u; j1++) {
+		[unroll(4)]
+		for (uint i1 = 0u; i1 < 4u; i1++) {
+			uint index = 16u + i1 + j1 * 4u;
+			miniBlock1[j1][i1] = ValueScans[64u * DTid.x + index];
+		}
+	}
 
-	uint4x4 miniBlock3 = uint4x4(
-		ValueScans[16u * DTid.x + 12u], ValueScans[16u * DTid.x + 13u], 
-		ValueScans[16u * DTid.x + 14u], ValueScans[16u * DTid.x + 15u]);
+	uint4x4 miniBlock2;
+	[unroll(4)]
+	for (uint j2 = 0u; j2 < 4u; j2++) {
+		[unroll(4)]
+		for (uint i2 = 0u; i2 < 4u; i2++) {
+			uint index = 32u + i2 + j2 * 4u;
+			miniBlock2[j2][i2] = ValueScans[64u * DTid.x + index];
+		}
+	}
 
+	uint4x4 miniBlock3;
+	[unroll(4)]
+	for (uint j3 = 0u; j3 < 4u; j3++) {
+		[unroll(4)]
+		for (uint i3 = 0u; i3 < 4u; i3++) {
+			uint index = 48u + i3 + j3 * 4u;
+			miniBlock3[j3][i3] = ValueScans[64u * DTid.x + index];
+		}
+	}
 
 	//Get the last element of each block (total block sums):
 	//The following four uint4's contains the total sums of the values 0-15 (each value individually) from each block:
@@ -204,19 +239,32 @@ void GlobalPrefixSum(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Dis
 	//miniBlock0[0].x should contain the partial sum of 0's. It appears every 16's index of the ValueScans buffer.
 
 	for (uint j = 0u; j < 4u; j++) {
-		ValueScans[16u * DTid.x + j] = miniBlock0[j];		//make sure this is an exclusive instead of inclusive scan
+		uint index = 4u * j;
+		ValueScans[64u * DTid.x + index + 0u] = miniBlock0[j].x;		//make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 1u] = miniBlock0[j].y;		//make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 2u] = miniBlock0[j].z;		//make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 3u] = miniBlock0[j].w;		//make sure this is an exclusive instead of inclusive scan
 	}
 	for (uint k = 0u; k < 4u; k++) {
-		uint index = 4u + k;
-		ValueScans[16u * DTid.x + index] = miniBlock1[k];   //make sure this is an exclusive instead of inclusive scan
+		uint index = 16u + 4u * k;
+		ValueScans[64u * DTid.x + index + 0u] = miniBlock1[k].x;   //make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 1u] = miniBlock1[k].y;   //make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 2u] = miniBlock1[k].z;   //make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 3u] = miniBlock1[k].w;   //make sure this is an exclusive instead of inclusive scan
 	}
 	for (uint l = 0u; l < 4u; l++) {
-		uint index = 8u + l;
-		ValueScans[16u * DTid.x + index] = miniBlock2[l];   //make sure this is an exclusive instead of inclusive scan
+		uint index = 32u + 4u * l;
+		ValueScans[64u * DTid.x + index + 0u] = miniBlock2[l].x;   //make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 1u] = miniBlock2[l].y;   //make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 2u] = miniBlock2[l].z;   //make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 3u] = miniBlock2[l].w;   //make sure this is an exclusive instead of inclusive scan
 	}
 	for (uint o = 0u; o < 4u; o++) {
-		uint index = 12u + o;
-		ValueScans[16u * DTid.x + index] = miniBlock3[o];  //make sure this is an exclusive instead of inclusive scan
+		uint index = 48u + 4u * o;
+		ValueScans[64u * DTid.x + index + 0u] = miniBlock3[o].x;   //make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 1u] = miniBlock3[o].y;   //make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 2u] = miniBlock3[o].z;   //make sure this is an exclusive instead of inclusive scan
+		ValueScans[64u * DTid.x + index + 3u] = miniBlock3[o].w;   //make sure this is an exclusive instead of inclusive scan
 	}
 
 	GroupMemoryBarrierWithGroupSync();  //probably not necessary
@@ -276,10 +324,10 @@ void RadixReorder(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Dispat
 
 	//ValueScansIn, every 16th value is a partial prefix sum of the same value.
 
-	uint localOffsets0 = ValueScansIn[16u * DTid.x + buckets.x][buckets.x / 4];  //the second lookup is 0-3. 0-> 0,1,2,3. 1-> 4,5,6,7. 2-> 8,9,10,11. 3-> 12,13,14,15
-	uint localOffsets1 = ValueScansIn[16u * DTid.x + buckets.y][buckets.y / 4];
-	uint localOffsets2 = ValueScansIn[16u * DTid.x + buckets.z][buckets.z / 4];
-	uint localOffsets3 = ValueScansIn[16u * DTid.x + buckets.w][buckets.w / 4];
+	uint localOffsets0 = ValueScansIn[16u * DTid.x + buckets.x];  //the second lookup is 0-3. 0-> 0,1,2,3. 1-> 4,5,6,7. 2-> 8,9,10,11. 3-> 12,13,14,15
+	uint localOffsets1 = ValueScansIn[16u * DTid.x + buckets.y];
+	uint localOffsets2 = ValueScansIn[16u * DTid.x + buckets.z /*   64 values offset?   */];    //READ THIS -->> Half of each value is 0?  I got the same result before using the uint4's and uint4x4's! Still get a bunch of 0's where 5 should be, but the larger numbers are good now.
+	uint localOffsets3 = ValueScansIn[16u * DTid.x + buckets.w];
 
 	uint newIndex0 = (globalOffset0 - 64u) + localOffsets0;
 	uint newIndex1 = (globalOffset1 - 64u) + localOffsets1;
@@ -290,13 +338,6 @@ void RadixReorder(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Dispat
 	KeysOut[newIndex1] = keys.y;
 	KeysOut[newIndex2] = keys.z;
 	KeysOut[newIndex3] = keys.w;
-
-	//uint newIndex0 = (offset0 - 1024u) + ValueScansIn[16u * DTid.x + buckets.x];
-	//uint newIndex1 = (offset1 - 1024u) + ValueScansIn[16u * DTid.x + buckets.y];
-	//uint newIndex2 = (offset2 - 1024u) + ValueScansIn[16u * DTid.x + buckets.z];
-	//uint newIndex3 = (offset2 - 1024u) + ValueScansIn[16u * DTid.x + buckets.w];
-
-	//KeysOut[DTid.x] = key;
 }
 
 
