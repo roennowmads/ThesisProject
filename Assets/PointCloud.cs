@@ -37,7 +37,7 @@ public class PointCloud : MonoBehaviour {
     private RadixSort radixSort;
 
     private ComputeShader m_myRadixSort;
-    private int localSortKernel;
+    private int LocalPrefixSum;
     private int GlobalPrefixSum;
     private int RadixReorder;
     private int inputSize;
@@ -353,15 +353,15 @@ public class PointCloud : MonoBehaviour {
         m_kernel = m_radixShader.FindKernel("CSMain");
 
         m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort", typeof(ComputeShader));
-        localSortKernel = m_myRadixSort.FindKernel("LocalPrefixSum");
+        LocalPrefixSum = m_myRadixSort.FindKernel("LocalPrefixSum");
         GlobalPrefixSum = m_myRadixSort.FindKernel("GlobalPrefixSum");
         RadixReorder = m_myRadixSort.FindKernel("RadixReorder");
 
         uint x, y, z;
-        m_myRadixSort.GetKernelThreadGroupSizes(localSortKernel, out x, out y, out z);
+        m_myRadixSort.GetKernelThreadGroupSizes(LocalPrefixSum, out x, out y, out z);
         m_threadGroupSize = (int)x;
 
-        int threadGroupsNeeded = 8 /** 16*/;
+        int threadGroupsNeeded = 1 /** 16*/;
 
         inputSize = m_threadGroupSize * 4 * threadGroupsNeeded;
 
@@ -384,6 +384,9 @@ public class PointCloud : MonoBehaviour {
         ComputeBuffer m_computeBufferIn = new ComputeBuffer(bufInRadix.Length/4, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
         m_computeBufferIn.SetData(bufInRadix);
 
+        ComputeBuffer m_computeBufferValueScans = new ComputeBuffer(bufInRadix.Length*4, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
+
+
         ComputeBuffer m_computeBufferOut = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
         m_computeBufferOut.SetData(bufOutRadix);
 
@@ -392,8 +395,9 @@ public class PointCloud : MonoBehaviour {
 
         ComputeBuffer m_computeBufferOutFinal = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
 
-        m_myRadixSort.SetBuffer(localSortKernel, "KeysIn", m_computeBufferIn);
-        m_myRadixSort.SetBuffer(localSortKernel, "BucketsOut", m_computeBufferOut);
+        m_myRadixSort.SetBuffer(LocalPrefixSum, "KeysIn", m_computeBufferIn);
+        m_myRadixSort.SetBuffer(LocalPrefixSum, "BucketsOut", m_computeBufferOut);
+        m_myRadixSort.SetBuffer(LocalPrefixSum, "ValueScans", m_computeBufferValueScans);
         
         m_myRadixSort.SetBuffer(GlobalPrefixSum, "GlobalPrefixSumOut", m_computeBufferOutPrefixSum);
         m_myRadixSort.SetBuffer(GlobalPrefixSum, "BucketsOut", m_computeBufferOut);
@@ -404,9 +408,26 @@ public class PointCloud : MonoBehaviour {
 
         m_myRadixSort.SetInt("bitshift", 0);
 
-        m_myRadixSort.Dispatch(localSortKernel, bufInRadix.Length / m_threadGroupSize / 4, 1, 1);
+        m_myRadixSort.Dispatch(LocalPrefixSum, bufInRadix.Length / m_threadGroupSize / 4, 1, 1);
 
         m_computeBufferOut.GetData(bufOutRadix);
+
+        uint[] bufOutValueScans = new uint[inputSize*16];
+        m_computeBufferValueScans.GetData(bufOutValueScans);
+
+        List<uint> prefixSumOfAValue = new List<uint>();
+
+        //string bla = "";
+
+        for (int i = 0; i < bufOutValueScans.Length; i++) {
+            if (i % 16 == 0) {
+                prefixSumOfAValue.Add(bufOutValueScans[i + 1]);
+                //bla += " " + bufOutValueScans[i+1] /*+ ": " + i + " :"*/;
+                
+            }   
+        }
+
+        //Debug.Log(bla);
 
         m_myRadixSort.Dispatch(GlobalPrefixSum, 1, 1, 1);
 
@@ -564,7 +585,7 @@ public class PointCloud : MonoBehaviour {
     {
         //GpuSort.BitonicSort32(m_indexComputeBuffers[m_frameIndex], m_computeBufferTemp, m_pointsBuffer, pointRenderer.localToWorldMatrix);
 
-        //m_myRadixSort.Dispatch(localSortKernel, inputSize / m_threadGroupSize / 4, 1, 1);
+        //m_myRadixSort.Dispatch(LocalPrefixSum, inputSize / m_threadGroupSize / 4, 1, 1);
         //m_myRadixSort.Dispatch(GlobalPrefixSum, 1, 1, 1);
         //m_myRadixSort.Dispatch(RadixReorder, inputSize / m_threadGroupSize, 1, 1);
 
