@@ -3,7 +3,7 @@
 #pragma kernel RadixReorder
 
 
-#define GROUP_SIZE 512
+#define GROUP_SIZE 16
 
 StructuredBuffer<uint4> KeysIn;
 RWStructuredBuffer<uint4> BucketsOut;
