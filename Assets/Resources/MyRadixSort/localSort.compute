@@ -270,47 +270,52 @@ void GlobalPrefixSum(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Dis
 	GroupMemoryBarrierWithGroupSync();  //probably not necessary
 
 	if (groupId.x == 0 && GI == (GROUP_SIZE - 1u)) {
-		//this is inclusive scan (needs to be exclusive!)
 		//Here we scan the counts of the 16 values, in order to get their base indices.
 
-		sharedBuffer[GI][0].y += sharedBuffer[GI][0].x;
-		sharedBuffer[GI][0].z += sharedBuffer[GI][0].y;
-		sharedBuffer[GI][0].w += sharedBuffer[GI][0].z;
+		//exclusive scan:
+		uint4 temp = sharedBuffer[GI][0];
+		sharedBuffer[GI][0][0] = 0u;
+		sharedBuffer[GI][0][1] = sharedBuffer[GI][0][0] + temp.x;
+		sharedBuffer[GI][0][2] = sharedBuffer[GI][0][1] + temp.y;
+		sharedBuffer[GI][0][3] = sharedBuffer[GI][0][2] + temp.z;
 
-		sharedBuffer[GI][1].x += sharedBuffer[GI][0].w;
-		sharedBuffer[GI][1].y += sharedBuffer[GI][1].x;
-		sharedBuffer[GI][1].z += sharedBuffer[GI][1].y;
-		sharedBuffer[GI][1].w += sharedBuffer[GI][1].z;
+		uint4 temp2 = sharedBuffer[GI][1];
+		sharedBuffer[GI][1][0] = sharedBuffer[GI][0][3] + temp.w;
+		sharedBuffer[GI][1][1] = sharedBuffer[GI][1][0] + temp2.x;
+		sharedBuffer[GI][1][2] = sharedBuffer[GI][1][1] + temp2.y;
+		sharedBuffer[GI][1][3] = sharedBuffer[GI][1][2] + temp2.z;
 
-		sharedBuffer[GI][2].x += sharedBuffer[GI][1].w;
-		sharedBuffer[GI][2].y += sharedBuffer[GI][2].x;
-		sharedBuffer[GI][2].z += sharedBuffer[GI][2].y;
-		sharedBuffer[GI][2].w += sharedBuffer[GI][2].z;
+		temp = sharedBuffer[GI][2];
+		sharedBuffer[GI][2][0] = sharedBuffer[GI][1][3] + temp2.w;
+		sharedBuffer[GI][2][1] = sharedBuffer[GI][2][0] + temp.x;
+		sharedBuffer[GI][2][2] = sharedBuffer[GI][2][1] + temp.y;
+		sharedBuffer[GI][2][3] = sharedBuffer[GI][2][2] + temp.z;
 
-		sharedBuffer[GI][3].x += sharedBuffer[GI][2].w;
-		sharedBuffer[GI][3].y += sharedBuffer[GI][3].x;
-		sharedBuffer[GI][3].z += sharedBuffer[GI][3].y;
-		sharedBuffer[GI][3].w += sharedBuffer[GI][3].z;
+		temp2 = sharedBuffer[GI][3];
+		sharedBuffer[GI][3][0] = sharedBuffer[GI][2][3] + temp.w;
+		sharedBuffer[GI][3][1] = sharedBuffer[GI][3][0] + temp2.x;
+		sharedBuffer[GI][3][2] = sharedBuffer[GI][3][1] + temp2.y;
+		sharedBuffer[GI][3][3] = sharedBuffer[GI][3][2] + temp2.z;
 
 		GlobalPrefixSumOut[16u * groupId.x + 0u] = sharedBuffer[GI][0].x;	//counts of 0u, 1u, 2u, 3u
 		GlobalPrefixSumOut[16u * groupId.x + 1u] = sharedBuffer[GI][0].y;	//counts of 0u, 1u, 2u, 3u
 		GlobalPrefixSumOut[16u * groupId.x + 2u] = sharedBuffer[GI][0].z;	//counts of 0u, 1u, 2u, 3u
 		GlobalPrefixSumOut[16u * groupId.x + 3u] = sharedBuffer[GI][0].w;	//counts of 0u, 1u, 2u, 3u
 
-		GlobalPrefixSumOut[16u * groupId.x + 4u] = sharedBuffer[GI][1].x;	//counts of 0u, 1u, 2u, 3u
-		GlobalPrefixSumOut[16u * groupId.x + 5u] = sharedBuffer[GI][1].y;	//counts of 0u, 1u, 2u, 3u
-		GlobalPrefixSumOut[16u * groupId.x + 6u] = sharedBuffer[GI][1].z;	//counts of 0u, 1u, 2u, 3u
-		GlobalPrefixSumOut[16u * groupId.x + 7u] = sharedBuffer[GI][1].w;	//counts of 0u, 1u, 2u, 3u
+		GlobalPrefixSumOut[16u * groupId.x + 4u] = sharedBuffer[GI][1].x;	//counts of 4u, 5u, 6u, 7u
+		GlobalPrefixSumOut[16u * groupId.x + 5u] = sharedBuffer[GI][1].y;	//counts of 4u, 5u, 6u, 7u
+		GlobalPrefixSumOut[16u * groupId.x + 6u] = sharedBuffer[GI][1].z;	//counts of 4u, 5u, 6u, 7u
+		GlobalPrefixSumOut[16u * groupId.x + 7u] = sharedBuffer[GI][1].w;	//counts of 4u, 5u, 6u, 7u
 
-		GlobalPrefixSumOut[16u * groupId.x + 8u] = sharedBuffer[GI][2].x;	//counts of 0u, 1u, 2u, 3u
-		GlobalPrefixSumOut[16u * groupId.x + 9u] = sharedBuffer[GI][2].y;	//counts of 0u, 1u, 2u, 3u
-		GlobalPrefixSumOut[16u * groupId.x + 10u] = sharedBuffer[GI][2].z;	//counts of 0u, 1u, 2u, 3u
-		GlobalPrefixSumOut[16u * groupId.x + 11u] = sharedBuffer[GI][2].w;	//counts of 0u, 1u, 2u, 3u
+		GlobalPrefixSumOut[16u * groupId.x + 8u] = sharedBuffer[GI][2].x;	//counts of 8u, 9u, 10u, 11u
+		GlobalPrefixSumOut[16u * groupId.x + 9u] = sharedBuffer[GI][2].y;	//counts of 8u, 9u, 10u, 11u
+		GlobalPrefixSumOut[16u * groupId.x + 10u] = sharedBuffer[GI][2].z;	//counts of 8u, 9u, 10u, 11u
+		GlobalPrefixSumOut[16u * groupId.x + 11u] = sharedBuffer[GI][2].w;	//counts of 8u, 9u, 10u, 11u
 
-		GlobalPrefixSumOut[16u * groupId.x + 12u] = sharedBuffer[GI][3].x;	//counts of 0u, 1u, 2u, 3u
-		GlobalPrefixSumOut[16u * groupId.x + 13u] = sharedBuffer[GI][3].y;	//counts of 0u, 1u, 2u, 3u
-		GlobalPrefixSumOut[16u * groupId.x + 14u] = sharedBuffer[GI][3].z;	//counts of 0u, 1u, 2u, 3u
-		GlobalPrefixSumOut[16u * groupId.x + 15u] = sharedBuffer[GI][3].w;	//counts of 0u, 1u, 2u, 3u
+		GlobalPrefixSumOut[16u * groupId.x + 12u] = sharedBuffer[GI][3].x;	//counts of 12u, 13u, 14u, 15u
+		GlobalPrefixSumOut[16u * groupId.x + 13u] = sharedBuffer[GI][3].y;	//counts of 12u, 13u, 14u, 15u
+		GlobalPrefixSumOut[16u * groupId.x + 14u] = sharedBuffer[GI][3].z;	//counts of 12u, 13u, 14u, 15u
+		GlobalPrefixSumOut[16u * groupId.x + 15u] = sharedBuffer[GI][3].w;	//counts of 12u, 13u, 14u, 15u
 
 		//GlobalPrefixSumOut[4u * groupId.x + 0u] = sharedBuffer[GI][0];	//counts of 0u, 1u, 2u, 3u
 		//GlobalPrefixSumOut[4u * groupId.x + 1u] = sharedBuffer[GI][1];	//counts of 4u, 5u, 6u, 7u
@@ -337,10 +342,10 @@ void RadixReorder(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Dispat
 	uint4 buckets = (keys >> bitshift) & 0xF;	
 
 	//the four 0-15 values each need to be converted from 1D 1x16 to 2D coordinates 4x4: (this is silly, but needs to be done because of the Vector4 stride on the PrefixSumIn buffer).
-	uint globalOffset0 = buckets.x > 0u ? PrefixSumIn[buckets.x - 1u] : 0u;
-	uint globalOffset1 = buckets.y > 0u ? PrefixSumIn[buckets.y - 1u] : 0u;
-	uint globalOffset2 = buckets.z > 0u ? PrefixSumIn[buckets.z - 1u] : 0u;
-	uint globalOffset3 = buckets.w > 0u ? PrefixSumIn[buckets.w - 1u] : 0u;
+	uint globalOffset0 = PrefixSumIn[buckets.x];
+	uint globalOffset1 = PrefixSumIn[buckets.y];
+	uint globalOffset2 = PrefixSumIn[buckets.z];
+	uint globalOffset3 = PrefixSumIn[buckets.w];
 
 	//ValueScansIn, every 16th value is a partial prefix sum of the same value.
 

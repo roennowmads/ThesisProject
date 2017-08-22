@@ -373,6 +373,9 @@ public class PointCloud : MonoBehaviour {
         {
             bufInRadix[i] = /*(uint)bufInRadix.Length -*/ i % 16;
             bufInRadix[i] = bufInRadix[i] == 5 ? 6 : bufInRadix[i];
+            if (i % 3 == 0) {
+                bufInRadix[i] = 10;
+            }
         }
 
         uint[] bufOutRadix = new uint[4 * bufInRadix.Length / m_threadGroupSize];
@@ -481,6 +484,16 @@ public class PointCloud : MonoBehaviour {
         m_myRadixSort.Dispatch(RadixReorder, bufInRadix.Length / m_threadGroupSize / 4, 1, 1);
 
         m_computeBufferOutFinal.GetData(bufOutFinal);
+
+        Array.Sort<uint>(bufInRadix);
+
+        bool theSame = true;
+        for (int i = 0; i < bufInRadix.Length; i++) {
+            if (bufOutFinal[i] != bufInRadix[i]) {
+                theSame = false;
+                break;
+            }
+        }
 
         /*Vector3 viewDir = new Vector3(0.0f, 0.0f, 1.0f);
         radixSort = new RadixSort(256, 128);
