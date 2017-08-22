@@ -478,7 +478,7 @@ public class PointCloud : MonoBehaviour {
 
 
 
-        m_myRadixSort.Dispatch(RadixReorder, bufInRadix.Length / m_threadGroupSize, 1, 1);
+        m_myRadixSort.Dispatch(RadixReorder, bufInRadix.Length / m_threadGroupSize / 4, 1, 1);
 
         m_computeBufferOutFinal.GetData(bufOutFinal);
 

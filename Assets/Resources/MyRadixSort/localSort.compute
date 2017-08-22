@@ -333,38 +333,33 @@ void GlobalPrefixSum(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Dis
 [numthreads(GROUP_SIZE, 1, 1)]
 void RadixReorder(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
 {
-	uint dispatchThreadID = DTid.x % 4u;
-	
-
-	uint keys = KeysInReorder[DTid.x / 4u][dispatchThreadID];
-	uint buckets = (keys >> bitshift) & 0xF;
-
-	
+	uint4 keys = KeysInReorder[DTid.x];
+	uint4 buckets = (keys >> bitshift) & 0xF;	
 
 	//the four 0-15 values each need to be converted from 1D 1x16 to 2D coordinates 4x4: (this is silly, but needs to be done because of the Vector4 stride on the PrefixSumIn buffer).
 	uint globalOffset0 = buckets.x > 0u ? PrefixSumIn[buckets.x - 1u] : 0u;
-	//uint globalOffset1 = buckets.y > 0u ? PrefixSumIn[buckets.y - 1u] : 0u;
-	//uint globalOffset2 = buckets.z > 0u ? PrefixSumIn[buckets.z - 1u] : 0u;
-	//uint globalOffset3 = buckets.w > 0u ? PrefixSumIn[buckets.w - 1u] : 0u;
+	uint globalOffset1 = buckets.y > 0u ? PrefixSumIn[buckets.y - 1u] : 0u;
+	uint globalOffset2 = buckets.z > 0u ? PrefixSumIn[buckets.z - 1u] : 0u;
+	uint globalOffset3 = buckets.w > 0u ? PrefixSumIn[buckets.w - 1u] : 0u;
 
 	//ValueScansIn, every 16th value is a partial prefix sum of the same value.
 
 	//There is 4 times less unique DTid.x's because we're doing this in four values at a time.
 
-	uint localOffsets0 = ValueScansIn[16u * DTid.x + buckets.x] - 1u;  //the second lookup is 0-3. 0-> 0,1,2,3. 1-> 4,5,6,7. 2-> 8,9,10,11. 3-> 12,13,14,15
-	//uint localOffsets1 = ValueScansIn[16u * DTid.x + buckets.y] - 1u;
-	//uint localOffsets2 = ValueScansIn[16u * DTid.x + buckets.z] - 1u;    //READ THIS -->> Half of each value is 0?  I got the same result before using the uint4's and uint4x4's! Still get a bunch of 0's where 5 should be, but the larger numbers are good now.
-	//uint localOffsets3 = ValueScansIn[16u * DTid.x + buckets.w] - 1u;
+	uint localOffsets0 = ValueScansIn[64u * DTid.x +  0u + buckets.x] - 1u;  //the second lookup is 0-3. 0-> 0,1,2,3. 1-> 4,5,6,7. 2-> 8,9,10,11. 3-> 12,13,14,15
+	uint localOffsets1 = ValueScansIn[64u * DTid.x + 16u + buckets.y] - 1u;
+	uint localOffsets2 = ValueScansIn[64u * DTid.x + 32u + buckets.z] - 1u;    //READ THIS -->> Half of each value is 0?  I got the same result before using the uint4's and uint4x4's! Still get a bunch of 0's where 5 should be, but the larger numbers are good now.
+	uint localOffsets3 = ValueScansIn[64u * DTid.x + 48u + buckets.w] - 1u;
 
 	uint newIndex0 = globalOffset0 + localOffsets0;
-	//uint newIndex1 = globalOffset1 + localOffsets1;
-	//uint newIndex2 = globalOffset2 + localOffsets2; //Kinda works now, but there is some problems. Fx. where there is no 5's, 0's are inserted instead?
-	//uint newIndex3 = globalOffset3 + localOffsets3;
+	uint newIndex1 = globalOffset1 + localOffsets1;
+	uint newIndex2 = globalOffset2 + localOffsets2; //Kinda works now, but there is some problems. Fx. where there is no 5's, 0's are inserted instead?
+	uint newIndex3 = globalOffset3 + localOffsets3;
 	
 	KeysOut[newIndex0] = keys.x; 
-	//KeysOut[newIndex1] = keys.y;
-	//KeysOut[newIndex2] = keys.z;
-	//KeysOut[newIndex3] = keys.w;
+	KeysOut[newIndex1] = keys.y;
+	KeysOut[newIndex2] = keys.z;
+	KeysOut[newIndex3] = keys.w;
 }
 
 
