@@ -408,7 +408,8 @@ public class PointCloud : MonoBehaviour {
         m_myRadixSort.SetBuffer(RadixReorder, "PrefixSumIn", m_computeBufferOutPrefixSum);
         m_myRadixSort.SetBuffer(RadixReorder, "ValueScansIn", m_computeBufferValueScans);
 
-        m_myRadixSort.SetInt("bitshift", 0);
+        int bitshift = 0;
+        m_myRadixSort.SetInt("bitshift", bitshift);
 
         m_myRadixSort.Dispatch(LocalPrefixSum, bufInRadix.Length / m_threadGroupSize / 4, 1, 1);
 
@@ -449,6 +450,27 @@ public class PointCloud : MonoBehaviour {
         }
 
         //for (int i = 0; i < bufOutValueScans.Length; )
+
+
+        uint[] sortedData = new uint[inputSize];
+
+        for (int i = 0; i < inputSize; i++) {
+            sortedData[i] = 9999;
+        }
+
+
+        for (int i = 0; i < inputSize; i++) {
+
+            uint key = bufInRadix[i];
+	        uint bucket = (key >> bitshift) & 0xF;
+            uint globalOffset = bucket > 0 ? bufOutPrefixSum[bucket-1] : 0;  
+
+            uint localOffsets = bufOutValueScans[16u * i + bucket] - 1;  
+
+            uint newIndex = globalOffset + localOffsets;
+
+            sortedData[newIndex] = key;
+        }
 
 
 
