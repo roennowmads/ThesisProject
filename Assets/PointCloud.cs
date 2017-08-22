@@ -380,6 +380,9 @@ public class PointCloud : MonoBehaviour {
         uint[] bufOutPrefixSum = new uint[16]; //the size represents the 16 possible values with 4 bits.
 
         uint[] bufOutFinal = new uint[inputSize];
+        for (int i = 0; i < bufOutFinal.Length; i++) {
+            bufOutFinal[i] = 9999u;
+        }
 
         ComputeBuffer m_computeBufferIn = new ComputeBuffer(bufInRadix.Length/4, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
         m_computeBufferIn.SetData(bufInRadix);
@@ -390,10 +393,11 @@ public class PointCloud : MonoBehaviour {
         ComputeBuffer m_computeBufferOut = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
         m_computeBufferOut.SetData(bufOutRadix);
 
-        ComputeBuffer m_computeBufferOutPrefixSum = new ComputeBuffer(4, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
+        ComputeBuffer m_computeBufferOutPrefixSum = new ComputeBuffer(16, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
         m_computeBufferOut.SetData(bufOutPrefixSum);
 
         ComputeBuffer m_computeBufferOutFinal = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
+        m_computeBufferOutFinal.SetData(bufOutFinal);
 
         m_myRadixSort.SetBuffer(LocalPrefixSum, "KeysIn", m_computeBufferIn);
         m_myRadixSort.SetBuffer(LocalPrefixSum, "BucketsOut", m_computeBufferOut);
@@ -474,7 +478,7 @@ public class PointCloud : MonoBehaviour {
 
 
 
-        m_myRadixSort.Dispatch(RadixReorder, bufInRadix.Length / m_threadGroupSize / 4, 1, 1);
+        m_myRadixSort.Dispatch(RadixReorder, bufInRadix.Length / m_threadGroupSize, 1, 1);
 
         m_computeBufferOutFinal.GetData(bufOutFinal);
 
