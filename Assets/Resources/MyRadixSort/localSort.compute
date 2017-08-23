@@ -5,7 +5,7 @@
 
 #define GROUP_SIZE 16
 
-StructuredBuffer<uint4> KeysIn;
+StructuredBuffer<uint> KeysIn;
 RWStructuredBuffer<uint4> BucketsOut;
 RWStructuredBuffer<uint> GlobalPrefixSumOut;
 RWStructuredBuffer<uint> ValueScans;
@@ -25,8 +25,16 @@ int bitshift;
 [numthreads(GROUP_SIZE, 1, 1)]
 void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
 {
+	uint dispatchThreadID = DTid.x * 4u;
+	uint4 keyBits;
+	keyBits.x = (KeysIn[dispatchThreadID + 0u] >> bitshift) & 0xF;
+	keyBits.y = (KeysIn[dispatchThreadID + 1u] >> bitshift) & 0xF;
+	keyBits.z = (KeysIn[dispatchThreadID + 2u] >> bitshift) & 0xF;
+	keyBits.w = (KeysIn[dispatchThreadID + 3u] >> bitshift) & 0xF;
+
+
     //take first four bits of every input element.
-    uint4 keyBits = (KeysIn[DTid.x] >> bitshift) & 0xF;	//take the 4 least significant bits.  //hey this is only 16 bits, but it takes up 128 bits! ah we'll use it for counting so we need it to be potentially large.
+    //uint4 keyBits = (KeysIn[DTid.x] >> bitshift) & 0xF;	//take the 4 least significant bits.  //hey this is only 16 bits, but it takes up 128 bits! ah we'll use it for counting so we need it to be potentially large.
     
 	//if we're doing 4 bits (16 values) we need compare the 16 values to all values between 0-15 and return 0 or 1 depending on whether they are equal.
 
@@ -251,8 +259,21 @@ void GlobalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupI
 [numthreads(GROUP_SIZE, 1, 1)]
 void RadixReorder(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
 {
-	uint4 keys = KeysIn[DTid.x];
-	uint4 buckets = (keys >> bitshift) & 0xF;	
+	//uint key = KeysIn[DTid.x];
+	//uint bucket = (key >> bitshift) & 0xF;
+
+
+	uint dispatchThreadID = DTid.x * 4u;
+	uint4 keys;
+	keys.x = KeysIn[dispatchThreadID + 0u];
+	keys.y = KeysIn[dispatchThreadID + 1u];
+	keys.z = KeysIn[dispatchThreadID + 2u];
+	keys.w = KeysIn[dispatchThreadID + 3u];
+
+	uint4 buckets = (keys >> bitshift) & 0xF;
+	
+	//uint4 keys = KeysIn[DTid.x];
+	//uint4 buckets = (keys >> bitshift) & 0xF;	
 
 	[unroll(4)]
 	for (uint i = 0u; i < 4u; i++) {

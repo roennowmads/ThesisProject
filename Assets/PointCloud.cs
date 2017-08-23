@@ -396,7 +396,7 @@ public class PointCloud : MonoBehaviour {
             bufOutFinal[i] = 9999u;
         }
 
-        ComputeBuffer m_computeBufferIn = new ComputeBuffer(bufInRadix.Length/4, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
+        ComputeBuffer m_computeBufferIn = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
         m_computeBufferIn.SetData(bufInRadix);
 
         ComputeBuffer m_computeBufferValueScans = new ComputeBuffer(bufInRadix.Length*16, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
@@ -432,6 +432,17 @@ public class PointCloud : MonoBehaviour {
 
         m_computeBufferOutFinal.GetData(bufOutFinal);
 
+
+        uint[] bufOutValueScans = new uint[inputSize*16];
+        m_computeBufferValueScans.GetData(bufOutValueScans);
+
+        List<uint> prefixSumOfAValueLocal = new List<uint>();
+        for (int i = 0; i < bufOutValueScans.Length; i++) {
+            if (i % 16 == 0) {
+                prefixSumOfAValueLocal.Add(bufOutValueScans[i + 1]); // + 1 means the partial sums of 1's. 
+            }   
+        }
+
         Array.Sort<uint>(bufInRadix);       
 
         //2nd Pass:
@@ -442,23 +453,17 @@ public class PointCloud : MonoBehaviour {
 	        .Repeat(0, inputSize)
 	        .Select(i => (uint)randNum.Next(Min, Max))
 	        .ToArray();*/
-	
-        m_computeBufferIn = new ComputeBuffer(inputSize/4, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
-        m_computeBufferIn.SetData(bufOutFinal);
 
-        m_computeBufferOutFinal = new ComputeBuffer(inputSize, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
-
-        m_myRadixSort.SetBuffer(LocalPrefixSum, "KeysIn", m_computeBufferIn);
- 
-        m_myRadixSort.SetBuffer(RadixReorder, "KeysIn", m_computeBufferIn);
-        m_myRadixSort.SetBuffer(RadixReorder, "KeysOut", m_computeBufferOutFinal);
+        m_myRadixSort.SetBuffer(LocalPrefixSum, "KeysIn", m_computeBufferOutFinal);
+        m_myRadixSort.SetBuffer(RadixReorder, "KeysIn", m_computeBufferOutFinal);
+        m_myRadixSort.SetBuffer(RadixReorder, "KeysOut", m_computeBufferIn);
 
         m_myRadixSort.Dispatch(LocalPrefixSum, actualNumberOfThreadGroups, 1, 1);
         m_myRadixSort.Dispatch(GlobalPrefixSum, actualNumberOfThreadGroups, 1, 1);
         m_myRadixSort.Dispatch(RadixReorder, actualNumberOfThreadGroups, 1, 1);
 
         m_computeBufferOutPrefixSum.GetData(bufOutPrefixSum);
-        m_computeBufferOutFinal.GetData(bufOutFinal);
+        m_computeBufferIn.GetData(bufOutFinal);
 
         bool theSame = true;
         for (int i = 0; i < inputSize; i++) {
