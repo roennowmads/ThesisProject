@@ -402,9 +402,6 @@ public class PointCloud : MonoBehaviour {
         inOutBuffers[1] = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
         inOutBuffers[1].SetData(bufOutFinal);
 
-        //ComputeBuffer m_computeBufferIn = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
-        //m_computeBufferIn.SetData(bufInRadix);
-
         ComputeBuffer m_computeBufferValueScans = new ComputeBuffer(bufInRadix.Length*16, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
 
         ComputeBuffer m_computeBufferOut = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
@@ -413,10 +410,6 @@ public class PointCloud : MonoBehaviour {
         ComputeBuffer m_computeBufferOutPrefixSum = new ComputeBuffer(16, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
         m_computeBufferOutPrefixSum.SetData(bufOutPrefixSum);
 
-        //ComputeBuffer m_computeBufferOutFinal = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
-        //m_computeBufferOutFinal.SetData(bufOutFinal);
-
-        //m_myRadixSort.SetBuffer(LocalPrefixSum, "KeysIn", inOutBuffers[0]);
         m_myRadixSort.SetBuffer(LocalPrefixSum, "BucketsOut", m_computeBufferOut);
         m_myRadixSort.SetBuffer(LocalPrefixSum, "ValueScans", m_computeBufferValueScans);
         
@@ -424,17 +417,8 @@ public class PointCloud : MonoBehaviour {
         m_myRadixSort.SetBuffer(GlobalPrefixSum, "BucketsOut", m_computeBufferOut);
         m_myRadixSort.SetBuffer(GlobalPrefixSum, "ValueScans", m_computeBufferValueScans);
 
-        //m_myRadixSort.SetBuffer(RadixReorder, "KeysIn", inOutBuffers[0]);
-        //m_myRadixSort.SetBuffer(RadixReorder, "KeysOut", inOutBuffers[1]);
         m_myRadixSort.SetBuffer(RadixReorder, "GlobalPrefixSumIn", m_computeBufferOutPrefixSum);
         m_myRadixSort.SetBuffer(RadixReorder, "ValueScansIn", m_computeBufferValueScans);
-
-        /*int bitshift = 0;
-        m_myRadixSort.SetInt("bitshift", bitshift);
-
-        m_myRadixSort.Dispatch(LocalPrefixSum, actualNumberOfThreadGroups, 1, 1);
-        m_myRadixSort.Dispatch(GlobalPrefixSum, actualNumberOfThreadGroups, 1, 1);
-        m_myRadixSort.Dispatch(RadixReorder, actualNumberOfThreadGroups, 1, 1);*/
 
         /*m_computeBufferOutFinal.GetData(bufOutFinal);
 
@@ -450,18 +434,6 @@ public class PointCloud : MonoBehaviour {
         }*/
 
         Array.Sort<uint>(bufInRadix);
-
-        //2nd Pass:
-        /*bitshift = 4;
-        m_myRadixSort.SetInt("bitshift", bitshift);
-
-        m_myRadixSort.SetBuffer(LocalPrefixSum, "KeysIn", inOutBuffers[1]);
-        m_myRadixSort.SetBuffer(RadixReorder, "KeysIn", inOutBuffers[1]);
-        m_myRadixSort.SetBuffer(RadixReorder, "KeysOut", inOutBuffers[0]);
-
-        m_myRadixSort.Dispatch(LocalPrefixSum, actualNumberOfThreadGroups, 1, 1);
-        m_myRadixSort.Dispatch(GlobalPrefixSum, actualNumberOfThreadGroups, 1, 1);
-        m_myRadixSort.Dispatch(RadixReorder, actualNumberOfThreadGroups, 1, 1);*/
 
         int outSwapIndex = 1;
         int numberOfPasses = 3;

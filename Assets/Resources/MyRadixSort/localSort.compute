@@ -259,10 +259,6 @@ void GlobalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupI
 [numthreads(GROUP_SIZE, 1, 1)]
 void RadixReorder(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
 {
-	//uint key = KeysIn[DTid.x];
-	//uint bucket = (key >> bitshift) & 0xF;
-
-
 	uint dispatchThreadID = DTid.x * 4u;
 	uint4 keys;
 	keys.x = KeysIn[dispatchThreadID + 0u];
@@ -271,9 +267,6 @@ void RadixReorder(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Dispat
 	keys.w = KeysIn[dispatchThreadID + 3u];
 
 	uint4 buckets = (keys >> bitshift) & 0xF;
-	
-	//uint4 keys = KeysIn[DTid.x];
-	//uint4 buckets = (keys >> bitshift) & 0xF;	
 
 	[unroll(4)]
 	for (uint i = 0u; i < 4u; i++) {
