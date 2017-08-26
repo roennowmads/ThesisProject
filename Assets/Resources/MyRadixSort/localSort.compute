@@ -135,20 +135,6 @@ void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID
 [numthreads(GROUP_SIZE, 1, 1)]
 void GlobalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
 {
-	uint offset = 64u * DTid.x;
-	uint4x4 miniBlock[4];
-	[unroll(4)]
-	for (uint j = 0u; j < 4u; j++) {
-		[unroll(4)]
-		for (uint i = 0u; i < 4u; i++) {
-			uint index = i + j * 4u;
-			miniBlock[0][j][i] = ValueScans[offset +       index];
-			miniBlock[1][j][i] = ValueScans[offset + 16u + index];
-			miniBlock[2][j][i] = ValueScans[offset + 32u + index];
-			miniBlock[3][j][i] = ValueScans[offset + 48u + index];
-		}
-	}
-
 	//Get the last element of each block (total block sums):
 	//The following four uint4's contains the total sums of the values 0-15 (each value individually) from each block:
 	//counts of 0u, 1u, 2u, 3u, counts of 4u, 5u, 6u, 7u, counts of 8u, 9u, 10u, 11u, counts of 12u, 13u, 14u, 15u
@@ -185,22 +171,17 @@ void GlobalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupI
 	if (groupId.x > 0) {
 		uint4x4 prevSubBlockFinalSum = sharedBuffer[groupId.x-1]; //this gives a new sum for each increase in GI. While we want the same for this group, right?
 
-		[unroll(4)]
-		for (uint i = 0u; i < 4u; i++) {
-			miniBlock[i] += prevSubBlockFinalSum;
-		}
-	}
-
-	{
+		uint offset = 64u * DTid.x;
 		[unroll(4)]
 		for (uint j = 0u; j < 4u; j++) {
 			[unroll(4)]
 			for (uint i = 0u; i < 4u; i++) {
 				uint index = i + j * 4u;
-				ValueScans[offset +       index] = miniBlock[0][j][i]; //miniBlock[0][0][0] contains the partial sum of 0's. It appears every 16's index of the ValueScans buffer.
-				ValueScans[offset + 16u + index] = miniBlock[1][j][i];
-				ValueScans[offset + 32u + index] = miniBlock[2][j][i];
-				ValueScans[offset + 48u + index] = miniBlock[3][j][i];
+				uint prevSum = prevSubBlockFinalSum[index / 4u][index % 4u];
+				ValueScans[offset + index] += prevSum; //miniBlock[0][0][0] contains the partial sum of 0's. It appears every 16's index of the ValueScans buffer.
+				ValueScans[offset + 16u + index] += prevSum;
+				ValueScans[offset + 32u + index] += prevSum;
+				ValueScans[offset + 48u + index] += prevSum;
 			}
 		}
 	}
