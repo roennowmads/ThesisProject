@@ -402,7 +402,7 @@ public class PointCloud : MonoBehaviour {
         inOutBuffers[1] = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
         inOutBuffers[1].SetData(bufOutFinal);
 
-        ComputeBuffer m_computeBufferValueScans = new ComputeBuffer(bufInRadix.Length*16, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
+        ComputeBuffer m_computeBufferValueScans = new ComputeBuffer(bufInRadix.Length / 4, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
 
         ComputeBuffer m_computeBufferOut = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
         m_computeBufferOut.SetData(bufOutRadix);
@@ -445,6 +445,7 @@ public class PointCloud : MonoBehaviour {
 
             m_myRadixSort.SetBuffer(LocalPrefixSum, "KeysIn", inOutBuffers[swapIndex0]);
             m_myRadixSort.SetBuffer(RadixReorder, "KeysIn", inOutBuffers[swapIndex0]);
+            m_myRadixSort.SetBuffer(GlobalPrefixSum, "KeysIn", inOutBuffers[swapIndex0]);
             m_myRadixSort.SetBuffer(RadixReorder, "KeysOut", inOutBuffers[outSwapIndex]);
 
             m_myRadixSort.Dispatch(LocalPrefixSum, actualNumberOfThreadGroups, 1, 1);
