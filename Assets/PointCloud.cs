@@ -387,7 +387,7 @@ public class PointCloud : MonoBehaviour {
             .Select(i => (uint)randNum.Next(Min, Max))
             .ToArray();
 
-        uint[] bufOutRadix = new uint[4 * bufInRadix.Length / m_threadGroupSize];
+        uint[] bufOutRadix = new uint[actualNumberOfThreadGroups * 16];
 
         uint[] bufOutPrefixSum = new uint[16]; //the size represents the 16 possible values with 4 bits.
 
@@ -404,7 +404,7 @@ public class PointCloud : MonoBehaviour {
 
         ComputeBuffer m_computeBufferValueScans = new ComputeBuffer(bufInRadix.Length / 4, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
 
-        ComputeBuffer m_computeBufferOut = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
+        ComputeBuffer m_computeBufferOut = new ComputeBuffer(bufOutRadix.Length/16, Marshal.SizeOf(typeof(Matrix4x4)), ComputeBufferType.Default);
         m_computeBufferOut.SetData(bufOutRadix);
 
         ComputeBuffer m_computeBufferOutPrefixSum = new ComputeBuffer(16, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);

@@ -6,7 +6,7 @@
 #define GROUP_SIZE 16
 
 StructuredBuffer<uint4> KeysIn;
-RWStructuredBuffer<uint4> BucketsOut;
+RWStructuredBuffer<uint4x4> BucketsOut;
 RWStructuredBuffer<uint4> GlobalPrefixSumOut;
 RWStructuredBuffer<uint4> ValueScans;
 
@@ -52,7 +52,6 @@ void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID
 	miniBlock1 += miniBlock0;
 	miniBlock2 += miniBlock1;
 	miniBlock3 += miniBlock2;
-
 
 	sharedBuffer[GI] = miniBlock3; //counts of 0u, 1u, 2u, 3u, counts of 4u, 5u, 6u, 7u, counts of 8u, 9u, 10u, 11u, counts of 12u, 13u, 14u, 15u
 
@@ -100,16 +99,18 @@ void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID
 	uint4 divKeyBits = keyBits / 4u;
 	uint4 modKeyBits = keyBits % 4u;
 
+	//We only store the values that we actually need to create a local index:
 	ValueScans[DTid.x].x = miniBlock0[divKeyBits.x][modKeyBits.x];
 	ValueScans[DTid.x].y = miniBlock1[divKeyBits.y][modKeyBits.y];
 	ValueScans[DTid.x].z = miniBlock2[divKeyBits.z][modKeyBits.z];
 	ValueScans[DTid.x].w = sharedBuffer[GI][divKeyBits.w][modKeyBits.w];
 
 	if (GI == (GROUP_SIZE - 1u)) {
-		BucketsOut[4u * groupId.x + 0u] = sharedBuffer[GI][0];	//counts of 0u, 1u, 2u, 3u
-		BucketsOut[4u * groupId.x + 1u] = sharedBuffer[GI][1];	//counts of 4u, 5u, 6u, 7u
-		BucketsOut[4u * groupId.x + 2u] = sharedBuffer[GI][2];	//counts of 8u, 9u, 10u, 11u
-		BucketsOut[4u * groupId.x + 3u] = sharedBuffer[GI][3];	//counts of 12u, 13u, 14u, 15u
+		//counts of 0u, 1u, 2u, 3u
+		//counts of 4u, 5u, 6u, 7u
+		//counts of 8u, 9u, 10u, 11u
+		//counts of 12u, 13u, 14u, 15u
+		BucketsOut[groupId.x] = sharedBuffer[GI];
 	}
 }
 
@@ -125,7 +126,7 @@ void GlobalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupI
 	//counts of 0u, 1u, 2u, 3u, counts of 4u, 5u, 6u, 7u, counts of 8u, 9u, 10u, 11u, counts of 12u, 13u, 14u, 15u
 	//GI as an index only works (if it actually does?) here as long as the number of blocks is <= GROUP_SIZE.
 
-	sharedBuffer[GI] = uint4x4(BucketsOut[4u * GI + 0u], BucketsOut[4u * GI + 1u], BucketsOut[4u * GI + 2u], BucketsOut[4u * GI + 3u]); 
+	sharedBuffer[GI] = BucketsOut[GI];
 
 	GroupMemoryBarrierWithGroupSync();
 
