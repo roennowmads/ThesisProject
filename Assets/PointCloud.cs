@@ -60,6 +60,27 @@ public class PointCloud : MonoBehaviour {
     private ComputeBuffer[] m_inOutBuffers;
     private int m_actualNumberOfThreadGroups;
 
+    struct Particle : IComparable {
+        public uint key;
+        public uint depth;
+
+        public Particle (uint key, uint depth) {
+            this.key = key;
+            this.depth = depth;
+        }
+
+        int IComparable.CompareTo(object obj) {
+            Particle p1 = this;
+            Particle p2 = (Particle)obj;
+            if (p1.depth > p2.depth)
+                return 1;
+            if (p1.depth < p2.depth)
+                return -1;
+            else
+                return 0;
+        }
+    };
+
     Texture2D createColorLookupTexture() {
         int numberOfValues = m_lookupTextureSize;
 
@@ -280,11 +301,6 @@ public class PointCloud : MonoBehaviour {
         return points;
     }
 
-    struct Particle {
-        uint key;
-        uint depth;
-    };
-
     void Start () {
         m_textureSideSize = 1 << m_textureSideSizePower;
         m_textureSize = m_textureSideSize * m_textureSideSize;
@@ -375,26 +391,28 @@ public class PointCloud : MonoBehaviour {
         int Min = 0;
         int Max = 2047;
         System.Random randNum = new System.Random();
-        uint[] bufInRadix = Enumerable
+        Particle[] bufInRadix = Enumerable
             .Repeat(0, inputSize)
-            .Select(i => (uint)randNum.Next(Min, Max))
+            .Select(i => new Particle((uint)i, (uint)randNum.Next(Min, Max)))
             .ToArray();
 
-        
+        for (int i = 0; i < inputSize; i++) {
+            bufInRadix[i].key = (uint)i;
+        }
 
         uint[] bufOutRadix = new uint[m_actualNumberOfThreadGroups * 16];
 
         uint[] bufOutPrefixSum = new uint[16]; //the size represents the 16 possible values with 4 bits.
 
-        uint[] bufOutFinal = new uint[inputSize];
+        Particle[] bufOutFinal = new Particle[inputSize];
         for (int i = 0; i < bufOutFinal.Length; i++) {
-            bufOutFinal[i] = 9999u;
+            bufOutFinal[i].depth = 9999u;
         }
 
         m_inOutBuffers = new ComputeBuffer[2];
-        m_inOutBuffers[0] = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
+        m_inOutBuffers[0] = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(Particle)), ComputeBufferType.Default);
         m_inOutBuffers[0].SetData(bufInRadix);
-        m_inOutBuffers[1] = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
+        m_inOutBuffers[1] = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(Particle)), ComputeBufferType.Default);
         m_inOutBuffers[1].SetData(bufOutFinal);
 
         ComputeBuffer m_computeBufferValueScans = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
@@ -428,7 +446,7 @@ public class PointCloud : MonoBehaviour {
             }   
         }*/
 
-        Array.Sort<uint>(bufInRadix);
+        Array.Sort<Particle>(bufInRadix);
 
         int outSwapIndex = 1;
         int numberOfPasses = 3;
@@ -455,7 +473,7 @@ public class PointCloud : MonoBehaviour {
 
         bool theSame = true;
         for (int i = 0; i < inputSize; i++) {
-	        if (bufOutFinal[i] != bufInRadix[i]) {
+	        if (bufOutFinal[i].depth != bufInRadix[i].depth) {
 		        theSame = false;
 		        break;
 	        }

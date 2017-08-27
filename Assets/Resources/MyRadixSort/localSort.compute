@@ -10,14 +10,14 @@ struct Particle {
 	uint depth;
 };
 
-StructuredBuffer<uint> KeysIn;
+StructuredBuffer<Particle> KeysIn;
 RWStructuredBuffer<uint4x4> BucketsOut;
 RWStructuredBuffer<uint4> GlobalPrefixSumOut;
 RWStructuredBuffer<uint> ValueScans;
 
 StructuredBuffer<uint> GlobalPrefixSumIn;
 StructuredBuffer<uint> ValueScansIn;
-RWStructuredBuffer<uint> KeysOut;
+RWStructuredBuffer<Particle> KeysOut;
 
 //this buffer is 16 times the size the KeysIn buffer. It has the consecutive scans of the counts of 0's, 1's,..., 15's in the input array, in that order.
 
@@ -31,7 +31,7 @@ int bitshift;
 void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
 {
 	//take four bits of every input element:
-	uint keyBits = (KeysIn[DTid.x] >> bitshift) & 0xF;
+	uint keyBits = (KeysIn[DTid.x].depth >> bitshift) & 0xF;
     
 	 //hey this is only 16 bits, but it takes up 128 bits! ah we'll use it for counting so we need it to be potentially large.
 	//if we're doing 4 bits (16 values) we need compare the 16 values to all values between 0-15 and return 0 or 1 depending on whether they are equal.
@@ -146,7 +146,7 @@ void GlobalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupI
 	if (groupId.x > 0) {
 		uint prevSubBlockFinalSum[16] = (uint[16])sharedBuffer[groupId.x - 1]; //this gives a new sum for each increase in GI. While we want the same for this group, right?
 
-		uint keyBits = (KeysIn[DTid.x] >> bitshift) & 0xF;
+		uint keyBits = (KeysIn[DTid.x].depth >> bitshift) & 0xF;
 		uint prevSum0 = prevSubBlockFinalSum[keyBits];
 		ValueScans[DTid.x] += prevSum0; //miniBlock[0][0][0] contains the partial sum of 0's. It appears every 16's index of the ValueScans buffer.
 	}
@@ -169,8 +169,8 @@ void GlobalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupI
 [numthreads(GROUP_SIZE, 1, 1)]
 void RadixReorder(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
 {
-	uint key = KeysIn[DTid.x];
-	uint bucket = (key >> bitshift) & 0xF;
+	Particle key = KeysIn[DTid.x];
+	uint bucket = (key.depth >> bitshift) & 0xF;
 
 	uint globalOffset = GlobalPrefixSumIn[bucket];
 	uint localOffset = ValueScansIn[DTid.x] - 1u;  //ValueScansIn, every 16th value is a partial prefix sum of the same value.
