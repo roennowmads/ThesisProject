@@ -417,6 +417,15 @@ public class PointCloud : MonoBehaviour {
             bufInRadix[i].key = (uint)i << 8;
         }
 
+
+        Vector3[] myPoints = new Vector3[inputSize];
+        for (int i = 0; i < myPoints.Length; i++) {
+            myPoints[i] = new Vector3(1000 - i, 1000 - i, 1000 - i);
+        }
+
+        ComputeBuffer myPointsBuffer = new ComputeBuffer(inputSize, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
+        myPointsBuffer.SetData(myPoints);
+
         uint[] bufOutRadix = new uint[m_actualNumberOfThreadGroups * 16];
 
         uint[] bufOutPrefixSum = new uint[16]; //the size represents the 16 possible values with 4 bits.
@@ -450,9 +459,9 @@ public class PointCloud : MonoBehaviour {
         m_myRadixSort.SetBuffer(RadixReorder, "GlobalPrefixSumIn", m_computeBufferOutPrefixSum);
         m_myRadixSort.SetBuffer(RadixReorder, "ValueScansIn", m_computeBufferValueScans);
 
-        m_myRadixSort.SetBuffer(LocalPrefixSum, "_Points", m_pointsBuffer);
-        m_myRadixSort.SetBuffer(GlobalPrefixSum, "_Points", m_pointsBuffer);
-        m_myRadixSort.SetBuffer(RadixReorder, "_Points", m_pointsBuffer);
+        m_myRadixSort.SetBuffer(LocalPrefixSum, "_Points", myPointsBuffer/*m_pointsBuffer*/);
+        m_myRadixSort.SetBuffer(GlobalPrefixSum, "_Points", myPointsBuffer/*m_pointsBuffer*/);
+        m_myRadixSort.SetBuffer(RadixReorder, "_Points", myPointsBuffer/*m_pointsBuffer*/);
 
         /*m_computeBufferOutFinal.GetData(bufOutFinal);
 
@@ -467,7 +476,7 @@ public class PointCloud : MonoBehaviour {
             }   
         }*/
 
-        Array.Sort<PartInt>(bufInRadix);
+        //Array.Sort<PartInt>(bufInRadix);
 
         m_myRadixSort.SetVector("camPos", -Camera.main.transform.forward);     //camera view direction DOT point position == distance to camera.
 
