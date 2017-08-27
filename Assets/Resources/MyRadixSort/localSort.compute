@@ -30,17 +30,16 @@ int bitshift;
 [numthreads(GROUP_SIZE, 1, 1)]
 void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
 {
-	uint dispatchThreadID = DTid.x;
 	//take four bits of every input element:
-	uint keyBits = (KeysIn[dispatchThreadID] >> bitshift) & 0xF;
+	uint keyBits = (KeysIn[DTid.x] >> bitshift) & 0xF;
     
 	 //hey this is only 16 bits, but it takes up 128 bits! ah we'll use it for counting so we need it to be potentially large.
 	//if we're doing 4 bits (16 values) we need compare the 16 values to all values between 0-15 and return 0 or 1 depending on whether they are equal.
-	uint4x4 miniBlock0 = uint4x4(
+	uint4x4 miniBlock = uint4x4(
 		keyBits.xxxx == uint4(0u, 1u, 2u, 3u), keyBits.xxxx == uint4(4u, 5u, 6u, 7u), 
 		keyBits.xxxx == uint4(8u, 9u, 10u, 11u), keyBits.xxxx == uint4(12u, 13u, 14u, 15u));
 
-	sharedBuffer[GI] = miniBlock0; //counts of 0u, 1u, 2u, 3u, counts of 4u, 5u, 6u, 7u, counts of 8u, 9u, 10u, 11u, counts of 12u, 13u, 14u, 15u
+	sharedBuffer[GI] = miniBlock; //counts of 0u, 1u, 2u, 3u, counts of 4u, 5u, 6u, 7u, counts of 8u, 9u, 10u, 11u, counts of 12u, 13u, 14u, 15u
 
 	GroupMemoryBarrierWithGroupSync();
 
@@ -65,7 +64,7 @@ void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID
 	//After this we have all the final sums for each 4 value subblock. Now we need to offset the partial sums with the previous subblocks final sum:
 
 	if (GI > 0) {
-		miniBlock0 += sharedBuffer[GI - 1];
+		miniBlock += sharedBuffer[GI - 1];
 	}
 
 
@@ -79,14 +78,10 @@ void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID
 	//sharedBuffer[GI][3].w is the block count for the 15's
 
 	//We only store the values that we actually need to create a local index:
-	ValueScans[DTid.x] = ((uint[16])miniBlock0)[keyBits];
+	ValueScans[DTid.x] = ((uint[16])miniBlock)[keyBits];
 
 	if (GI == (GROUP_SIZE - 1u)) {
-		//counts of 0u, 1u, 2u, 3u
-		//counts of 4u, 5u, 6u, 7u
-		//counts of 8u, 9u, 10u, 11u
-		//counts of 12u, 13u, 14u, 15u
-		BucketsOut[groupId.x] = sharedBuffer[GI];
+		BucketsOut[groupId.x] = sharedBuffer[GI]; //counts of 0u, 1u, 2u, 3u, counts of 4u, 5u, 6u, 7u, counts of 8u, 9u, 10u, 11u, counts of 12u, 13u, 14u, 15u
 	}
 }
 
