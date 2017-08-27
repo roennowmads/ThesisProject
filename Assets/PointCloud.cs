@@ -60,7 +60,22 @@ public class PointCloud : MonoBehaviour {
     private ComputeBuffer[] m_inOutBuffers;
     private int m_actualNumberOfThreadGroups;
 
-    struct Particle : IComparable {
+    struct PartInt : IComparable {
+        public uint key;
+
+        int IComparable.CompareTo(object obj) {
+            PartInt p1 = this;
+            PartInt p2 = (PartInt)obj;
+            if (p1.key << 8 > p2.key << 8)
+                return 1;
+            if (p1.key << 8 < p2.key << 8)
+                return -1;
+            else
+                return 0;
+        }
+    };
+
+    /*struct Particle : IComparable {
         public uint key;
         public uint depth;
 
@@ -79,7 +94,7 @@ public class PointCloud : MonoBehaviour {
             else
                 return 0;
         }
-    };
+    };*/
 
     Texture2D createColorLookupTexture() {
         int numberOfValues = m_lookupTextureSize;
@@ -391,28 +406,30 @@ public class PointCloud : MonoBehaviour {
         int Min = 0;
         int Max = 2047;
         System.Random randNum = new System.Random();
-        Particle[] bufInRadix = Enumerable
+
+        PartInt[] bufInRadix = new PartInt[inputSize];
+        /*uint[] bufInRadix = Enumerable
             .Repeat(0, inputSize)
-            .Select(i => new Particle((uint)i, (uint)randNum.Next(Min, Max)))
-            .ToArray();
+            .Select(i => (uint)randNum.Next(Min, Max) << 8)
+            .ToArray();*/
 
         for (int i = 0; i < inputSize; i++) {
-            bufInRadix[i].key = (uint)i;
+            bufInRadix[i].key = (uint)i << 8;
         }
 
         uint[] bufOutRadix = new uint[m_actualNumberOfThreadGroups * 16];
 
         uint[] bufOutPrefixSum = new uint[16]; //the size represents the 16 possible values with 4 bits.
 
-        Particle[] bufOutFinal = new Particle[inputSize];
+        PartInt[] bufOutFinal = new PartInt[inputSize];
         for (int i = 0; i < bufOutFinal.Length; i++) {
-            bufOutFinal[i].depth = 9999u;
+            bufOutFinal[i].key = 9999u;
         }
 
         m_inOutBuffers = new ComputeBuffer[2];
-        m_inOutBuffers[0] = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(Particle)), ComputeBufferType.Default);
+        m_inOutBuffers[0] = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(PartInt)), ComputeBufferType.Default);
         m_inOutBuffers[0].SetData(bufInRadix);
-        m_inOutBuffers[1] = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(Particle)), ComputeBufferType.Default);
+        m_inOutBuffers[1] = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(PartInt)), ComputeBufferType.Default);
         m_inOutBuffers[1].SetData(bufOutFinal);
 
         ComputeBuffer m_computeBufferValueScans = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
@@ -433,6 +450,10 @@ public class PointCloud : MonoBehaviour {
         m_myRadixSort.SetBuffer(RadixReorder, "GlobalPrefixSumIn", m_computeBufferOutPrefixSum);
         m_myRadixSort.SetBuffer(RadixReorder, "ValueScansIn", m_computeBufferValueScans);
 
+        m_myRadixSort.SetBuffer(LocalPrefixSum, "_Points", m_pointsBuffer);
+        m_myRadixSort.SetBuffer(GlobalPrefixSum, "_Points", m_pointsBuffer);
+        m_myRadixSort.SetBuffer(RadixReorder, "_Points", m_pointsBuffer);
+
         /*m_computeBufferOutFinal.GetData(bufOutFinal);
 
 
@@ -446,10 +467,18 @@ public class PointCloud : MonoBehaviour {
             }   
         }*/
 
-        Array.Sort<Particle>(bufInRadix);
+        Array.Sort<PartInt>(bufInRadix);
+
+        m_myRadixSort.SetVector("camPos", -Camera.main.transform.forward);     //camera view direction DOT point position == distance to camera.
+
+        Matrix4x4 transMatrix = transform.localToWorldMatrix;
+        m_myRadixSort.SetFloats("model", transMatrix[0], transMatrix[1], transMatrix[2], transMatrix[3],
+                                  transMatrix[4], transMatrix[5], transMatrix[6], transMatrix[7],
+                                  transMatrix[8], transMatrix[9], transMatrix[10], transMatrix[11],
+                                  transMatrix[12], transMatrix[13], transMatrix[14], transMatrix[15]);
 
         int outSwapIndex = 1;
-        int numberOfPasses = 3;
+        int numberOfPasses = 8;
         for (int i = 0; i < numberOfPasses; i++) {
             int bitshift = 4 * i;
             m_myRadixSort.SetInt("bitshift", bitshift);
@@ -473,7 +502,7 @@ public class PointCloud : MonoBehaviour {
 
         bool theSame = true;
         for (int i = 0; i < inputSize; i++) {
-	        if (bufOutFinal[i].depth != bufInRadix[i].depth) {
+	        if (bufOutFinal[i].key != bufInRadix[i].key) {
 		        theSame = false;
 		        break;
 	        }

@@ -10,15 +10,16 @@ struct Particle {
 	uint depth;
 };
 
-StructuredBuffer<Particle> KeysIn;
+StructuredBuffer<uint> KeysIn;
 RWStructuredBuffer<uint4x4> BucketsOut;
 RWStructuredBuffer<uint4> GlobalPrefixSumOut;
 RWStructuredBuffer<uint> ValueScans;
 
 StructuredBuffer<uint> GlobalPrefixSumIn;
 StructuredBuffer<uint> ValueScansIn;
-RWStructuredBuffer<Particle> KeysOut;
+RWStructuredBuffer<uint> KeysOut;
 
+StructuredBuffer<float3> _Points;
 //this buffer is 16 times the size the KeysIn buffer. It has the consecutive scans of the counts of 0's, 1's,..., 15's in the input array, in that order.
 
 //Since one thread in LocalPrefixSum handles 4 input values, we need to output 4*16 (64) values to the ValueScan buffer per thread.
@@ -26,12 +27,22 @@ RWStructuredBuffer<Particle> KeysOut;
 groupshared uint4x4 sharedBuffer[GROUP_SIZE];
 
 int bitshift;
+float4x4 model;
+float3 camPos;
 
 [numthreads(GROUP_SIZE, 1, 1)]
 void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
 {
+	//uint indexAndColor = Data.Load(DTid.x);
+	
+
+	uint keys = KeysIn[DTid.x];  //indexAndColor
+	float4 transVert = mul(model, float4(-_Points[keys >> 8], 1.0));
+	float depth = dot(camPos, transVert.xyz);
+	uint intDepth = asuint(depth);
+
 	//take four bits of every input element:
-	uint keyBits = (KeysIn[DTid.x].depth >> bitshift) & 0xF;
+	uint keyBits = (intDepth >> bitshift) & 0xF;
     
 	 //hey this is only 16 bits, but it takes up 128 bits! ah we'll use it for counting so we need it to be potentially large.
 	//if we're doing 4 bits (16 values) we need compare the 16 values to all values between 0-15 and return 0 or 1 depending on whether they are equal.
@@ -146,7 +157,16 @@ void GlobalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupI
 	if (groupId.x > 0) {
 		uint prevSubBlockFinalSum[16] = (uint[16])sharedBuffer[groupId.x - 1]; //this gives a new sum for each increase in GI. While we want the same for this group, right?
 
-		uint keyBits = (KeysIn[DTid.x].depth >> bitshift) & 0xF;
+
+		uint keys = KeysIn[DTid.x];  //indexAndColor
+		float4 transVert = mul(model, float4(-_Points[keys >> 8], 1.0));
+		float depth = dot(camPos, transVert.xyz);
+		uint intDepth = asuint(depth);
+
+		//take four bits of every input element:
+		uint keyBits = (intDepth >> bitshift) & 0xF;
+
+		//uint keyBits = (KeysIn[DTid.x].depth >> bitshift) & 0xF;
 		uint prevSum0 = prevSubBlockFinalSum[keyBits];
 		ValueScans[DTid.x] += prevSum0; //miniBlock[0][0][0] contains the partial sum of 0's. It appears every 16's index of the ValueScans buffer.
 	}
@@ -169,8 +189,16 @@ void GlobalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupI
 [numthreads(GROUP_SIZE, 1, 1)]
 void RadixReorder(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
 {
-	Particle key = KeysIn[DTid.x];
-	uint bucket = (key.depth >> bitshift) & 0xF;
+	//Particle key = KeysIn[DTid.x];
+	uint key = KeysIn[DTid.x];  //indexAndColor
+	float4 transVert = mul(model, float4(-_Points[key >> 8], 1.0));
+	float depth = dot(camPos, transVert.xyz);
+	uint intDepth = asuint(depth);
+
+	//take four bits of every input element:
+	uint bucket = (intDepth >> bitshift) & 0xF;    //could store this value so we don't have to look up _Points in all kernels, it's also a 4 bit value, so some encoding could be used.
+
+	//uint bucket = (key.depth >> bitshift) & 0xF;
 
 	uint globalOffset = GlobalPrefixSumIn[bucket];
 	uint localOffset = ValueScansIn[DTid.x] - 1u;  //ValueScansIn, every 16th value is a partial prefix sum of the same value.
