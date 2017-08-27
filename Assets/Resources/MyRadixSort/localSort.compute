@@ -5,6 +5,11 @@
 
 #define GROUP_SIZE 16
 
+struct Particle {
+	uint4 keys;
+	uint4 depths;
+};
+
 StructuredBuffer<uint4> KeysIn;
 RWStructuredBuffer<uint4x4> BucketsOut;
 RWStructuredBuffer<uint4> GlobalPrefixSumOut;
@@ -26,11 +31,10 @@ int bitshift;
 void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
 {
 	uint dispatchThreadID = DTid.x * 4u;
+	//take four bits of every input element:
 	uint4 keyBits = (KeysIn[dispatchThreadID] >> bitshift) & 0xF;
-
-    //take first four bits of every input element.
-    //uint4 keyBits = (KeysIn[DTid.x] >> bitshift) & 0xF;	//take the 4 least significant bits.  //hey this is only 16 bits, but it takes up 128 bits! ah we'll use it for counting so we need it to be potentially large.
     
+	 //hey this is only 16 bits, but it takes up 128 bits! ah we'll use it for counting so we need it to be potentially large.
 	//if we're doing 4 bits (16 values) we need compare the 16 values to all values between 0-15 and return 0 or 1 depending on whether they are equal.
 	uint4x4 miniBlock0 = uint4x4(
 		keyBits.xxxx == uint4(0u, 1u, 2u, 3u), keyBits.xxxx == uint4(4u, 5u, 6u, 7u), 
