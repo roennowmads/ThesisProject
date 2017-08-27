@@ -30,7 +30,7 @@ int bitshift;
 [numthreads(GROUP_SIZE, 1, 1)]
 void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
 {
-	uint dispatchThreadID = DTid.x /** 4u*/;
+	uint dispatchThreadID = DTid.x;
 	//take four bits of every input element:
 	uint keyBits = (KeysIn[dispatchThreadID] >> bitshift) & 0xF;
     
@@ -40,25 +40,7 @@ void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID
 		keyBits.xxxx == uint4(0u, 1u, 2u, 3u), keyBits.xxxx == uint4(4u, 5u, 6u, 7u), 
 		keyBits.xxxx == uint4(8u, 9u, 10u, 11u), keyBits.xxxx == uint4(12u, 13u, 14u, 15u));
 
-	/*uint4x4 miniBlock1 = uint4x4(
-		keyBits.yyyy == uint4(0u, 1u, 2u, 3u), keyBits.yyyy == uint4(4u, 5u, 6u, 7u), 
-		keyBits.yyyy == uint4(8u, 9u, 10u, 11u), keyBits.yyyy == uint4(12u, 13u, 14u, 15u));
-
-	uint4x4 miniBlock2 = uint4x4(
-		keyBits.zzzz == uint4(0u, 1u, 2u, 3u), keyBits.zzzz == uint4(4u, 5u, 6u, 7u), 
-		keyBits.zzzz == uint4(8u, 9u, 10u, 11u), keyBits.zzzz == uint4(12u, 13u, 14u, 15u));
-
-	uint4x4 miniBlock3 = uint4x4(
-		keyBits.wwww == uint4(0u, 1u, 2u, 3u), keyBits.wwww == uint4(4u, 5u, 6u, 7u), 
-		keyBits.wwww == uint4(8u, 9u, 10u, 11u), keyBits.wwww == uint4(12u, 13u, 14u, 15u));*/
-
-	//thread local scan: (sequential)
-	/*miniBlock1 += miniBlock0;
-	miniBlock2 += miniBlock1;
-	miniBlock3 += miniBlock2;*/
-
-	sharedBuffer[GI] = miniBlock0;
-	//sharedBuffer[GI] = miniBlock3; //counts of 0u, 1u, 2u, 3u, counts of 4u, 5u, 6u, 7u, counts of 8u, 9u, 10u, 11u, counts of 12u, 13u, 14u, 15u
+	sharedBuffer[GI] = miniBlock0; //counts of 0u, 1u, 2u, 3u, counts of 4u, 5u, 6u, 7u, counts of 8u, 9u, 10u, 11u, counts of 12u, 13u, 14u, 15u
 
 	GroupMemoryBarrierWithGroupSync();
 
@@ -83,12 +65,7 @@ void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID
 	//After this we have all the final sums for each 4 value subblock. Now we need to offset the partial sums with the previous subblocks final sum:
 
 	if (GI > 0) {
-		uint4x4 prevSubBlockFinalSum = sharedBuffer[GI-1];
-
-		miniBlock0 += prevSubBlockFinalSum;
-		/*miniBlock1 += prevSubBlockFinalSum;
-		miniBlock2 += prevSubBlockFinalSum;
-		//miniBlock3 += prevSubBlockFinalSum; // already stored in sharedBuffer[GI], right?*/
+		miniBlock0 += sharedBuffer[GI - 1];
 	}
 
 
@@ -101,14 +78,8 @@ void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID
 	//sharedBuffer[GI][0].x is the block count for the 0's
 	//sharedBuffer[GI][3].w is the block count for the 15's
 
-	uint4 divKeyBits = keyBits / 4u;
-	uint4 modKeyBits = keyBits % 4u;
-
 	//We only store the values that we actually need to create a local index:
-	ValueScans[DTid.x].x = miniBlock0[divKeyBits.x][modKeyBits.x];
-	//ValueScans[DTid.x].y = miniBlock1[divKeyBits.y][modKeyBits.y];
-	//ValueScans[DTid.x].z = miniBlock2[divKeyBits.z][modKeyBits.z];
-	//ValueScans[DTid.x].w = sharedBuffer[GI][divKeyBits.w][modKeyBits.w];
+	ValueScans[DTid.x] = ((uint[16])miniBlock0)[keyBits];
 
 	if (GI == (GROUP_SIZE - 1u)) {
 		//counts of 0u, 1u, 2u, 3u
@@ -159,59 +130,34 @@ void GlobalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupI
 	//here we need to take the value from the last BLOCK not the last thread. This complicates things because sharedBuffer is block scope only.
 	//The shaderBuffer does contain the partial sums of the blocks though. This kernel was meant to be run only with one thread group, and have all the partial sums within one block.
 
-	if (groupId.x > 0) {
-		uint4x4 prevSubBlockFinalSum = sharedBuffer[groupId.x - 1]; //this gives a new sum for each increase in GI. While we want the same for this group, right?
-
-		uint dispatchThreadID = DTid.x /** 4u*/;
-		uint keyBits = (KeysIn[dispatchThreadID] >> bitshift) & 0xF;
-
-		uint divKeyBits = keyBits / 4u;
-		uint modKeyBits = keyBits % 4u;
-
-		uint prevSum0 = prevSubBlockFinalSum[divKeyBits.x][modKeyBits.x];
-		//uint prevSum1 = prevSubBlockFinalSum[divKeyBits.y][modKeyBits.y];
-		//uint prevSum2 = prevSubBlockFinalSum[divKeyBits.z][modKeyBits.z];
-		//uint prevSum3 = prevSubBlockFinalSum[divKeyBits.w][modKeyBits.w];
-		ValueScans[DTid.x].x += prevSum0; //miniBlock[0][0][0] contains the partial sum of 0's. It appears every 16's index of the ValueScans buffer.
-		//ValueScans[DTid.x].y += prevSum1;
-		//ValueScans[DTid.x].z += prevSum2;
-		//ValueScans[DTid.x].w += prevSum3;
-	}
-
 	if (groupId.x == 0 && GI == (GROUP_SIZE - 1u)) {
 		//Here we scan the counts of the 16 values, in order to get their base indices.
 
 		//exclusive scan:
-		uint4 temp = sharedBuffer[GI][0];
-		sharedBuffer[GI][0][0] = 0u;
-		sharedBuffer[GI][0][1] = sharedBuffer[GI][0][0] + temp.x;
-		sharedBuffer[GI][0][2] = sharedBuffer[GI][0][1] + temp.y;
-		sharedBuffer[GI][0][3] = sharedBuffer[GI][0][2] + temp.z;
-
-		uint4 temp2 = sharedBuffer[GI][1];
-		sharedBuffer[GI][1][0] = sharedBuffer[GI][0][3] + temp.w;
-		sharedBuffer[GI][1][1] = sharedBuffer[GI][1][0] + temp2.x;
-		sharedBuffer[GI][1][2] = sharedBuffer[GI][1][1] + temp2.y;
-		sharedBuffer[GI][1][3] = sharedBuffer[GI][1][2] + temp2.z;
-
-		temp = sharedBuffer[GI][2];
-		sharedBuffer[GI][2][0] = sharedBuffer[GI][1][3] + temp2.w;
-		sharedBuffer[GI][2][1] = sharedBuffer[GI][2][0] + temp.x;
-		sharedBuffer[GI][2][2] = sharedBuffer[GI][2][1] + temp.y;
-		sharedBuffer[GI][2][3] = sharedBuffer[GI][2][2] + temp.z;
-
-		temp2 = sharedBuffer[GI][3];
-		sharedBuffer[GI][3][0] = sharedBuffer[GI][2][3] + temp.w;
-		sharedBuffer[GI][3][1] = sharedBuffer[GI][3][0] + temp2.x;
-		sharedBuffer[GI][3][2] = sharedBuffer[GI][3][1] + temp2.y;
-		sharedBuffer[GI][3][3] = sharedBuffer[GI][3][2] + temp2.z;
-
-		uint groupOffset = 16u * groupId.x;
-		[unroll(4)]
-		for (uint i = 0u; i < 4u; i++) {
-			GlobalPrefixSumOut[groupOffset + i * 4u] = sharedBuffer[GI][i];	//counts of 0u, 1u, 2u, 3u
+		uint prefixSums[16];
+		prefixSums[0] = 0u;
+		for (uint i = 1u; i < 16u; i++) {
+			prefixSums[i] = prefixSums[i - 1] + ((uint[16])sharedBuffer[GI])[i - 1];
 		}
+
+		uint4x4 prefixSumsMatrix = uint4x4(prefixSums);
+		uint groupOffset = 16u * groupId.x;
+		GlobalPrefixSumOut[groupOffset] = prefixSumsMatrix[0];
+		GlobalPrefixSumOut[groupOffset + 4u] = prefixSumsMatrix[1];
+		GlobalPrefixSumOut[groupOffset + 8u] = prefixSumsMatrix[2];
+		GlobalPrefixSumOut[groupOffset + 12u] = prefixSumsMatrix[3];
 	}
+
+	if (groupId.x > 0) {
+		uint prevSubBlockFinalSum[16] = (uint[16])sharedBuffer[groupId.x - 1]; //this gives a new sum for each increase in GI. While we want the same for this group, right?
+
+		uint keyBits = (KeysIn[DTid.x] >> bitshift) & 0xF;
+		uint prevSum0 = prevSubBlockFinalSum[keyBits];
+		ValueScans[DTid.x] += prevSum0; //miniBlock[0][0][0] contains the partial sum of 0's. It appears every 16's index of the ValueScans buffer.
+	}
+
+	
+	
 }
 
 
@@ -228,19 +174,13 @@ void GlobalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupI
 [numthreads(GROUP_SIZE, 1, 1)]
 void RadixReorder(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
 {
-	uint dispatchThreadID = DTid.x /** 4u*/;
-	uint keys = KeysIn[dispatchThreadID];
-	uint buckets = (keys >> bitshift) & 0xF;
-	uint valueScans = ValueScansIn[DTid.x];
+	uint key = KeysIn[DTid.x];
+	uint bucket = (key >> bitshift) & 0xF;
 
-	uint i = 0u;
-	//[unroll(4)]
-	//for (uint i = 0u; i < 4u; i++) {
-		uint globalOffset = GlobalPrefixSumIn[buckets];
-		uint localOffset = valueScans - 1u;  //ValueScansIn, every 16th value is a partial prefix sum of the same value.
-		uint newIndex = globalOffset + localOffset;
-		KeysOut[newIndex] = keys;
-	//}
+	uint globalOffset = GlobalPrefixSumIn[bucket];
+	uint localOffset = ValueScansIn[DTid.x] - 1u;  //ValueScansIn, every 16th value is a partial prefix sum of the same value.
+	uint newIndex = globalOffset + localOffset;
+	KeysOut[newIndex] = key;
 }
 
 
