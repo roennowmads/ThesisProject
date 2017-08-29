@@ -15,7 +15,7 @@ Shader "Unlit/SortingTest" {
 	SubShader {
 		Tags{ "Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent" }
 		//Tags{"RenderType" = "Opaque"}
-		//Blend SrcAlpha OneMinusSrcAlpha
+		Blend SrcAlpha OneMinusSrcAlpha
 		//Cull Off
 		ZWrite Off
 		//LOD 200
@@ -103,6 +103,7 @@ Shader "Unlit/SortingTest" {
 				uint value = _IndicesValues.Load(quadId);
 
 				uint index = value >> 8;
+				float4 position = float4(-_Points[index], 1.0);
 				float colorValue = (value & 0xFF) * inv255;
 
 				//good for fireball:
@@ -123,7 +124,7 @@ Shader "Unlit/SortingTest" {
 				//o.vertex = UnityWorldToClipPos(-_Points[index]);
 
 				//o.vertex = mul(UNITY_MATRIX_M, float4(-_Points[index], 1.0));
-				o.vertex = mul(model, float4(-_Points[index], 1.0));
+				o.vertex = mul(model, position);
 				o.vertex = mul(UNITY_MATRIX_VP, o.vertex);
 
 				//float4 vertWorld = mul(UNITY_MATRIX_M, float4(-_Points[index], 1.0)); //these three work

@@ -181,7 +181,7 @@
 				//o.color = fixed4(/*i.color*/fixed3(0.5,0.1,0.1), albedo*0.0525);
 
 				//good for fireball:
-				o.color = fixed4(i.color, albedo/**0.125*/);
+				o.color = fixed4(i.color, albedo*0.0125);
 				return o;
 			}
 			ENDCG

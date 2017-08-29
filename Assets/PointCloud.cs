@@ -449,19 +449,27 @@ public class PointCloud : MonoBehaviour {
         ComputeBuffer m_computeBufferOutPrefixSum = new ComputeBuffer(16, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
         m_computeBufferOutPrefixSum.SetData(bufOutPrefixSum);
 
+        ComputeBuffer computeBufferDepthVals = new ComputeBuffer(m_inOutBuffers[0].count, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
+
         m_myRadixSort.SetBuffer(LocalPrefixSum, "BucketsOut", m_computeBufferOut);
         m_myRadixSort.SetBuffer(LocalPrefixSum, "ValueScans", m_computeBufferValueScans);
+        m_myRadixSort.SetBuffer(LocalPrefixSum, "DepthVals", computeBufferDepthVals);
         
         m_myRadixSort.SetBuffer(GlobalPrefixSum, "GlobalPrefixSumOut", m_computeBufferOutPrefixSum);
         m_myRadixSort.SetBuffer(GlobalPrefixSum, "BucketsOut", m_computeBufferOut);
         m_myRadixSort.SetBuffer(GlobalPrefixSum, "ValueScans", m_computeBufferValueScans);
+        m_myRadixSort.SetBuffer(GlobalPrefixSum, "DepthVals", computeBufferDepthVals);
 
         m_myRadixSort.SetBuffer(RadixReorder, "GlobalPrefixSumIn", m_computeBufferOutPrefixSum);
         m_myRadixSort.SetBuffer(RadixReorder, "ValueScansIn", m_computeBufferValueScans);
+        m_myRadixSort.SetBuffer(RadixReorder, "DepthVals", computeBufferDepthVals);
 
         m_myRadixSort.SetBuffer(LocalPrefixSum, "_Points", /*myPointsBuffer*/m_pointsBuffer);
         m_myRadixSort.SetBuffer(GlobalPrefixSum, "_Points", /*myPointsBuffer*/m_pointsBuffer);
         m_myRadixSort.SetBuffer(RadixReorder, "_Points", /*myPointsBuffer*/m_pointsBuffer);
+
+        pointRenderer.material.SetBuffer("_IndicesValues", m_inOutBuffers[0]);
+
 
         /*m_computeBufferOutFinal.GetData(bufOutFinal);
 
@@ -478,36 +486,8 @@ public class PointCloud : MonoBehaviour {
 
         //Array.Sort<PartInt>(bufInRadix);
 
-        m_myRadixSort.SetVector("camPos", -Camera.main.transform.forward);     //camera view direction DOT point position == distance to camera.
-
-        Matrix4x4 transMatrix = transform.localToWorldMatrix;
-        m_myRadixSort.SetFloats("model", transMatrix[0], transMatrix[1], transMatrix[2], transMatrix[3],
-                                  transMatrix[4], transMatrix[5], transMatrix[6], transMatrix[7],
-                                  transMatrix[8], transMatrix[9], transMatrix[10], transMatrix[11],
-                                  transMatrix[12], transMatrix[13], transMatrix[14], transMatrix[15]);
-
-        int outSwapIndex = 1;
-        int numberOfPasses = 8;
-        for (int i = 0; i < numberOfPasses; i++) {
-            int bitshift = 4 * i;
-            m_myRadixSort.SetInt("bitshift", bitshift);
-            int swapIndex0 = i % 2;
-            outSwapIndex = (i+1) % 2;
-
-            m_myRadixSort.SetBuffer(LocalPrefixSum, "KeysIn", m_inOutBuffers[swapIndex0]);
-            m_myRadixSort.SetBuffer(RadixReorder, "KeysIn", m_inOutBuffers[swapIndex0]);
-            m_myRadixSort.SetBuffer(GlobalPrefixSum, "KeysIn", m_inOutBuffers[swapIndex0]);
-            m_myRadixSort.SetBuffer(RadixReorder, "KeysOut", m_inOutBuffers[outSwapIndex]);
-
-            m_myRadixSort.Dispatch(LocalPrefixSum, m_actualNumberOfThreadGroups, 1, 1);
-            m_myRadixSort.Dispatch(GlobalPrefixSum, m_actualNumberOfThreadGroups, 1, 1);
-            m_myRadixSort.Dispatch(RadixReorder, m_actualNumberOfThreadGroups, 1, 1);
-        }
-
-        m_inOutBuffers[outSwapIndex].GetData(bufOutFinal);
-
-       /* m_computeBufferOutPrefixSum.GetData(bufOutPrefixSum);
-        m_computeBufferIn.GetData(bufOutFinal);*/
+        /* m_computeBufferOutPrefixSum.GetData(bufOutPrefixSum);
+         m_computeBufferIn.GetData(bufOutFinal);*/
 
         /*bool theSame = true;
         for (int i = 0; i < inputSize; i++) {
@@ -684,18 +664,12 @@ public class PointCloud : MonoBehaviour {
 
             m_myRadixSort.SetBuffer(LocalPrefixSum, "KeysIn", m_inOutBuffers[swapIndex0]);
             m_myRadixSort.SetBuffer(RadixReorder, "KeysIn", m_inOutBuffers[swapIndex0]);
-            m_myRadixSort.SetBuffer(GlobalPrefixSum, "KeysIn", m_inOutBuffers[swapIndex0]);
             m_myRadixSort.SetBuffer(RadixReorder, "KeysOut", m_inOutBuffers[outSwapIndex]);
 
             m_myRadixSort.Dispatch(LocalPrefixSum, m_actualNumberOfThreadGroups, 1, 1);
             m_myRadixSort.Dispatch(GlobalPrefixSum, m_actualNumberOfThreadGroups, 1, 1);
             m_myRadixSort.Dispatch(RadixReorder, m_actualNumberOfThreadGroups, 1, 1);
         }
-
-        pointRenderer.material.SetBuffer("_IndicesValues", m_inOutBuffers[outSwapIndex]);
-
-
-
 
         //m_myRadixSort.Dispatch(LocalPrefixSum, inputSize / m_threadGroupSize / 4, 1, 1);
         //m_myRadixSort.Dispatch(GlobalPrefixSum, 1, 1, 1);
