@@ -407,24 +407,24 @@ public class PointCloud : MonoBehaviour {
         int Max = 2047;
         System.Random randNum = new System.Random();
 
-        PartInt[] bufInRadix = new PartInt[inputSize];
-        /*uint[] bufInRadix = Enumerable
+        /*PartInt[] bufInRadix = new PartInt[inputSize];
+        uint[] bufInRadix = Enumerable
             .Repeat(0, inputSize)
             .Select(i => (uint)randNum.Next(Min, Max) << 8)
             .ToArray();*/
 
-        for (int i = 0; i < inputSize; i++) {
+        /*for (int i = 0; i < inputSize; i++) {
             bufInRadix[i].key = (uint)i << 8;
-        }
+        }*/
 
 
-        Vector3[] myPoints = new Vector3[inputSize];
+        /*Vector3[] myPoints = new Vector3[inputSize];
         for (int i = 0; i < myPoints.Length; i++) {
             myPoints[i] = new Vector3(1000 - i, 1000 - i, 1000 - i);
         }
 
         ComputeBuffer myPointsBuffer = new ComputeBuffer(inputSize, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
-        myPointsBuffer.SetData(myPoints);
+        myPointsBuffer.SetData(myPoints);*/
 
         uint[] bufOutRadix = new uint[m_actualNumberOfThreadGroups * 16];
 
@@ -441,7 +441,7 @@ public class PointCloud : MonoBehaviour {
         m_inOutBuffers[1] = new ComputeBuffer(m_inOutBuffers[0].count, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
         m_inOutBuffers[1].SetData(bufOutFinal);
 
-        ComputeBuffer m_computeBufferValueScans = new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
+        ComputeBuffer m_computeBufferValueScans = new ComputeBuffer(inputSize, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
 
         ComputeBuffer m_computeBufferOut = new ComputeBuffer(bufOutRadix.Length / 16, Marshal.SizeOf(typeof(Matrix4x4)), ComputeBufferType.Default);
         m_computeBufferOut.SetData(bufOutRadix);
@@ -478,7 +478,7 @@ public class PointCloud : MonoBehaviour {
 
         //Array.Sort<PartInt>(bufInRadix);
 
-        /*m_myRadixSort.SetVector("camPos", -Camera.main.transform.forward);     //camera view direction DOT point position == distance to camera.
+        m_myRadixSort.SetVector("camPos", -Camera.main.transform.forward);     //camera view direction DOT point position == distance to camera.
 
         Matrix4x4 transMatrix = transform.localToWorldMatrix;
         m_myRadixSort.SetFloats("model", transMatrix[0], transMatrix[1], transMatrix[2], transMatrix[3],
@@ -504,7 +504,7 @@ public class PointCloud : MonoBehaviour {
             m_myRadixSort.Dispatch(RadixReorder, m_actualNumberOfThreadGroups, 1, 1);
         }
 
-        m_inOutBuffers[outSwapIndex].GetData(bufOutFinal);*/
+        m_inOutBuffers[outSwapIndex].GetData(bufOutFinal);
 
        /* m_computeBufferOutPrefixSum.GetData(bufOutPrefixSum);
         m_computeBufferIn.GetData(bufOutFinal);*/
