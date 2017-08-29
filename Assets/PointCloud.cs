@@ -666,7 +666,7 @@ public class PointCloud : MonoBehaviour {
         //GpuSort.BitonicSort32(m_indexComputeBuffers[m_frameIndex], m_computeBufferTemp, m_pointsBuffer, pointRenderer.localToWorldMatrix);
 
 
-        m_myRadixSort.SetVector("camPos", -Camera.main.transform.forward);     //camera view direction DOT point position == distance to camera.
+        m_myRadixSort.SetVector("camPos", Camera.main.transform.position);     //camera view direction DOT point position == distance to camera.
 
         Matrix4x4 transMatrix = pointRenderer.localToWorldMatrix;
         m_myRadixSort.SetFloats("model", transMatrix[0], transMatrix[1], transMatrix[2], transMatrix[3],
@@ -675,7 +675,7 @@ public class PointCloud : MonoBehaviour {
                                   transMatrix[12], transMatrix[13], transMatrix[14], transMatrix[15]);
 
         int outSwapIndex = 1;
-        int numberOfPasses = 8;
+        int numberOfPasses = 2;
         for (int i = 0; i < numberOfPasses; i++) {
             int bitshift = 4 * i;
             m_myRadixSort.SetInt("bitshift", bitshift);

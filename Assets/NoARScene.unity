@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44038197, g: 0.48896253, b: 0.5691229, a: 1}
+  m_IndirectSpecularColor: {r: 0.44038203, g: 0.4889627, b: 0.56912315, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -198,7 +198,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &188646690
 Transform:
   m_ObjectHideFlags: 0
@@ -400,6 +400,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_FPSLabelOffsetX: 15
   m_FPSLabelOffsetY: 250
+  m_updateFrequency: 1
+  m_fpsText: 
+  m_currentFPS: 0
+  m_framesSinceUpdate: 0
+  m_accumulation: 0
+  m_currentTime: 0
+  m_tangoApplication: {fileID: 0}
 --- !u!114 &507702503
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -414,6 +421,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_enableOcclusion: 0
   m_occlusionShader: {fileID: 0}
+  m_tangoApplication: {fileID: 0}
+  m_arCameraPostProcess: {fileID: 0}
+  m_camera: {fileID: 0}
+  m_uOffset: 0
+  m_vOffset: 0
+  <IsRendering>k__BackingField: 0
 --- !u!114 &507702504
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -428,6 +441,44 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_clutchEnabled: 0
   m_baseFrameMode: 0
+  m_tangoARScreen: {fileID: 0}
+  m_characterController: {fileID: 0}
+  m_unityWorld_T_unityCamera:
+    e00: 1
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 1
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 1
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 1
+  m_unityWorldTransformOffset_T_unityWorld:
+    e00: 1
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 1
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 1
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 1
+  m_tangoApplication: {fileID: 0}
+  <LastPoseTimestamp>k__BackingField: 0
 --- !u!114 &507702505
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -442,6 +493,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_enableDebugUI: 0
   m_enableEnvironmentalLighting: 0
+  m_environmentMap: {fileID: 0}
+  m_coefficients: []
 --- !u!20 &507702506
 Camera:
   m_ObjectHideFlags: 0
@@ -688,7 +741,7 @@ MonoBehaviour:
     type: 2}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 547284104}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: eb088d6948a441b4eb688315f3dd486d, type: 3}
   m_Name: 
@@ -1846,7 +1899,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2112320112
 Transform:
   m_ObjectHideFlags: 0
