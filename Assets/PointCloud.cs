@@ -609,7 +609,7 @@ public class PointCloud : MonoBehaviour {
 
         //m_frameIndex = 2;//((int)(Time.fixedTime * m_frameSpeed)) % m_lastFrameIndex;
 
-        pointRenderer.material.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
+        //pointRenderer.material.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
 
         //t = 29;
 
@@ -668,7 +668,7 @@ public class PointCloud : MonoBehaviour {
 
         m_myRadixSort.SetVector("camPos", -Camera.main.transform.forward);     //camera view direction DOT point position == distance to camera.
 
-        Matrix4x4 transMatrix = transform.localToWorldMatrix;
+        Matrix4x4 transMatrix = pointRenderer.localToWorldMatrix;
         m_myRadixSort.SetFloats("model", transMatrix[0], transMatrix[1], transMatrix[2], transMatrix[3],
                                   transMatrix[4], transMatrix[5], transMatrix[6], transMatrix[7],
                                   transMatrix[8], transMatrix[9], transMatrix[10], transMatrix[11],
@@ -691,6 +691,10 @@ public class PointCloud : MonoBehaviour {
             m_myRadixSort.Dispatch(GlobalPrefixSum, m_actualNumberOfThreadGroups, 1, 1);
             m_myRadixSort.Dispatch(RadixReorder, m_actualNumberOfThreadGroups, 1, 1);
         }
+
+        pointRenderer.material.SetBuffer("_IndicesValues", m_inOutBuffers[outSwapIndex]);
+
+
 
 
         //m_myRadixSort.Dispatch(LocalPrefixSum, inputSize / m_threadGroupSize / 4, 1, 1);

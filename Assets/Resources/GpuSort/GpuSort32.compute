@@ -58,7 +58,7 @@ groupshared indexDepth shared_data[BITONIC_BLOCK_SIZE];
 void BitonicSort( uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID,  uint3 GTid : SV_GroupThreadID,  uint GI : SV_GroupIndex )
 {
     // Load shared data
-	uint indexAndColor = Data.Load(DTid.x);
+	uint indexAndColor = Data[DTid.x];
 	float4 transVert = mul(model, float4(-_Points[indexAndColor >> 8], 1.0));
 
 	shared_data[GI].indexAndColor = indexAndColor;
