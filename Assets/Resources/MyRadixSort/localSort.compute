@@ -38,7 +38,7 @@ void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID
 
 	uint key = KeysIn[DTid.x];  //indexAndColor
 	float4 transVert = mul(model, float4(-_Points[key >> 8], 1.0));
-	float depth = /*length(_Points[key >> 8]);*/dot(camPos, transVert.xyz);
+	float depth = /*length(_Points[key >> 8]);*/100000.0 + dot(camPos, transVert.xyz);
 	uint intDepth = asuint(depth);
 
 	//take four bits of every input element:
@@ -160,7 +160,7 @@ void GlobalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupI
 
 		uint key = KeysIn[DTid.x];  //indexAndColor
 		float4 transVert = mul(model, float4(-_Points[key >> 8], 1.0));
-		float depth = /*length(_Points[key >> 8]);*/dot(camPos, transVert.xyz);
+		float depth = /*length(_Points[key >> 8]);*/100000.0 + dot(camPos, transVert.xyz);
 		uint intDepth = asuint(depth);
 
 		//take four bits of every input element:
@@ -192,7 +192,7 @@ void RadixReorder(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Dispat
 	//Particle key = KeysIn[DTid.x];
 	uint key = KeysIn[DTid.x];  //indexAndColor
 	float4 transVert = mul(model, float4(-_Points[key >> 8], 1.0));
-	float depth = /*length(_Points[key >> 8]);*/dot(camPos, transVert.xyz);
+	float depth = /*length(_Points[key >> 8]);*/100000.0 + dot(camPos, transVert.xyz);
 	uint intDepth = asuint(depth);
 
 	//take four bits of every input element:
