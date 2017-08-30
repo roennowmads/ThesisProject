@@ -91,6 +91,7 @@ Shader "Unlit/SortingTest" {
 				UNITY_INITIALIZE_OUTPUT(v2f, o)
 
 				float quadId = v.id * inv6;
+				uint value = _IndicesValues[quadId];
 				//uint quad_vertexID = v.id % 6;
 				//uint quad_vertexID = -6.0 * floor(quadId) + v.id;
 				uint quad_vertexID = mad(-6.0, floor(quadId), v.id);
@@ -98,9 +99,6 @@ Shader "Unlit/SortingTest" {
 				/*if (quadId % 2 != 0) {
 				return;
 				}*/
-
-
-				uint value = _IndicesValues.Load(quadId);
 
 				uint index = value >> 8;
 				float4 position = float4(-_Points[index], 1.0);
