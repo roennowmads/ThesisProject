@@ -15,7 +15,7 @@ Shader "Unlit/SortingTest" {
 	SubShader {
 		Tags{ "Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent" }
 		//Tags{"RenderType" = "Opaque"}
-		Blend SrcAlpha OneMinusSrcAlpha
+		//Blend SrcAlpha OneMinusSrcAlpha
 		//Cull Off
 		ZWrite Off
 		//LOD 200
@@ -94,7 +94,8 @@ Shader "Unlit/SortingTest" {
 				uint value = _IndicesValues[quadId];
 				//uint quad_vertexID = v.id % 6;
 				//uint quad_vertexID = -6.0 * floor(quadId) + v.id;
-				uint quad_vertexID = mad(-6.0, floor(quadId), v.id);
+				uint quad_vertexID = mad(-6.0, floor(quadId), v.id);  //Useful trick: foo % n == foo & (n - 1), if n is a power of 2
+
 
 				/*if (quadId % 2 != 0) {
 				return;
