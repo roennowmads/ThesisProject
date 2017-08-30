@@ -11,7 +11,7 @@ struct Particle {
 
 StructuredBuffer<uint> KeysIn;
 RWStructuredBuffer<uint4x4> BucketsOut;
-RWStructuredBuffer<uint4> GlobalDigitPrefixSumOut;
+RWStructuredBuffer<uint> GlobalDigitPrefixSumOut;
 RWStructuredBuffer<uint> ValueScans;
 RWStructuredBuffer<uint4x4> GlobalPrefixSumOut;
 
@@ -253,14 +253,8 @@ void GlobalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupI
 		prefixSums[0] = 0u;
 		for (uint i = 1u; i < 16u; i++) {
 			prefixSums[i] = prefixSums[i - 1] + ((uint[16])sharedBuffer[GI])[i - 1];
+			GlobalDigitPrefixSumOut[i] = prefixSums[i];
 		}
-
-		uint4x4 prefixSumsMatrix = uint4x4(prefixSums);
-		uint groupOffset = 16u * groupId.x;
-		GlobalDigitPrefixSumOut[groupOffset] = prefixSumsMatrix[0];
-		GlobalDigitPrefixSumOut[groupOffset + 4u] = prefixSumsMatrix[1];
-		GlobalDigitPrefixSumOut[groupOffset + 8u] = prefixSumsMatrix[2];
-		GlobalDigitPrefixSumOut[groupOffset + 12u] = prefixSumsMatrix[3];
 	}
 }
 
