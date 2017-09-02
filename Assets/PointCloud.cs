@@ -446,12 +446,10 @@ public class PointCloud : MonoBehaviour {
         m_myRadixSort.SetBuffer(GlobalPrefixSum, "GlobalDigitPrefixSumOut", computeBufferDigitPrefixSum);
         m_myRadixSort.SetBuffer(GlobalPrefixSum, "BucketsIn", m_computeBufferOut);
         m_myRadixSort.SetBuffer(GlobalPrefixSum, "GlobalPrefixSumOut", m_computeBufferGlobalPrefixSum);
-        m_myRadixSort.SetBuffer(GlobalPrefixSum, "_Points", m_pointsBuffer);
 
         m_myRadixSort.SetBuffer(RadixReorder, "GlobalDigitPrefixSumIn", computeBufferDigitPrefixSum);
         m_myRadixSort.SetBuffer(RadixReorder, "DepthValueScanIn", depthsAndValueScans);
         m_myRadixSort.SetBuffer(RadixReorder, "GlobalPrefixSumIn", m_computeBufferGlobalPrefixSum);
-        m_myRadixSort.SetBuffer(RadixReorder, "_Points", m_pointsBuffer);
 
         pointRenderer.material.SetBuffer("_IndicesValues", m_inOutBuffers[0]);
 
