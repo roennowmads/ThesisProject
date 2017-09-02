@@ -32,13 +32,6 @@ StructuredBuffer<DepthAndValueScans> DepthValueScanIn;
 StructuredBuffer<uint4x4> Input;
 RWStructuredBuffer<uint4x4> Output;
 
-
-//this buffer is 16 times the size the KeysIn buffer. It has the consecutive scans of the counts of 0's, 1's,..., 15's in the input array, in that order.
-
-//Since one thread in LocalPrefixSum handles 4 input values, we need to output 4*16 (64) values to the ValueScan buffer per thread.
-
-
-
 #define WARP_SIZE 64
 
 #if WARP_SIZE == 64
@@ -155,11 +148,11 @@ void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID
 	
 	uint key = KeysIn[DTid.x];  //indexAndColor
 	float4 transVert = mul(model, float4(-_Points[key >> 8], 1.0));
-	float depth = 100000.0 - distance(camPos, transVert.xyz);
+	float depth = distance(camPos, transVert.xyz);
 	uint intDepth = asuint(depth);
 	
 	//take four bits of every input element:
-	uint keyBits = (intDepth >> bitshift) & 0xF;
+	uint keyBits = 15u - ((intDepth >> bitshift) & 0xF);  // we invert the 0-15 to 15-0 to get a reverse sort
 
 	DepthValueScanOut[DTid.x].depth = keyBits;
     
@@ -264,6 +257,8 @@ void RadixReorder(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Dispat
 	uint globalOffset = GlobalDigitPrefixSumIn[keyBits];
 
 	uint newIndex = globalOffset + localOffset - 1u;
+
+	//Very uncoalesced writes...
 	KeysOut[newIndex] = key;
 }
 

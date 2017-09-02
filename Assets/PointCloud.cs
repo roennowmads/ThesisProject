@@ -694,7 +694,7 @@ public class PointCloud : MonoBehaviour {
         int outSwapIndex = 1;
         int numberOfPasses = 2;
         for (int i = 0; i < numberOfPasses; i++) {
-            int bitshift = 4 * i;
+            int bitshift = 20 + 4 * i;   //when only doing 2 passes, we start at bit 20
             m_myRadixSort.SetInt("bitshift", bitshift);
             int swapIndex0 = i % 2;
             outSwapIndex = (i + 1) % 2;
