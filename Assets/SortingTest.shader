@@ -1,5 +1,7 @@
 ﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
 
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
 // Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
 
 // Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
@@ -10,7 +12,6 @@ Shader "Unlit/SortingTest" {
 		_MainTex2("_MainTex2", 2D) = "white" {}
 		_AlbedoTex("AlbedoTex", 2D) = "white" {}
 		_ColorTex("_ColorTex", 2D) = "white" {}
-		_FrameTime("_FrameTime", Int) = 0
 	}
 	SubShader {
 		Tags{ "Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent" }
@@ -37,8 +38,6 @@ Shader "Unlit/SortingTest" {
 
 			uniform matrix model;
 			uniform float aspect;
-			uniform int _PointsCount;
-			uniform uint _FrameTime;
 			uniform uint _Magnitude;
 			uniform int _TextureSwitchFrameNumber;
 
@@ -123,8 +122,10 @@ Shader "Unlit/SortingTest" {
 				//o.vertex = UnityWorldToClipPos(-_Points[index]);
 
 				//o.vertex = mul(UNITY_MATRIX_M, float4(-_Points[index], 1.0));
-				o.vertex = mul(model, position);
-				o.vertex = mul(UNITY_MATRIX_VP, o.vertex);
+				///o.vertex = mul(model, position);
+				///o.vertex = mul(UNITY_MATRIX_VP, o.vertex);
+
+				o.vertex = UnityObjectToClipPos(position);
 
 				//float4 vertWorld = mul(UNITY_MATRIX_M, float4(-_Points[index], 1.0)); //these three work
 				//float4 vertView = mul(UNITY_MATRIX_V, vertWorld);						//these three work

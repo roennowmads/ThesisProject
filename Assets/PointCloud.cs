@@ -61,6 +61,9 @@ public class PointCloud : MonoBehaviour {
     private ComputeBuffer[] m_inOutBuffers;
     private int m_actualNumberOfThreadGroups;
 
+    public RenderTexture m_renderTex;
+    public Camera cam;
+
     /*struct Particle : IComparable {
         public uint key;
         public uint depth;
@@ -153,7 +156,7 @@ public class PointCloud : MonoBehaviour {
         tex2.Apply();
 
         pointRenderer = GetComponent<Renderer>();
-        pointRenderer.material.SetTexture("_MainTex2", tex2);
+        pointRenderer.sharedMaterial.SetTexture("_MainTex2", tex2);
         yield return 0;
     }
 
@@ -326,7 +329,7 @@ public class PointCloud : MonoBehaviour {
         pointRenderer = GetComponent<Renderer>();
         //pointRenderer.material.mainTexture = texture;
         //pointRenderer.material.SetTexture("_MainTex2", texture2);
-        pointRenderer.material.SetTexture("_ColorTex", colorTexture);
+        pointRenderer.sharedMaterial.SetTexture("_ColorTex", colorTexture);
 
         //float[] pointDepths = { 5.1f, 10.1f, 2.5f, 1.4f, 0.3f, 20.5f, 30.7f, 45.1f, 12.6f, 63.9f, 48.8f, 3.6f, 6.3f, 32.8f, 87.9f, 39.4f};
 
@@ -350,16 +353,16 @@ public class PointCloud : MonoBehaviour {
         
         m_pointsBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
         m_pointsBuffer.SetData(points);
-        pointRenderer.material.SetBuffer("_Points", m_pointsBuffer);
+        pointRenderer.sharedMaterial.SetBuffer("_Points", m_pointsBuffer);
 
         //pointRenderer.material.SetInt("_PointsCount", /*m_pointsCount*/pointPositions.Length);
-        pointRenderer.material.SetInt("_PointsCount", m_pointsCount);
+        pointRenderer.sharedMaterial.SetInt("_PointsCount", m_pointsCount);
         float aspect = Camera.main.GetComponent<Camera>().aspect;
-        pointRenderer.material.SetFloat("aspect", aspect);
+        pointRenderer.sharedMaterial.SetFloat("aspect", aspect);
         Vector4 trans = transform.position;
-        pointRenderer.material.SetVector("trans", trans);
-        pointRenderer.material.SetInt("_Magnitude", m_textureSideSizePower);
-        pointRenderer.material.SetInt("_TextureSwitchFrameNumber", m_textureSwitchFrameNumber);
+        pointRenderer.sharedMaterial.SetVector("trans", trans);
+        pointRenderer.sharedMaterial.SetInt("_Magnitude", m_textureSideSizePower);
+        pointRenderer.sharedMaterial.SetInt("_TextureSwitchFrameNumber", m_textureSwitchFrameNumber);
 
        // m_kernel = m_radixShader.FindKernel("CSMain");
 
@@ -451,7 +454,7 @@ public class PointCloud : MonoBehaviour {
         m_myRadixSort.SetBuffer(RadixReorder, "DepthValueScanIn", depthsAndValueScans);
         m_myRadixSort.SetBuffer(RadixReorder, "GlobalPrefixSumIn", m_computeBufferGlobalPrefixSum);
 
-        pointRenderer.material.SetBuffer("_IndicesValues", m_inOutBuffers[0]);
+        pointRenderer.sharedMaterial.SetBuffer("_IndicesValues", m_inOutBuffers[0]);
 
         /*uint[] input = new uint[m_threadGroupSize*16];
         for (int i = 0; i < input.Length; i++) {
@@ -614,10 +617,12 @@ public class PointCloud : MonoBehaviour {
 
         Debug.Log("Number of points: " + m_pointsCount);
 
+        m_renderTex = RenderTexture.GetTemporary(Screen.width, Screen.height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+
     }
-	
-	// Update is called once per frame
-	void Update () {
+
+    // Update is called once per frame
+    void Update() {
         //Debug.Log(Time.fixedTime);
 
         //m_computeShader.Dispatch(m_kernel, 1, 1, 1);
@@ -641,8 +646,7 @@ public class PointCloud : MonoBehaviour {
         m_currentTime += Time.deltaTime;
         ++m_framesSinceUpdate;
         m_accumulation += Time.timeScale / Time.deltaTime;
-        if (m_currentTime >= m_updateFrequency)
-        {
+        if (m_currentTime >= m_updateFrequency) {
             m_currentFPS = (int)(m_accumulation / m_framesSinceUpdate);
             m_currentTime = 0.0f;
             m_framesSinceUpdate = 0;
@@ -658,10 +662,28 @@ public class PointCloud : MonoBehaviour {
         //print(bufOut[10]);
 
         //Debug.Log(t);
-        pointRenderer.material.SetInt("_FrameTime", m_frameIndex);
+        pointRenderer.sharedMaterial.SetInt("_FrameTime", m_frameIndex);
         float aspect = Camera.main.GetComponent<Camera>().aspect;
-        pointRenderer.material.SetFloat("aspect", aspect);
+        pointRenderer.sharedMaterial.SetFloat("aspect", aspect);
+
+        //m_renderTex = new RenderTexture(Screen.width, Screen.height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
     }
+
+    //void OnRenderImage(RenderTexture src, RenderTexture dst) {
+        //m_renderTex = RenderTexture.GetTemporary(Screen.width, Screen.height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+        
+        //pointRenderer.sharedMaterial.SetPass(0);
+        //pointRenderer.sharedMaterial.SetMatrix("model", pointRenderer.localToWorldMatrix);
+        //Graphics.SetRenderTarget(m_renderTex);
+
+        //Graphics.DrawProcedural(MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count)*6 );  // index buffer
+
+        //Graphics.SetRenderTarget(null);
+
+     //   Graphics.Blit(m_renderTex, dst);
+
+    //    RenderTexture.ReleaseTemporary(m_renderTex);
+    //}
 
     private void OnGUI()
     {
@@ -678,10 +700,16 @@ public class PointCloud : MonoBehaviour {
 
     private void OnRenderObject()
     {
+        //m_renderTex = RenderTexture.GetTemporary(Screen.width, Screen.height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+        //Camera.main.targetTexture = m_renderTex;
+        //RenderTexture.active = m_renderTex;
+
+
+
         //GpuSort.BitonicSort32(m_indexComputeBuffers[m_frameIndex], m_computeBufferTemp, m_pointsBuffer, pointRenderer.localToWorldMatrix);
 
 
-        m_myRadixSort.SetVector("camPos", Camera.main.transform.position);     //camera view direction DOT point position == distance to camera.
+        /*m_myRadixSort.SetVector("camPos", Camera.main.transform.position);     //camera view direction DOT point position == distance to camera.
 
         Matrix4x4 transMatrix = pointRenderer.localToWorldMatrix;
         m_myRadixSort.SetFloats("model", transMatrix[0], transMatrix[1], transMatrix[2], transMatrix[3],
@@ -705,17 +733,34 @@ public class PointCloud : MonoBehaviour {
             m_myRadixSort.Dispatch(GlobalPrefixSum, 1, 1, 1);
             m_myRadixSort.Dispatch(RadixReorder, m_actualNumberOfThreadGroups, 1, 1);
         }
-
-        pointRenderer.material.SetPass(0);
-        pointRenderer.material.SetMatrix("model", pointRenderer.localToWorldMatrix);
+        */
+        
+        pointRenderer.sharedMaterial.SetPass(0);
+        pointRenderer.sharedMaterial.SetMatrix("model", pointRenderer.localToWorldMatrix/*cam.transform.localToWorldMatrix*/);  //localToWorldMatrix attached to camera?
 
         //Debug.Log(m_indexComputeBuffers[m_frameIndex].count);
+
+        //Graphics.SetRenderTarget(m_renderTex);
 
         //Graphics.DrawProcedural(MeshTopology.Points, 1, m_pointsCount);
         //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count*6);  // index buffer.
         Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/(m_indexComputeBuffers[m_frameIndex].count)*6 );  // index buffer.
 
+        //Graphics.SetRenderTarget(null);
+
         //Maybe this rendering stuff is supposed to be attached to the camera?
+
+        //Camera.main.targetTexture = null;
+
+        //Graphics.Blit(m_renderTex, null);
+
+        //RenderTexture.active = m_renderTex;
+        //Camera.main.Render();
+        //RenderTexture.active = null;
+
+        //Camera.main.targetTexture = m_renderTex;
+
+        //RenderTexture.ReleaseTemporary(m_renderTex);
     }
 
     void OnDestroy() {

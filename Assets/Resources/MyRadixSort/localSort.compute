@@ -32,7 +32,7 @@ StructuredBuffer<DepthAndValueScans> DepthValueScanIn;
 StructuredBuffer<uint4x4> Input;
 RWStructuredBuffer<uint4x4> Output;
 
-#define WARP_SIZE 64
+#define WARP_SIZE 16
 
 #if WARP_SIZE == 64
 #define GROUP_SIZE 512
@@ -42,7 +42,7 @@ RWStructuredBuffer<uint4x4> Output;
 #define WARP_SHIFT 5
 #else
 #define WARP_SIZE 16
-#define GROUP_SIZE 240
+#define GROUP_SIZE 512
 #define WARP_SHIFT 4
 #endif
 
