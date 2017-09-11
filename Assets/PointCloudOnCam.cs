@@ -132,6 +132,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         pointRenderer.material.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
 
         //m_renderTex = new RenderTexture(Screen.width, Screen.height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+        //m_renderTex.Create();
 
         m_commandBuf = new CommandBuffer();
 
@@ -142,14 +143,19 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         //m_commandBuf.SetGlobalTexture("_ColorTex", colorTexture);
         //m_commandBuf.SetRenderTarget(m_renderTex);
         //m_commandBuf.ClearRenderTarget(true, true, new Color(0.0f, 0.5f, 0.0f));
+        //m_commandBuf.Blit(Texture2D.blackTexture, m_renderTex);
+
+        m_commandBuf.SetRenderTarget(m_renderTex);
+        m_commandBuf.ClearRenderTarget(true, true, new Color(0.0f, 0.5f, 0.0f)); //should use the camera's depth, or something like it?
+
         //m_commandBuf.SetRenderTarget( BuiltinRenderTextureType.CameraTarget);
         m_commandBuf.DrawProcedural(/*Matrix4x4.identity*/pointRenderer.localToWorldMatrix, pointRenderer.material, 0, MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count) * 6);
-        m_commandBuf.Blit(BuiltinRenderTextureType.CameraTarget, m_renderTex);
+        //m_commandBuf.Blit(BuiltinRenderTextureType.CameraTarget, m_renderTex);  //it could be that the plane that we see in unity gets rendered before the particles and therefore they do not show up, but then why is the blit executed?
 
         Camera cam = Camera.main;
 		//if (!cam)
 		//	return;
-        cam.AddCommandBuffer (CameraEvent.AfterForwardOpaque, m_commandBuf); //AfterImageEffects //BeforeImageEffectsOpaque //AfterForwardOpaque
+        cam.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, m_commandBuf); //AfterImageEffects //BeforeImageEffectsOpaque //AfterForwardOpaque
 
     }
 
@@ -159,6 +165,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
     //}
 
     private void OnRenderObject() {
+        //Graphics.ExecuteCommandBuffer(m_commandBuf);
+
         //Graphics.SetRenderTarget(m_renderTex);
         //pointRenderer.sharedMaterial.SetInt("_FrameTime", m_frameIndex);
 
