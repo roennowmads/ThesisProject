@@ -17,7 +17,7 @@ Shader "Unlit/SortingTest" {
 		Tags{ "Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent" }
 		//Tags{"RenderType" = "Opaque"}
 		//Blend SrcAlpha OneMinusSrcAlpha
-		Cull Off
+		Cull Front
 		ZWrite Off
 		//LOD 200
 
@@ -122,10 +122,10 @@ Shader "Unlit/SortingTest" {
 				//o.vertex = UnityWorldToClipPos(-_Points[index]);
 
 				//o.vertex = mul(UNITY_MATRIX_M, float4(-_Points[index], 1.0));
-				///o.vertex = mul(model, position);
-				///o.vertex = mul(UNITY_MATRIX_VP, o.vertex);
+				o.vertex = mul(model, position);
+				o.vertex = mul(UNITY_MATRIX_VP, o.vertex);
 
-				o.vertex = UnityObjectToClipPos(position);
+				//o.vertex = UnityObjectToClipPos(position);
 
 				//float4 vertWorld = mul(UNITY_MATRIX_M, float4(-_Points[index], 1.0)); //these three work
 				//float4 vertView = mul(UNITY_MATRIX_V, vertWorld);						//these three work

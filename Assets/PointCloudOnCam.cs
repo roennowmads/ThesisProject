@@ -17,6 +17,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
     private int m_frameIndex = 0;
 
     public RenderTexture m_renderTex;
+    private RenderTexture m_tempTex;
 
     private CommandBuffer m_commandBuf;
     private GameObject pointCloudObj;
@@ -131,37 +132,40 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
         pointRenderer.material.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
 
+        m_tempTex = RenderTexture.GetTemporary(Screen.width, Screen.height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+        m_tempTex.Create();
+
         //m_renderTex = new RenderTexture(Screen.width, Screen.height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
         //m_renderTex.Create();
 
-        int tempBuf = 0;
-        m_commandBuf = new CommandBuffer();
+        //int tempBuf = 0;
+        //m_commandBuf = new CommandBuffer();
 
-        m_commandBuf.GetTemporaryRT(tempBuf, -1, -1, 24, FilterMode.Bilinear, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+        //m_commandBuf.GetTemporaryRT(tempBuf, -1, -1, 24, FilterMode.Bilinear, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
 
         //m_commandBuf.SetGlobalBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
         //m_commandBuf.SetGlobalVector("trans", trans);
         //m_commandBuf.SetGlobalFloat("aspect", aspect);
         //m_commandBuf.SetGlobalBuffer("_Points", m_pointsBuffer);
         //m_commandBuf.SetGlobalTexture("_ColorTex", colorTexture);
-        m_commandBuf.SetRenderTarget(tempBuf);
-        m_commandBuf.ClearRenderTarget(true, true, new Color(0.0f, 0.5f, 0.0f));
+        //m_commandBuf.SetRenderTarget(tempBuf);
+        //m_commandBuf.ClearRenderTarget(true, true, new Color(0.0f, 0.5f, 0.0f));
         //m_commandBuf.Blit(Texture2D.blackTexture, m_renderTex);
 
         //m_commandBuf.SetRenderTarget(m_renderTex);
         //m_commandBuf.ClearRenderTarget(true, true, new Color(0.0f, 0.5f, 0.0f)); //should use the camera's depth, or something like it?
 
         //m_commandBuf.SetRenderTarget( BuiltinRenderTextureType.CameraTarget);
-        m_commandBuf.DrawProcedural(/*Matrix4x4.identity*/pointRenderer.localToWorldMatrix, pointRenderer.material, 0, MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count) * 6);
+        //m_commandBuf.DrawProcedural(/*Matrix4x4.identity*/pointRenderer.localToWorldMatrix, pointRenderer.material, 0, MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count) * 6);
         //m_commandBuf.Blit(BuiltinRenderTextureType.CameraTarget, m_renderTex);  //it could be that the plane that we see in unity gets rendered before the particles and therefore they do not show up, but then why is the blit executed?
 
-        m_commandBuf.Blit(tempBuf, m_renderTex);
+        //m_commandBuf.Blit(tempBuf, m_renderTex);
 
-        m_commandBuf.ReleaseTemporaryRT(tempBuf);
+        //m_commandBuf.ReleaseTemporaryRT(tempBuf);
 
-        Camera cam = Camera.main;
-		//if (!cam)
-		//	return;
+        //Camera cam = Camera.main;
+        //if (!cam)
+        //	return;
         //cam.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, m_commandBuf); //AfterImageEffects //BeforeImageEffectsOpaque //AfterForwardOpaque
 
     }
@@ -172,14 +176,18 @@ private List<ComputeBuffer> m_indexComputeBuffers;
     //}
 
     private void OnRenderObject() {
-        Graphics.ExecuteCommandBuffer(m_commandBuf);
+        //Graphics.ExecuteCommandBuffer(m_commandBuf);
 
         //pointRenderer.sharedMaterial.SetInt("_FrameTime", m_frameIndex);
-        ///Graphics.SetRenderTarget(m_renderTex.colorBuffer, m_renderTex.depthBuffer);
-        ///pointRenderer.sharedMaterial.SetPass(0);
-        ///pointRenderer.sharedMaterial.SetMatrix("model", pointRenderer.localToWorldMatrix);
-        ///Graphics.DrawProcedural(MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count)*6 );  // index buffer.
-        ///Graphics.SetRenderTarget(null);
+
+        Graphics.SetRenderTarget(m_tempTex.colorBuffer, Graphics.activeDepthBuffer /*m_tempTex.depthBuffer*/);
+        GL.Clear(true, true, new Color(0.0f, 0.5f, 0.0f));
+        pointRenderer.sharedMaterial.SetPass(0);
+        pointRenderer.sharedMaterial.SetMatrix("model", pointRenderer.localToWorldMatrix);
+        Graphics.DrawProcedural(MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count)*6 );  // index buffer.
+        Graphics.SetRenderTarget(null);
+
+        Graphics.Blit(m_tempTex, m_renderTex);
 
          //m_commandBuf.SetGlobalMatrix("model", pointRenderer.localToWorldMatrix);
         //m_commandBuf.GetTemporaryRT (normalsID, -1, -1);
