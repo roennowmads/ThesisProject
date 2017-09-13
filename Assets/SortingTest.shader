@@ -36,7 +36,6 @@ Shader "Unlit/SortingTest" {
 			StructuredBuffer<float3> _Points;
 			StructuredBuffer<uint> _IndicesValues;
 
-			uniform matrix model;
 			uniform float aspect;
 			uniform uint _Magnitude;
 			uniform int _TextureSwitchFrameNumber;
@@ -110,29 +109,8 @@ Shader "Unlit/SortingTest" {
 				o.color = tex2Dlod(_ColorTex, half4(pow((colorValue*2.0), .0625), 0, 0, 0)).rgb /** modifier*/;
 				//o.color = tex2Dlod(_ColorTex, half4(pow((value*5.0), .0625)*0.95, 0, 0, 0)).rgb /** modifier*/;
 				//o.color = float3(value, value, value);
-				
-				//o.color = float3(0.0, 0.0, 1.0);
-				//o.color = float3(0.0, 0.0, quadId / 65536.0);
 
-				//_Points[v.iid] += float3(0.1, 0.1, 0.1);
-
-				//Correcting the translation:
-				//o.vertex = mul(model, float4(-_Points[index], 1.0));
-				//o.vertex += trans;
-				//o.vertex = UnityWorldToClipPos(-_Points[index]);
-
-				//o.vertex = mul(UNITY_MATRIX_M, float4(-_Points[index], 1.0));
-				o.vertex = mul(model, position);
-				o.vertex = mul(UNITY_MATRIX_VP, o.vertex);
-
-				//o.vertex = UnityObjectToClipPos(position);
-
-				//float4 vertWorld = mul(UNITY_MATRIX_M, float4(-_Points[index], 1.0)); //these three work
-				//float4 vertView = mul(UNITY_MATRIX_V, vertWorld);						//these three work
-				//o.vertex = mul(UNITY_MATRIX_P, vertView);								//these three work (vector needs to be float4!)
-
-				//float3 vertWorld = UnityObjectToViewPos(-_Points[index]); //these two work
-				//o.vertex = mul(UNITY_MATRIX_P, float4(vertWorld, 1.0));  //these two work (vector needs to be float4!)
+				o.vertex = UnityObjectToClipPos(position);
 
 				//Translating the vertices in a quad shape:
 				//half size = 0.4 * exp(1.0 - value) /** modifier*/;
@@ -155,7 +133,7 @@ Shader "Unlit/SortingTest" {
 			{
 				fragOutput o;
 
-				fixed albedo = tex2D(_AlbedoTex, i.texCoord).a;
+				fixed albedo = tex2D(_AlbedoTex, /*i.texCoord*/float2(0.5,0.5)).a;
 				//o.color = fixed4(/*i.color*/fixed3(0.5,0.1,0.1), albedo*0.0525);
 
 				//good for fireball:
