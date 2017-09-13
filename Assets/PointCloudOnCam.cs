@@ -17,7 +17,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
     private int m_frameIndex = 0;
 
     public RenderTexture m_renderTex;
-    private RenderTexture m_tempTex;
+    private RenderTexture m_accumTex, m_revealageTex;
 
     private CommandBuffer m_commandBuf;
     private GameObject pointCloudObj;
@@ -132,8 +132,9 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
         pointRenderer.material.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
 
-        m_tempTex = RenderTexture.GetTemporary(Screen.width, Screen.height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
-        m_tempTex.Create();
+        m_accumTex = RenderTexture.GetTemporary(1024, 600, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+        m_revealageTex = RenderTexture.GetTemporary(1024, 600, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+        //m_tempTex.Create();
 
         //m_renderTex = new RenderTexture(Screen.width, Screen.height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
         //m_renderTex.Create();
@@ -180,14 +181,33 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
         //pointRenderer.sharedMaterial.SetInt("_FrameTime", m_frameIndex);
 
-        Graphics.SetRenderTarget(m_tempTex.colorBuffer, Graphics.activeDepthBuffer /*m_tempTex.depthBuffer*/);
-        GL.Clear(true, true, new Color(0.0f, 0.5f, 0.0f));
-        pointRenderer.sharedMaterial.SetPass(0);
-        pointRenderer.sharedMaterial.SetMatrix("model", pointRenderer.localToWorldMatrix);
-        Graphics.DrawProcedural(MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count)*6 );  // index buffer.
-        Graphics.SetRenderTarget(null);
+        RenderBuffer originalColorBuffer = Graphics.activeColorBuffer;
+        RenderBuffer originalDepthBuffer = Graphics.activeDepthBuffer;
 
-        Graphics.Blit(m_tempTex, m_renderTex);
+        if (Camera.current == Camera.main) {
+            //Graphics.SetRenderTarget(m_tempTex.colorBuffer, Graphics.activeDepthBuffer /*m_tempTex.depthBuffer*/);
+            //Graphics.SetRenderTarget(m_accumTex);
+            Graphics.SetRenderTarget(m_accumTex.colorBuffer, originalDepthBuffer);
+            //Graphics.SetRenderTarget(m_renderTex);
+            GL.Clear(false, true, new Color(0.0f, 0.0f, 0.0f, 0.0f));  //only clear color, we bind the depth from the opaque geometry render as depth render target
+            pointRenderer.sharedMaterial.SetPass(0);
+            pointRenderer.sharedMaterial.SetMatrix("model", pointRenderer.localToWorldMatrix);
+            Graphics.DrawProcedural(MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count)*6 );  // index buffer.
+
+            //this step i believe could be done in one pass with multiple render targets:
+            Graphics.SetRenderTarget(m_revealageTex.colorBuffer, originalDepthBuffer);
+            GL.Clear(false, true, new Color(1.0f, 1.0f, 1.0f, 1.0f));
+
+            //(draw transparent geometry using the revealage shader) (need to change material or something, probably easier just to do this in a commandbuffer)
+            Graphics.DrawProcedural(MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count)*6,); // (draw transparent geometry using the revealage shader)
+            //Graphics.Draw 
+
+            //Graphics.DrawTexture (this is probably a good candidate for the last step of rendering it to screen)
+
+
+            Graphics.SetRenderTarget(originalColorBuffer, originalDepthBuffer);
+            Graphics.Blit(m_accumTex, m_renderTex);
+        }
 
          //m_commandBuf.SetGlobalMatrix("model", pointRenderer.localToWorldMatrix);
         //m_commandBuf.GetTemporaryRT (normalsID, -1, -1);

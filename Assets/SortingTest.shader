@@ -17,7 +17,7 @@ Shader "Unlit/SortingTest" {
 		Tags{ "Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent" }
 		//Tags{"RenderType" = "Opaque"}
 		//Blend SrcAlpha OneMinusSrcAlpha
-		Cull Front
+		Cull Off
 		ZWrite Off
 		//LOD 200
 
