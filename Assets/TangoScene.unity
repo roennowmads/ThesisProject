@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.4497087, g: 0.4997782, b: 0.5756323, a: 1}
+  m_IndirectSpecularColor: {r: 0.44970864, g: 0.49977833, b: 0.5756324, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -274,7 +274,7 @@ MeshRenderer:
   m_LightProbeUsage: 0
   m_ReflectionProbeUsage: 0
   m_Materials:
-  - {fileID: 2100000, guid: 078db1c863d64c8409281f5eb269d14c, type: 2}
+  - {fileID: 2100000, guid: 990816ec7834b4e48b24c08b0e6c5866, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -383,7 +383,7 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.3
+  near clip plane: 0.05
   far clip plane: 1000
   field of view: 37.8
   orthographic: 0
@@ -506,7 +506,6 @@ GameObject:
   serializedVersion: 5
   m_Component:
   - component: {fileID: 1579013619}
-  - component: {fileID: 1579013620}
   m_Layer: 0
   m_Name: placeholder
   m_TagString: Untagged
@@ -527,38 +526,6 @@ Transform:
   m_Father: {fileID: 154601869}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
---- !u!23 &1579013620
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1579013618}
-  m_Enabled: 1
-  m_CastShadows: 0
-  m_ReceiveShadows: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 0
-  m_ReflectionProbeUsage: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 7a64c316e1f2db54eb09b1fec8735241, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
 --- !u!1 &1742325935
 GameObject:
   m_ObjectHideFlags: 0
@@ -674,7 +641,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 4349668038099098, guid: 94b76e50c03828949a1995c8df14f660, type: 2}
       propertyPath: m_RootOrder
-      value: 7
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 4203858061946688, guid: 94b76e50c03828949a1995c8df14f660, type: 2}
       propertyPath: m_RootOrder
@@ -682,11 +649,11 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 4555234742929804, guid: 94b76e50c03828949a1995c8df14f660, type: 2}
       propertyPath: m_RootOrder
-      value: 8
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 4553540895490612, guid: 94b76e50c03828949a1995c8df14f660, type: 2}
       propertyPath: m_RootOrder
-      value: 6
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 4819734311546432, guid: 94b76e50c03828949a1995c8df14f660, type: 2}
       propertyPath: m_RootOrder
@@ -696,6 +663,41 @@ Prefab:
         type: 2}
       propertyPath: m_Depth
       value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 20149690976931812, guid: 94b76e50c03828949a1995c8df14f660,
+        type: 2}
+      propertyPath: m_CullingMask.m_Bits
+      value: 4294966729
+      objectReference: {fileID: 0}
+    - target: {fileID: 20149690976931812, guid: 94b76e50c03828949a1995c8df14f660,
+        type: 2}
+      propertyPath: m_ClearFlags
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 20149690976931812, guid: 94b76e50c03828949a1995c8df14f660,
+        type: 2}
+      propertyPath: orthographic
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 20149690976931812, guid: 94b76e50c03828949a1995c8df14f660,
+        type: 2}
+      propertyPath: m_OcclusionCulling
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 20149690976931812, guid: 94b76e50c03828949a1995c8df14f660,
+        type: 2}
+      propertyPath: m_RenderingPath
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 20149690976931812, guid: 94b76e50c03828949a1995c8df14f660,
+        type: 2}
+      propertyPath: m_HDR
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 20149690976931812, guid: 94b76e50c03828949a1995c8df14f660,
+        type: 2}
+      propertyPath: m_AllowMSAA
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 94b76e50c03828949a1995c8df14f660, type: 2}
@@ -719,3 +721,6 @@ MonoBehaviour:
   m_valueDataPath: OilRigDataIndexed
   m_renderTex: {fileID: 8400000, guid: c999e8690ae3aa246aa8f67e54e5d872, type: 2}
   m_opaqueTex: {fileID: 8400000, guid: b5f9d418d5cadbb4c90b051661dc478b, type: 2}
+  m_accumTex: {fileID: 8400000, guid: fb853de2019f4264d8a25a801aa4571c, type: 2}
+  shader: {fileID: 4800000, guid: 268cbeb370ac3e844a78195221d5f9f9, type: 3}
+  particleTexture: {fileID: 10300, guid: 0000000000000000f000000000000000, type: 0}

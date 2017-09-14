@@ -16,10 +16,12 @@ Shader "Unlit/SortingTest" {
 	SubShader {
 		Tags{ "Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent" }
 		//Tags{"RenderType" = "Opaque"}
-		//Blend SrcAlpha OneMinusSrcAlpha
+		Blend SrcAlpha OneMinusSrcAlpha
+		//Blend One OneMinusSrcAlpha		
 		Cull Off
 		ZWrite Off
-		//LOD 200
+		LOD 3000
+		//AlphaToMask Off
 
 		Pass {
 			CGPROGRAM
@@ -133,7 +135,12 @@ Shader "Unlit/SortingTest" {
 			{
 				fragOutput o;
 
-				fixed albedo = tex2D(_AlbedoTex, /*i.texCoord*/float2(0.5,0.5)).a;
+				fixed albedo = tex2Dlod(_AlbedoTex, float4(i.texCoord, 0.0, 0.0) /*float2(0.5,0.5)*/).r;
+				//fixed albedo = tex2D(_AlbedoTex, i.texCoord /*float2(0.5,0.5)*/).a;
+				
+				if (albedo < 0.7) 
+					discard;
+
 				//o.color = fixed4(/*i.color*/fixed3(0.5,0.1,0.1), albedo*0.0525);
 
 				//good for fireball:
