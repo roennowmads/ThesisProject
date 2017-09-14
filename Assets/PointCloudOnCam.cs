@@ -22,7 +22,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
     private CommandBuffer m_commandBuf, m_commandBuf2;
 
-    public Shader shader;
+    public Shader shader, m_accumShader;
     private Material m_material, m_material2;
 
     public Texture particleTexture;
@@ -126,7 +126,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         m_pointCloudObj = GameObject.Find("placeholder");
 
         m_material = new Material(shader);
-        m_material2 = new Material(shader);
+        m_material2 = new Material(m_accumShader);
 
         m_material.SetTexture("_AlbedoTex", particleTexture);
         m_material2.SetTexture("_AlbedoTex", particleTexture);
@@ -178,7 +178,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
     private void OnRenderObject() {
         Graphics.SetRenderTarget(m_accumTex.colorBuffer, m_opaqueTex.depthBuffer);
         //Graphics.SetRenderTarget(null);
-        GL.Clear(false, true, new Color(1.0f, 1.0f, 1.0f, 1.0f));
+        GL.Clear(false, true, new Color(0.0f, 0.0f, 0.0f, 0.0f));
         GL.MultMatrix(m_pointCloudObj.transform.localToWorldMatrix);
         m_material.SetPass(0);
         Graphics.DrawProcedural(MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count)*6 );
