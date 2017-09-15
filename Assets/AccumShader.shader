@@ -40,8 +40,6 @@
 			struct appdata
 			{
 				uint id : SV_VertexID;
-				//float4 vertex : POSITION;
-				//float2 uv : TEXCOORD0;
 			};
 
 			struct v2f
@@ -51,9 +49,6 @@
 				float2 texCoord : TEXCOORD0;
 				float z : TEXCOORD1;
 			};
-
-			sampler2D _MainTex;
-			float4 _MainTex_ST;
 
 			static const half2 quadCoords[6] = {
 				half2(-0.1, -0.1),

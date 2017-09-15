@@ -16,11 +16,11 @@ Shader "Unlit/SortingTest" {
 	SubShader {
 		Tags{ "Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent" }
 		//Tags{"RenderType" = "Opaque"}
-		Blend SrcAlpha OneMinusSrcAlpha
+		//Blend SrcAlpha OneMinusSrcAlpha
 		//Blend One OneMinusSrcAlpha		
 		Cull Off
 		ZWrite Off
-		LOD 3000
+		//LOD 3000
 		//AlphaToMask Off
 
 		Pass {
@@ -96,20 +96,11 @@ Shader "Unlit/SortingTest" {
 				//uint quad_vertexID = -6.0 * floor(quadId) + v.id;
 				uint quad_vertexID = mad(-6.0, floor(quadId), v.id);  //Useful trick: foo % n == foo & (n - 1), if n is a power of 2
 
-
-				/*if (quadId % 2 != 0) {
-				return;
-				}*/
-
 				uint index = value >> 8;
 				float4 position = float4(-_Points[index], 1.0);
 				float colorValue = (value & 0xFF) * inv255;
 
-				//good for fireball:
-				//o.color = tex2Dlod(_ColorTex, half4(value*2.0, 0, 0, 0)).rgb /** modifier*/;
-				//o.color = tex2Dlod(_ColorTex, half4(pow((value*5.0), .03125), 0, 0, 0)).rgb /** modifier*/;
 				o.color = tex2Dlod(_ColorTex, half4(pow((colorValue*2.0), .0625), 0, 0, 0)).rgb /** modifier*/;
-				//o.color = tex2Dlod(_ColorTex, half4(pow((value*5.0), .0625)*0.95, 0, 0, 0)).rgb /** modifier*/;
 				//o.color = float3(value, value, value);
 
 				o.vertex = UnityObjectToClipPos(position);
