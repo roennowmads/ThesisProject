@@ -54,7 +54,7 @@
 			static const float2 quadTexCoords[6] = {
 				float2(0.0, 0.0),
 				float2(1.0, 1.0),
-				float2(1.0, 0.0),
+				float2(1.0, 0.0), 
 
 				float2(0.0, 1.0),
 				float2(1.0, 1.0),
@@ -69,6 +69,7 @@
 				v2f o;
 
 				float quadId = v.id * inv6;
+
 				uint value = _IndicesValues[quadId];
 
 				uint quad_vertexID = mad(-6.0, floor(quadId), v.id);  //Useful trick: foo % n == foo & (n - 1), if n is a power of 2
@@ -80,6 +81,10 @@
 				o.color = tex2Dlod(_ColorTex, half4(pow((colorValue*2.0), .0625), 0, 0, 0)).rgb /** modifier*/;
 
 				o.vertex = UnityObjectToClipPos(position);
+
+				//if (/*int(quadId) % 4 != 0 ||*/ int(quadId) < 50000) {
+				//	return o;
+				//}
 
 				half size = 0.02;
 				half2 quadSize = half2(size, size * aspect);
@@ -93,10 +98,16 @@
 			
 			fixed4 frag (v2f i) : SV_Target
 			{
-				fixed albedo = tex2Dlod(_AlbedoTex, float4(i.texCoord, 0.0, 0.0) /*float2(0.5,0.5)*/).r;
-				fixed4 alpha = fixed4(i.color, 1.0) * albedo;
+				fixed albedo = tex2Dlod(_AlbedoTex, float4(i.texCoord, 0.0, 0.0) /*float2(0.5,0.5)*/).a;
 
-				return alpha.aaaa;//alpha.aaaa;
+				if (albedo < 0.7)
+					discard;
+
+				//fixed4 alpha = fixed4(i.color, 1.0) * albedo;
+
+				//return alpha.aaaa;//alpha.aaaa;
+
+				return albedo.xxxx;
 			}
 			ENDCG
 		}

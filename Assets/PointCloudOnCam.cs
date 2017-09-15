@@ -19,15 +19,29 @@ private List<ComputeBuffer> m_indexComputeBuffers;
     public RenderTexture m_opaqueTex;
     public RenderTexture m_accumTex;
     public RenderTexture m_revealageTex;
+    public RenderTexture m_resultTex;
 
     private CommandBuffer m_commandBuf, m_commandBuf2;
 
-    public Shader shader, m_accumShader, m_revealageShader;
-    private Material m_material, m_accumMaterial, m_revealageMaterial;
+    public Shader shader, m_accumShader, m_revealageShader, m_blendShader, m_textureShader;
+    private Material m_material, m_accumMaterial, m_revealageMaterial, m_blendMaterial, m_textureMaterial;
 
     public Texture particleTexture;
 
     private GameObject m_pointCloudObj;
+
+    private static System.Random rng = new System.Random();
+
+    public static void Shuffle(uint[] list) {
+        int n = list.Length;
+        while (n > 1) {
+            n--;
+            int k = rng.Next(n + 1);
+            uint value = list[k];
+            list[k] = list[n];
+            list[n] = value;
+        }
+    }
 
     void readIndicesAndValues(List<ComputeBuffer> computeBuffers)
     {
@@ -42,7 +56,9 @@ private List<ComputeBuffer> m_indexComputeBuffers;
             uint[] zeroedBytes = new uint[bufferSize];
 
             Buffer.BlockCopy(bytes, 0, zeroedBytes, 0,  bufferSize*4);
-            
+
+            //Shuffle(zeroedBytes);
+
             ComputeBuffer indexComputeBuffer = new ComputeBuffer(bufferSize, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
 
             indexComputeBuffer.SetData(zeroedBytes);
@@ -128,6 +144,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         m_material = new Material(shader);
         m_accumMaterial = new Material(m_accumShader);
         m_revealageMaterial = new Material(m_revealageShader);
+        m_blendMaterial = new Material(m_blendShader);
+        m_textureMaterial = new Material(m_textureShader);
 
         m_material.SetTexture("_AlbedoTex", particleTexture);
         m_accumMaterial.SetTexture("_AlbedoTex", particleTexture);
@@ -152,11 +170,13 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         m_accumMaterial.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
         m_revealageMaterial.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
 
+        m_blendMaterial.SetTexture("_AccumTex", m_accumTex);
+        m_blendMaterial.SetTexture("_RevealageTex", m_revealageTex);
 
         //m_accumTex = RenderTexture.GetTemporary(1024, 600, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
         //m_revealageTex = RenderTexture.GetTemporary(1024, 600, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
         //m_tempTex.Create();
-        
+
 
         Camera.main.targetTexture = m_opaqueTex;
 
@@ -180,32 +200,55 @@ private List<ComputeBuffer> m_indexComputeBuffers;
     }
 
     private void OnRenderObject() {
-        Graphics.SetRenderTarget(m_renderTex.colorBuffer, m_opaqueTex.depthBuffer);
-        //Graphics.SetRenderTarget(null);
-        GL.Clear(false, true, new Color(0.0f, 0.0f, 0.0f, 0.0f));
-        GL.MultMatrix(m_pointCloudObj.transform.localToWorldMatrix);
-        m_material.SetPass(0);
-        Graphics.DrawProcedural(MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count) * 6);
-    
-        Graphics.SetRenderTarget(m_accumTex.colorBuffer, m_opaqueTex.depthBuffer);
-        GL.Clear(false, true, new Color(0.0f, 0.0f, 0.0f, 0.0f));
-        GL.MultMatrix(m_pointCloudObj.transform.localToWorldMatrix);
-        m_accumMaterial.SetPass(0);
-        Graphics.DrawProcedural(MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count) * 6);
+        Shader.EnableKeyword("_WEIGHTED_ON");
+        Shader.DisableKeyword("_WEIGHTED0");
+        Shader.DisableKeyword("_WEIGHTED1");
+        Shader.EnableKeyword("_WEIGHTED2");
 
-        Graphics.SetRenderTarget(m_revealageTex.colorBuffer, m_opaqueTex.depthBuffer);
-        GL.Clear(false, true, new Color(1.0f, 1.0f, 1.0f, 1.0f));
-        GL.MultMatrix(m_pointCloudObj.transform.localToWorldMatrix);
-        m_revealageMaterial.SetPass(0);
-        Graphics.DrawProcedural(MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count) * 6);
+        if (Camera.current == Camera.main) {
+            
+            Graphics.SetRenderTarget(m_renderTex.colorBuffer, m_opaqueTex.depthBuffer);
+            //Graphics.SetRenderTarget(null);
+            GL.Clear(false, true, new Color(0.0f, 0.0f, 0.0f, 0.0f));
+            GL.MultMatrix(m_pointCloudObj.transform.localToWorldMatrix);
+            m_material.SetPass(0);
+            Graphics.DrawProcedural(MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count) * 6);
+            
 
-        /*Graphics.SetRenderTarget(null);
-        GL.PushMatrix();
-        GL.LoadPixelMatrix(0, Screen.width, Screen.height, 0);
+            Graphics.SetRenderTarget(m_accumTex.colorBuffer, m_opaqueTex.depthBuffer);
+            GL.Clear(false, true, new Color(0.0f, 0.0f, 0.0f, 0.0f));
+            GL.MultMatrix(m_pointCloudObj.transform.localToWorldMatrix);
+            m_accumMaterial.SetPass(0);
+            Graphics.DrawProcedural(MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count) * 6);
 
-        Graphics.DrawTexture(   // be aware that this call seems to fuck the particles up, if the texture is shown on a plane it looks different.
-            new Rect(0, 0, Screen.width, Screen.height),
-            m_accumTex); // m_revealageTex
-        GL.PopMatrix();*/        
+            Graphics.SetRenderTarget(m_revealageTex.colorBuffer, m_opaqueTex.depthBuffer);
+            GL.Clear(false, true, new Color(1.0f, 1.0f, 1.0f, 1.0f));
+            GL.MultMatrix(m_pointCloudObj.transform.localToWorldMatrix);
+            m_revealageMaterial.SetPass(0);
+            Graphics.DrawProcedural(MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count) * 6);
+
+            Graphics.Blit(m_opaqueTex, m_resultTex, m_blendMaterial);
+
+            Graphics.SetRenderTarget(null);
+
+            GL.PushMatrix();
+            GL.LoadPixelMatrix(0, Screen.width, Screen.height, 0);
+
+            Graphics.DrawTexture(   // be aware that this call seems to fuck the particles up, if the texture is shown on a plane it looks different.
+                new Rect(0, 0, Screen.width / 2, Screen.height),
+                m_opaqueTex, m_blendMaterial); // m_revealageTex
+
+            //Graphics.DrawTexture(   // be aware that this call seems to fuck the particles up, if the texture is shown on a plane it looks different.
+            //    new Rect(0, 0, Screen.width / 2, Screen.height),
+            //    m_resultTex); // m_revealageTex
+
+            Graphics.DrawTexture(   // be aware that this call seems to fuck the particles up, if the texture is shown on a plane it looks different.
+                new Rect(Screen.width / 2, 0, Screen.width / 2, Screen.height),
+                m_renderTex, m_textureMaterial); // m_revealageTex
+
+
+            GL.PopMatrix();
+
+        }
     }
 }

@@ -16,7 +16,7 @@ Shader "Unlit/SortingTest" {
 	SubShader {
 		Tags{ "Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent" }
 		//Tags{"RenderType" = "Opaque"}
-		//Blend SrcAlpha OneMinusSrcAlpha
+		Blend SrcAlpha OneMinusSrcAlpha
 		//Blend One OneMinusSrcAlpha		
 		Cull Off
 		ZWrite Off
@@ -91,6 +91,7 @@ Shader "Unlit/SortingTest" {
 				UNITY_INITIALIZE_OUTPUT(v2f, o)
 
 				float quadId = v.id * inv6;
+				
 				uint value = _IndicesValues[quadId];
 				//uint quad_vertexID = v.id % 6;
 				//uint quad_vertexID = -6.0 * floor(quadId) + v.id;
@@ -104,6 +105,10 @@ Shader "Unlit/SortingTest" {
 				//o.color = float3(value, value, value);
 
 				o.vertex = UnityObjectToClipPos(position);
+
+				//if (/*int(quadId) % 4 != 0 ||*/ int(quadId) < 50000) {
+				//	return;
+				//}
 
 				//Translating the vertices in a quad shape:
 				//half size = 0.4 * exp(1.0 - value) /** modifier*/;
@@ -126,7 +131,7 @@ Shader "Unlit/SortingTest" {
 			{
 				fragOutput o;
 
-				fixed albedo = tex2Dlod(_AlbedoTex, float4(i.texCoord, 0.0, 0.0) /*float2(0.5,0.5)*/).r;
+				fixed albedo = tex2Dlod(_AlbedoTex, float4(i.texCoord, 0.0, 0.0) /*float2(0.5,0.5)*/).a;
 				//fixed albedo = tex2D(_AlbedoTex, i.texCoord /*float2(0.5,0.5)*/).a;
 				
 				if (albedo < 0.7) 
@@ -135,7 +140,7 @@ Shader "Unlit/SortingTest" {
 				//o.color = fixed4(/*i.color*/fixed3(0.5,0.1,0.1), albedo*0.0525);
 
 				//good for fireball:
-				o.color = fixed4(i.color, albedo/**0.25*/);
+				o.color = fixed4(i.color, albedo/*albedo*//**0.25*/);
 				return o;
 			}
 			ENDCG
