@@ -224,6 +224,21 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &1374823190657772
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 4443230877214160}
+  m_Layer: 0
+  m_Name: placeholder
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &1392658254281058
 GameObject:
   m_ObjectHideFlags: 1
@@ -272,7 +287,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &1452969263800470
 GameObject:
   m_ObjectHideFlags: 1
@@ -366,6 +381,7 @@ GameObject:
   - component: {fileID: 114545867842546252}
   - component: {fileID: 114946926973360314}
   - component: {fileID: 114666623640444132}
+  - component: {fileID: 114172207063235284}
   m_Layer: 0
   m_Name: Tango Camera
   m_TagString: MainCamera
@@ -566,7 +582,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 4579791480945716}
-  m_RootOrder: 4
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!4 &4224352086139718
 Transform:
@@ -678,6 +694,19 @@ Transform:
   m_Father: {fileID: 4553540895490612}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!4 &4443230877214160
+Transform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1374823190657772}
+  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 4579791480945716}
+  m_RootOrder: 4
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!4 &4444389419694198
 Transform:
   m_ObjectHideFlags: 1
@@ -734,7 +763,7 @@ Transform:
   m_Children:
   - {fileID: 4386221679381326}
   m_Father: {fileID: 4579791480945716}
-  m_RootOrder: 5
+  m_RootOrder: 8
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &4554318442976844
 Transform:
@@ -778,10 +807,11 @@ Transform:
   - {fileID: 4310674233205730}
   - {fileID: 4714895312549386}
   - {fileID: 4250653004641904}
+  - {fileID: 4443230877214160}
   - {fileID: 4203858061946688}
-  - {fileID: 4553540895490612}
   - {fileID: 4349668038099098}
   - {fileID: 4555234742929804}
+  - {fileID: 4553540895490612}
   - {fileID: 4819734311546432}
   m_Father: {fileID: 4349666496639162}
   m_RootOrder: 3
@@ -860,8 +890,8 @@ Transform:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1673527247082710}
-  m_LocalRotation: {x: 0.05377265, y: 0.7562453, z: -0.06265284, w: 0.6490579}
-  m_LocalPosition: {x: -10.997464, y: -0.17980137, z: -22.130568}
+  m_LocalRotation: {x: -0.0020714072, y: 0.99304175, z: -0.116411515, w: -0.01766985}
+  m_LocalPosition: {x: -10.491594, y: -0.23441404, z: -22.065273}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 4444389419694198}
@@ -879,7 +909,7 @@ Transform:
   m_Children:
   - {fileID: 4794172242924362}
   m_Father: {fileID: 4579791480945716}
-  m_RootOrder: 8
+  m_RootOrder: 9
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &4889522949637664
 Transform:
@@ -943,10 +973,10 @@ Camera:
   field of view: 37.8
   orthographic: 0
   orthographic size: 5
-  m_Depth: 1
+  m_Depth: 20
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294966783
+    m_Bits: 4294966729
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -1564,6 +1594,29 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_enableDebugUI: 0
   m_enableEnvironmentalLighting: 0
+--- !u!114 &114172207063235284
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1673527247082710}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd827b393a4fbbd4686ddfe1c19d2cf4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_valueDataPath: OilRigDataIndexed
+  m_renderTex: {fileID: 8400000, guid: 2de56503332991c4d8336c00b219c276, type: 2}
+  m_opaqueTex: {fileID: 8400000, guid: b5f9d418d5cadbb4c90b051661dc478b, type: 2}
+  m_accumTex: {fileID: 8400000, guid: fb853de2019f4264d8a25a801aa4571c, type: 2}
+  m_revealageTex: {fileID: 8400000, guid: d3a2eda195652dc47ad9da4b29564f3f, type: 2}
+  m_resultTex: {fileID: 8400000, guid: 62baa5f4dc51e9140b73a80f80710f6f, type: 2}
+  shader: {fileID: 4800000, guid: 268cbeb370ac3e844a78195221d5f9f9, type: 3}
+  m_accumShader: {fileID: 4800000, guid: fc7ab1d5535385847a1d1d239b59abab, type: 3}
+  m_revealageShader: {fileID: 4800000, guid: 9bb6da422985e0e44bc728094d7d8b9e, type: 3}
+  m_blendShader: {fileID: 4800000, guid: a62a63e0cd9feaf4899dc6871975445b, type: 3}
+  m_textureShader: {fileID: 4800000, guid: 96127768bc216ed4d96604a405b5ab41, type: 3}
+  particleTexture: {fileID: 10300, guid: 0000000000000000f000000000000000, type: 0}
 --- !u!114 &114435679767268334
 MonoBehaviour:
   m_ObjectHideFlags: 1

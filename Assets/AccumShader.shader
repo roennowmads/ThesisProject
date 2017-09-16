@@ -7,26 +7,23 @@
 	SubShader
 	{
 		Tags{ "Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Accumulate" }
-		//LOD 100
 		Cull Off
 
 		Pass
 		{
-			Tags{ "LightMode" = "ForwardBase" }
-
 			ZWrite Off
-			Blend One One
+			Blend 0 One One
+			Blend 1 Zero OneMinusSrcAlpha
 
 			CGPROGRAM
-
-			#pragma shader_feature  _WEIGHTED_ON
-			#pragma multi_compile _WEIGHTED0 _WEIGHTED1 _WEIGHTED2
-
 			#pragma vertex vert
 			#pragma fragment frag
 
 			#include "UnityCG.cginc"
 			#pragma target es3.1
+
+			#pragma shader_feature  _WEIGHTED_ON
+			#pragma multi_compile _WEIGHTED0 _WEIGHTED1 _WEIGHTED2
 
 			sampler2D _ColorTex;
 			sampler2D _AlbedoTex;
@@ -35,7 +32,6 @@
 			StructuredBuffer<uint> _IndicesValues;
 
 			uniform float aspect;
-
 
 			struct appdata
 			{
@@ -48,6 +44,12 @@
 				fixed3 color : COLOR;
 				float2 texCoord : TEXCOORD0;
 				float z : TEXCOORD1;
+			};
+
+			struct f2o
+			{
+				float4 col0 : COLOR0;
+				float4 col1 : COLOR1;
 			};
 
 			static const half2 quadCoords[6] = {
@@ -119,8 +121,13 @@
 				return 1.0;
 			}
 			
-			fixed4 frag (v2f i) : SV_Target
+			//w = clamp(pow(min(1.0, premultipliedReflect.a * 10.0) + 0.01, 3.0) * 1e8 * pow(1.0 - gl_FragCoord.z * 0.9, 3.0), 1e-2, 3e3);
+
+
+			f2o frag (v2f i) : SV_Target
 			{
+				f2o o;
+
 				fixed albedo = tex2Dlod(_AlbedoTex, float4(i.texCoord, 0.0, 0.0) /*float2(0.5,0.5)*/).a;
 
 				if (albedo < 0.7)
@@ -130,12 +137,14 @@
 				float3 C = (i.color) * alpha;
 
 			#ifdef _WEIGHTED_ON
-				return float4(C, alpha) * w(i.z, alpha);
+				o.col0 = float4(C, alpha) * w(i.z, alpha);
 			#else
-				return float4(C, alpha);
+				o.col0 = float4(C, alpha);
 			#endif
 
+				o.col1 = albedo.xxxx;
 
+				return o;
 
 				//o.color = fixed4(/*i.color*/fixed3(0.5,0.1,0.1), albedo*0.0525);
 

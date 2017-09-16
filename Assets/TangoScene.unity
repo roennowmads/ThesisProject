@@ -409,7 +409,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: -90, y: 90, z: 0}
 --- !u!1 &896270791
 GameObject:
@@ -429,7 +429,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!81 &896270792
 AudioListener:
   m_ObjectHideFlags: 0
@@ -498,7 +498,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
 --- !u!1 &1266429028
 GameObject:
@@ -664,7 +664,7 @@ Transform:
   m_LocalScale: {x: 5, y: 5, z: 5}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 6
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1579013618
 GameObject:
@@ -954,31 +954,3 @@ Prefab:
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 94b76e50c03828949a1995c8df14f660, type: 2}
   m_IsPrefabParent: 0
---- !u!1 &1966935268 stripped
-GameObject:
-  m_PrefabParentObject: {fileID: 1673527247082710, guid: 94b76e50c03828949a1995c8df14f660,
-    type: 2}
-  m_PrefabInternal: {fileID: 1788681618}
---- !u!114 &1966935275
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1966935268}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bd827b393a4fbbd4686ddfe1c19d2cf4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_valueDataPath: OilRigDataIndexed
-  m_renderTex: {fileID: 8400000, guid: 2de56503332991c4d8336c00b219c276, type: 2}
-  m_opaqueTex: {fileID: 8400000, guid: b5f9d418d5cadbb4c90b051661dc478b, type: 2}
-  m_accumTex: {fileID: 8400000, guid: fb853de2019f4264d8a25a801aa4571c, type: 2}
-  m_revealageTex: {fileID: 8400000, guid: d3a2eda195652dc47ad9da4b29564f3f, type: 2}
-  m_resultTex: {fileID: 8400000, guid: 62baa5f4dc51e9140b73a80f80710f6f, type: 2}
-  shader: {fileID: 4800000, guid: 268cbeb370ac3e844a78195221d5f9f9, type: 3}
-  m_accumShader: {fileID: 4800000, guid: fc7ab1d5535385847a1d1d239b59abab, type: 3}
-  m_revealageShader: {fileID: 4800000, guid: 9bb6da422985e0e44bc728094d7d8b9e, type: 3}
-  m_blendShader: {fileID: 4800000, guid: a62a63e0cd9feaf4899dc6871975445b, type: 3}
-  m_textureShader: {fileID: 4800000, guid: 96127768bc216ed4d96604a405b5ab41, type: 3}
-  particleTexture: {fileID: 10300, guid: 0000000000000000f000000000000000, type: 0}
