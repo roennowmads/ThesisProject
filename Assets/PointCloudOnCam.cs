@@ -61,7 +61,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
             Buffer.BlockCopy(bytes, 0, zeroedBytes, 0,  bufferSize*4);
 
-            //Shuffle(zeroedBytes);
+            Shuffle(zeroedBytes);
 
             ComputeBuffer indexComputeBuffer = new ComputeBuffer(bufferSize, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
 
@@ -190,12 +190,12 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         m_renderBuffers = new RenderBuffer[]{ m_accumTex.colorBuffer, m_revealageTex.colorBuffer };
 
         m_clear0s = new Color(0.0f, 0.0f, 0.0f, 0.0f);
-        m_clear1s = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+        m_clear1s = new Color(1.0f, 0.0f, 0.0f, 0.0f);
 
-        Shader.EnableKeyword("_WEIGHTED_ON");
+        /*Shader.EnableKeyword("_WEIGHTED_ON");
         Shader.DisableKeyword("_WEIGHTED0");
         Shader.DisableKeyword("_WEIGHTED1");
-        Shader.EnableKeyword("_WEIGHTED2");
+        Shader.EnableKeyword("_WEIGHTED2");*/
     }
 
     //void OnRenderImage(RenderTexture src, RenderTexture dest) {        
@@ -244,7 +244,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
             Graphics.SetRenderTarget(null);
 
-            /*GL.PushMatrix();
+            GL.PushMatrix();
             GL.LoadPixelMatrix(0, Screen.width, Screen.height, 0);
 
             Graphics.DrawTexture(   // be aware that this call seems to fuck the particles up, if the texture is shown on a plane it looks different.
@@ -259,7 +259,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
                 new Rect(Screen.width / 2, 0, Screen.width / 2, Screen.height),
                 m_renderTex, m_textureMaterial); // m_revealageTex
 
-            GL.PopMatrix();*/
+            GL.PopMatrix();
 
         }
     }

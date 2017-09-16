@@ -13,7 +13,7 @@
 		{
 			ZWrite Off
 			Blend 0 One One
-			Blend 1 Zero OneMinusSrcAlpha
+			Blend 1 Zero OneMinusSrcColor
 
 			CGPROGRAM
 			#pragma vertex vert
@@ -48,8 +48,8 @@
 
 			struct f2o
 			{
-				float4 col0 : COLOR0;
-				float4 col1 : COLOR1;
+				half4 col0 : COLOR0;
+				half col1 : COLOR1;
 			};
 
 			static const half2 quadCoords[6] = {
@@ -111,38 +111,39 @@
 			}
 
 			float w(float z, float alpha) {
-			#ifdef _WEIGHTED0
-				return pow(z, -2.5);
-			#elif _WEIGHTED1
-				return alpha * max(1e-2, min(3 * 1e3, 10.0 / (1e-5 + pow(z / 5, 2) + pow(z / 200, 6))));
-			#elif _WEIGHTED2
-				return alpha * max(1e-2, min(3 * 1e3, 0.03 / (1e-5 + pow(z / 200, 4))));
-			#endif
-				return 1.0;
+			//#ifdef _WEIGHTED0
+			//	return pow(z, -2.5);
+			//#elif _WEIGHTED1
+			//	return alpha * max(1e-2, min(3e3, 10.0 / (1e-5 + pow(z / 5, 2) + pow(z / 200, 6))));
+			//#elif _WEIGHTED2
+				return alpha * max(1e-2, min(3e3, 0.03 / (1e-5 + pow(z / 200, 4))));
+			//#endif
+			//	return 1.0;
 			}
 			
 			//w = clamp(pow(min(1.0, premultipliedReflect.a * 10.0) + 0.01, 3.0) * 1e8 * pow(1.0 - gl_FragCoord.z * 0.9, 3.0), 1e-2, 3e3);
+
+			//float weight = max(min(1.0, max(max(color.r, color.g), color.b) * color.a)), color.a) * clamp(0.03 / (1e-5 + pow(z / 200, 4.0)), 1e-2, 3e3);
 
 
 			f2o frag (v2f i) : SV_Target
 			{
 				f2o o;
 
-				fixed albedo = tex2Dlod(_AlbedoTex, float4(i.texCoord, 0.0, 0.0) /*float2(0.5,0.5)*/).a;
+				half alpha = tex2Dlod(_AlbedoTex, half4(i.texCoord, 0.0, 0.0) /*float2(0.5,0.5)*/).a;
 
-				if (albedo < 0.7)
+				if (alpha < 0.7)
 					discard;
 
-				float alpha = albedo;
-				float3 C = (i.color) * alpha;
+				half3 C = i.color * alpha;
 
-			#ifdef _WEIGHTED_ON
-				o.col0 = float4(C, alpha) * w(i.z, alpha);
-			#else
-				o.col0 = float4(C, alpha);
-			#endif
+			//#ifdef _WEIGHTED_ON
+				o.col0 = half4(C, alpha) * w(i.z, alpha);
+			//#else
+			//	o.col0 = half4(C, alpha);
+			//#endif
 
-				o.col1 = albedo.xxxx;
+				o.col1 = alpha;
 
 				return o;
 

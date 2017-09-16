@@ -10,7 +10,10 @@ Shader "Unlit/BlendShader"
 	SubShader
 	{
 		//Tags { "RenderType"="Opaque" }
-		ZTest Always Cull Off ZWrite Off Fog{ Mode Off }
+		ZTest Always 
+		Cull Off ZWrite Off 
+		Fog{ Mode Off }
+		Blend SrcAlpha OneMinusSrcAlpha
 
 		Pass
 		{

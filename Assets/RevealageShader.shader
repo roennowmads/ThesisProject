@@ -98,16 +98,16 @@
 			
 			fixed4 frag (v2f i) : SV_Target
 			{
-				fixed albedo = tex2Dlod(_AlbedoTex, float4(i.texCoord, 0.0, 0.0) /*float2(0.5,0.5)*/).a;
+				fixed alpha = tex2Dlod(_AlbedoTex, float4(i.texCoord, 0.0, 0.0) /*float2(0.5,0.5)*/).a;
 
-				if (albedo < 0.7)
+				if (alpha < 0.7)
 					discard;
 
 				//fixed4 alpha = fixed4(i.color, 1.0) * albedo;
 
 				//return alpha.aaaa;//alpha.aaaa;
 
-				return albedo.xxxx;
+				return alpha;
 			}
 			ENDCG
 		}
