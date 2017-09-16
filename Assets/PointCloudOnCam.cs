@@ -34,6 +34,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
     private RenderBuffer[] m_renderBuffers;
 
+    private Color m_clear0s, m_clear1s;
+
     public static void Shuffle(uint[] list) {
         int n = list.Length;
         while (n > 1) {
@@ -186,6 +188,14 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         //m_renderTex.Create();
 
         m_renderBuffers = new RenderBuffer[]{ m_accumTex.colorBuffer, m_revealageTex.colorBuffer };
+
+        m_clear0s = new Color(0.0f, 0.0f, 0.0f, 0.0f);
+        m_clear1s = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+
+        Shader.EnableKeyword("_WEIGHTED_ON");
+        Shader.DisableKeyword("_WEIGHTED0");
+        Shader.DisableKeyword("_WEIGHTED1");
+        Shader.EnableKeyword("_WEIGHTED2");
     }
 
     //void OnRenderImage(RenderTexture src, RenderTexture dest) {        
@@ -196,7 +206,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
     private void OnPreRender() {
         //Make sure all opaque geometry (everything not rendered with drawProcedural) is rendered into opaqueTex.
         Camera.main.targetTexture = m_opaqueTex;
-        GL.Clear(true, true, new Color(0.0f, 0.0f, 0.0f, 0.0f));
+        GL.Clear(true, true, m_clear0s);
     }
 
     private void OnPostRender() {
@@ -204,29 +214,23 @@ private List<ComputeBuffer> m_indexComputeBuffers;
     }
 
     private void OnRenderObject() {
-        Shader.EnableKeyword("_WEIGHTED_ON");
-        Shader.DisableKeyword("_WEIGHTED0");
-        Shader.DisableKeyword("_WEIGHTED1");
-        Shader.EnableKeyword("_WEIGHTED2");
-
         if (Camera.current == Camera.main) {
-            
+            GL.MultMatrix(m_pointCloudObj.transform.localToWorldMatrix);
+
             Graphics.SetRenderTarget(m_renderTex.colorBuffer, m_opaqueTex.depthBuffer);
             //Graphics.SetRenderTarget(null);
-            GL.Clear(false, true, new Color(0.0f, 0.0f, 0.0f, 0.0f));
-            GL.MultMatrix(m_pointCloudObj.transform.localToWorldMatrix);
+            GL.Clear(false, true, m_clear0s);
             m_material.SetPass(0);
             Graphics.DrawProcedural(MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count) * 6);
 
             //Clear the colorbuffers:
             Graphics.SetRenderTarget(m_accumTex.colorBuffer, m_opaqueTex.depthBuffer);
-            GL.Clear(false, true, new Color(0.0f, 0.0f, 0.0f, 0.0f));
+            GL.Clear(false, true, m_clear0s);
             Graphics.SetRenderTarget(m_revealageTex.colorBuffer, m_opaqueTex.depthBuffer);
-            GL.Clear(false, true, new Color(1.0f, 1.0f, 1.0f, 1.0f));
+            GL.Clear(false, true, m_clear1s);
 
             Graphics.SetRenderTarget(/*m_accumTex.colorBuffer*/m_renderBuffers, m_opaqueTex.depthBuffer);
             //GL.Clear(false, true, new Color(0.0f, 0.0f, 0.0f, 0.0f));
-            GL.MultMatrix(m_pointCloudObj.transform.localToWorldMatrix);
             m_accumMaterial.SetPass(0);
             Graphics.DrawProcedural(MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count) * 6);
 
