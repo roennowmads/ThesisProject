@@ -38,6 +38,8 @@ Shader "Unlit/SortingTest" {
 			StructuredBuffer<float3> _Points;
 			StructuredBuffer<uint> _IndicesValues;
 
+			//RasterizerOrderedBuffer<float3> _ROV1;
+
 			uniform float aspect;
 			uniform uint _Magnitude;
 			uniform int _TextureSwitchFrameNumber;
@@ -50,8 +52,9 @@ Shader "Unlit/SortingTest" {
 			struct v2f
 			{
 				float4 vertex : SV_POSITION;
-				fixed3 color : COLOR;
+				//fixed3 color : COLOR;
 				float2 texCoord : TEXCOORD0;
+				float colorValue : TEXCOORD1;
 			};
 
 			static const half2 quadCoords[6] = {
@@ -101,7 +104,11 @@ Shader "Unlit/SortingTest" {
 				float4 position = float4(-_Points[index], 1.0);
 				float colorValue = (value & 0xFF) * inv255;
 
-				o.color = tex2Dlod(_ColorTex, half4(pow((colorValue*2.0), .0625), 0, 0, 0)).rgb /** modifier*/;
+				//o.color = tex2Dlod(_ColorTex, half4(pow((colorValue*2.0), .0625), 0, 0, 0)).rgb /** modifier*/;
+				o.colorValue = pow((colorValue*2.0), .0625);
+				
+				
+				
 				//o.color = float3(value, value, value);
 
 				o.vertex = UnityObjectToClipPos(position);
@@ -131,16 +138,23 @@ Shader "Unlit/SortingTest" {
 			{
 				fragOutput o;
 
+				fixed3 color = tex2D(_ColorTex, half2(i.colorValue, 0)).rgb;
+
+
 				fixed albedo = tex2Dlod(_AlbedoTex, float4(i.texCoord, 0.0, 0.0) /*float2(0.5,0.5)*/).a;
 				//fixed albedo = tex2D(_AlbedoTex, i.texCoord /*float2(0.5,0.5)*/).a;
 				
+				//float3 a = _ROV1[0];
+
 				if (albedo < 0.7) 
 					discard;
 
 				//o.color = fixed4(/*i.color*/fixed3(0.5,0.1,0.1), albedo*0.0525);
 
+				//_ROV1[0] = a + float3(1.0, 1.0, 1.0);
+
 				//good for fireball:
-				o.color = fixed4(i.color, albedo/*albedo*//**0.25*/);
+				o.color = fixed4(/*i.color*/ color, albedo/*albedo*//**0.25*/);
 				return o;
 			}
 			ENDCG

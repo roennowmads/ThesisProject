@@ -137,6 +137,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         float[] points = readPointsFile3Attribs();
         m_pointsCount = points.Length / 3;
 
+        Screen.SetResolution(950, 720, true);
+
         m_indexComputeBuffers = new List<ComputeBuffer>();
 
         readIndicesAndValues(m_indexComputeBuffers);
@@ -279,8 +281,6 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         Graphics.DrawProcedural(MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count) * 6);*/
 
         Graphics.Blit(m_opaqueTex, m_resultTex, m_blendMaterial);
-
-        //Graphics.SetRenderTarget(null);
     }
 
     private void renderDirect () {
@@ -294,9 +294,9 @@ private List<ComputeBuffer> m_indexComputeBuffers;
             m_accumMaterial.SetVector("camPos", Camera.main.transform.position);
             GL.MultMatrix(m_pointCloudObj.transform.localToWorldMatrix);
 
-            //renderDirect();
+            renderDirect();
             //renderToTextures();
-            renderToScreenSideBySide();
+            //renderToScreenSideBySide();
 
         }
     }
