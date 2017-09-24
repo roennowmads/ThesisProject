@@ -55,13 +55,13 @@ private List<ComputeBuffer> m_indexComputeBuffers;
             TextAsset ta = Resources.Load(m_valueDataPath + "/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
             byte[] bytes = ta.bytes;
 
-            int bufferSize = 4096 * 4 * 4 * 2;
+            int bufferSize = 4096 * 4 * 4 * 2 - 50000;
 
             uint[] zeroedBytes = new uint[bufferSize];
 
-            Buffer.BlockCopy(bytes, 0, zeroedBytes, 0,  bufferSize*4);
+            Buffer.BlockCopy(bytes, /*0*/50000*4, zeroedBytes, 0,  bufferSize*4);
 
-            Shuffle(zeroedBytes);
+            //Shuffle(zeroedBytes);
 
             ComputeBuffer indexComputeBuffer = new ComputeBuffer(bufferSize, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
 
@@ -145,19 +145,37 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
         Texture2D colorTexture = createColorLookupTexture();
 
-        ComputeBuffer coords = new ComputeBuffer(6, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
-        //Texture2D coordsTex = new Texture2D(6, 1, TextureFormat.RGBAFloat, false, false);
-        float[] quadCoordsAndTexCoords = {
-                -1.0f, -1.0f, 0.0f, 0.0f,
-                1.0f, 1.0f, 1.0f, 1.0f,
-                1.0f, -1.0f, 1.0f, 0.0f,
+        //ComputeBuffer coords = new ComputeBuffer(6, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
+       /* Texture2D coordsTex = new Texture2D(6, 1, TextureFormat.R8, false, false);
+        byte[] quadCoordsAndTexCoords = {
+                0, 0,
+                1, 1,
+                1, 0,
 
-                -1.0f, 1.0f, 0.0f, 1.0f,
-                1.0f, 1.0f, 1.0f, 1.0f,
-                -1.0f, -1.0f, 0.0f, 0.0f
+                0, 1,
+                1, 1,
+                0, 0
             };
 
-        coords.SetData(quadCoordsAndTexCoords);
+        byte[] bitCoords = {
+            0, 3, 2, 1, 3, 0
+        };*/
+
+        //coordsTex.LoadRawTextureData(bitCoords);
+
+        /*Color[] quadCoordsAndTexCoords = {
+                new Color(0, 0, 0, 0),
+                new Color(1, 1, 1, 1),
+                new Color(1, 0, 1, 0),
+
+                new Color(0, 1, 0, 1),
+                new Color(1, 1, 1, 1),
+                new Color(0, 0, 0, 0)
+            };*/
+
+        //coordsTex.SetPixels(quadCoordsAndTexCoords);
+
+        //coords.SetData(quadCoordsAndTexCoords);
 
         //byte[] quadCoordsAndTexCoordsBytes = new byte[quadCoordsAndTexCoords.Length*4];
         //Buffer.BlockCopy(quadCoordsAndTexCoords, 0, quadCoordsAndTexCoordsBytes, 0, quadCoordsAndTexCoordsBytes.Length);
@@ -182,7 +200,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         m_revealageMaterial.SetTexture("_ColorTex", colorTexture);
 
         //m_material.SetTexture("_CoordsTex", coordsTex);
-        m_material.SetBuffer("_CoordsTex", coords);
+        //m_material.SetBuffer("_CoordsTex", coords);
 
         m_pointsBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
         m_pointsBuffer.SetData(points);
