@@ -145,6 +145,26 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
         Texture2D colorTexture = createColorLookupTexture();
 
+        ComputeBuffer coords = new ComputeBuffer(6, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
+        //Texture2D coordsTex = new Texture2D(6, 1, TextureFormat.RGBAFloat, false, false);
+        float[] quadCoordsAndTexCoords = {
+                -1.0f, -1.0f, 0.0f, 0.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, -1.0f, 1.0f, 0.0f,
+
+                -1.0f, 1.0f, 0.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                -1.0f, -1.0f, 0.0f, 0.0f
+            };
+
+        coords.SetData(quadCoordsAndTexCoords);
+
+        //byte[] quadCoordsAndTexCoordsBytes = new byte[quadCoordsAndTexCoords.Length*4];
+        //Buffer.BlockCopy(quadCoordsAndTexCoords, 0, quadCoordsAndTexCoordsBytes, 0, quadCoordsAndTexCoordsBytes.Length);
+        //coordsTex.LoadRawTextureData(quadCoordsAndTexCoordsBytes);
+        //coordsTex.Apply();
+
+
         m_pointCloudObj = GameObject.Find("placeholder");
 
         m_material = new Material(shader);
@@ -160,7 +180,10 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         m_material.SetTexture("_ColorTex", colorTexture);
         m_accumMaterial.SetTexture("_ColorTex", colorTexture);
         m_revealageMaterial.SetTexture("_ColorTex", colorTexture);
-        
+
+        //m_material.SetTexture("_CoordsTex", coordsTex);
+        m_material.SetBuffer("_CoordsTex", coords);
+
         m_pointsBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
         m_pointsBuffer.SetData(points);
         m_material.SetBuffer("_Points", m_pointsBuffer);

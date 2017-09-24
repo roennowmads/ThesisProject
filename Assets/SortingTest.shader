@@ -34,6 +34,8 @@ Shader "Unlit/SortingTest" {
 			sampler2D _ColorTex;
 			sampler2D _AlbedoTex;
 
+			StructuredBuffer<float4> _CoordsTex;
+
 
 			StructuredBuffer<float3> _Points;
 			StructuredBuffer<uint> _IndicesValues;
@@ -52,12 +54,22 @@ Shader "Unlit/SortingTest" {
 			struct v2f
 			{
 				float4 vertex : SV_POSITION;
-				//fixed3 color : COLOR;
+				fixed3 color : COLOR;
 				float2 texCoord : TEXCOORD0;
-				float colorValue : TEXCOORD1;
+				//float colorValue : TEXCOORD1;
 			};
 
-			static const half2 quadCoords[6] = {
+			/*static const half4 quadCoordsAndTexCoords[6] = {
+				half4(-1.0, -1.0, 0.0, 0.0),
+				half4(1.0, 1.0, 1.0, 1.0),
+				half4(1.0, -1.0, 1.0, 0.0),
+
+				half4(-1.0, 1.0, 0.0, 1.0),
+				half4(1.0, 1.0, 1.0, 1.0),
+				half4(-1.0, -1.0, 0.0, 0.0)
+			};*/
+
+			/*static const half2 quadCoords[6] = {
 				half2(-0.1, -0.1),
 				half2(0.1, 0.1),
 				half2(0.1, -0.1),
@@ -75,7 +87,7 @@ Shader "Unlit/SortingTest" {
 				float2(0.0, 1.0),
 				float2(1.0, 1.0),
 				float2(0.0, 0.0)
-			};
+			};*/
 
 			static const float inv6 = 1.0 / 6.0;
 			static const float inv255 = 1.0 / 255.0;
@@ -104,8 +116,8 @@ Shader "Unlit/SortingTest" {
 				float4 position = float4(-_Points[index], 1.0);
 				float colorValue = (value & 0xFF) * inv255;
 
-				//o.color = tex2Dlod(_ColorTex, half4(pow((colorValue*2.0), .0625), 0, 0, 0)).rgb /** modifier*/;
-				o.colorValue = pow((colorValue*2.0), .0625);
+				o.color = tex2Dlod(_ColorTex, half4(pow((colorValue*2.0), .0625), 0, 0, 0)).rgb /** modifier*/;
+				//o.colorValue = pow((colorValue*2.0), .0625);
 				
 				
 				
@@ -119,13 +131,22 @@ Shader "Unlit/SortingTest" {
 
 				//Translating the vertices in a quad shape:
 				//half size = 0.4 * exp(1.0 - value) /** modifier*/;
-				half size = 0.02 /** exp(1.0 - colorValue)*/ /** modifier*/;
+
+				half size = 0.002 /** exp(1.0 - colorValue)*/ /** modifier*/;
+				///half size = 0.02 /** exp(1.0 - colorValue)*/ /** modifier*/;
 				//half size = 0.15 * exp(value) /** modifier*/;
 				half2 quadSize = half2(size, size * aspect);
-				half2 deltaSize = quadCoords[quad_vertexID] * quadSize;
+
+				//half4 quadCoordsAndTexCoord = quadCoordsAndTexCoords[quad_vertexID];
+				half4 quadCoordsAndTexCoord = _CoordsTex[quad_vertexID];
+				half2 deltaSize = quadCoordsAndTexCoord.xy * quadSize;
+
+				//half2 deltaSize = quadCoords[quad_vertexID] * quadSize;
+				
 				o.vertex.xy += deltaSize;
 
-				o.texCoord = quadTexCoords[quad_vertexID];
+				o.texCoord = quadCoordsAndTexCoord.zw;
+				//o.texCoord = quadTexCoords[quad_vertexID];
 			}
 
 			struct fragOutput
@@ -138,7 +159,7 @@ Shader "Unlit/SortingTest" {
 			{
 				fragOutput o;
 
-				fixed3 color = tex2D(_ColorTex, half2(i.colorValue, 0)).rgb;
+				//fixed3 color = tex2D(_ColorTex, half2(i.colorValue, 0)).rgb;
 
 
 				fixed albedo = tex2Dlod(_AlbedoTex, float4(i.texCoord, 0.0, 0.0) /*float2(0.5,0.5)*/).a;
@@ -154,7 +175,7 @@ Shader "Unlit/SortingTest" {
 				//_ROV1[0] = a + float3(1.0, 1.0, 1.0);
 
 				//good for fireball:
-				o.color = fixed4(/*i.color*/ color, albedo/*albedo*//**0.25*/);
+				o.color = fixed4(i.color /*color*/, albedo/*albedo*//**0.25*/);
 				return o;
 			}
 			ENDCG
