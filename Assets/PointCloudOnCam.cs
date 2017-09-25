@@ -55,11 +55,11 @@ private List<ComputeBuffer> m_indexComputeBuffers;
             TextAsset ta = Resources.Load(m_valueDataPath + "/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
             byte[] bytes = ta.bytes;
 
-            int bufferSize = 4096 * 4 * 4 * 2 - 50000;
+            int bufferSize = 4096 * 4 * 4 * 2 /*- 50000*/;
 
             uint[] zeroedBytes = new uint[bufferSize];
 
-            Buffer.BlockCopy(bytes, /*0*/50000*4, zeroedBytes, 0,  bufferSize*4);
+            Buffer.BlockCopy(bytes, 0/*50000*4*/, zeroedBytes, 0,  bufferSize*4);
 
             //Shuffle(zeroedBytes);
 
