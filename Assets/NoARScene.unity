@@ -176,7 +176,7 @@ Prefab:
         type: 2}
       propertyPath: shader
       value: 
-      objectReference: {fileID: 4800000, guid: 3c6dd6a8d9052c346b81b60082c2aea4, type: 3}
+      objectReference: {fileID: 4800000, guid: 268cbeb370ac3e844a78195221d5f9f9, type: 3}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 0d086da6e768ba144a9036fcbbfe1fde, type: 2}
   m_IsPrefabParent: 0
