@@ -147,36 +147,6 @@ Prefab:
       propertyPath: m_RootOrder
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 23482674452652054, guid: 0d086da6e768ba144a9036fcbbfe1fde,
-        type: 2}
-      propertyPath: m_Materials.Array.data[0]
-      value: 
-      objectReference: {fileID: 2100000, guid: 6260fee5fdb624898bd92068ab874264, type: 2}
-    - target: {fileID: 224900832024588880, guid: 0d086da6e768ba144a9036fcbbfe1fde,
-        type: 2}
-      propertyPath: m_LocalPosition.x
-      value: 448.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 224900832024588880, guid: 0d086da6e768ba144a9036fcbbfe1fde,
-        type: 2}
-      propertyPath: m_LocalPosition.y
-      value: 290.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 23654474614336912, guid: 0d086da6e768ba144a9036fcbbfe1fde,
-        type: 2}
-      propertyPath: m_Materials.Array.data[0]
-      value: 
-      objectReference: {fileID: 2100000, guid: 300a84f6fec3a4d0fa649955b79aa6b2, type: 2}
-    - target: {fileID: 224900832024588880, guid: 0d086da6e768ba144a9036fcbbfe1fde,
-        type: 2}
-      propertyPath: m_LocalPosition.z
-      value: 25.127827
-      objectReference: {fileID: 0}
-    - target: {fileID: 114787706331157086, guid: 0d086da6e768ba144a9036fcbbfe1fde,
-        type: 2}
-      propertyPath: shader
-      value: 
-      objectReference: {fileID: 4800000, guid: 3c6dd6a8d9052c346b81b60082c2aea4, type: 3}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 0d086da6e768ba144a9036fcbbfe1fde, type: 2}
   m_IsPrefabParent: 0

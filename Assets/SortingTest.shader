@@ -1,11 +1,5 @@
 ﻿
 Shader "Unlit/SortingTest" {
-	Properties{
-		_MainTex("Texture", 2D) = "white" {}
-		_MainTex2("_MainTex2", 2D) = "white" {}
-		_AlbedoTex("AlbedoTex", 2D) = "white" {}
-		_ColorTex("_ColorTex", 2D) = "white" {}
-	}
 	SubShader {
 		Tags{ "Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent" }
 		//Tags{"RenderType" = "Opaque"}
@@ -30,7 +24,7 @@ Shader "Unlit/SortingTest" {
 
 			//StructuredBuffer<float4> _CoordsTex;
 
-			Texture2D _CoordsTex;
+			//Texture2D _CoordsTex;
 
 
 			StructuredBuffer<float3> _Points;
@@ -55,7 +49,7 @@ Shader "Unlit/SortingTest" {
 				//float colorValue : TEXCOORD1;
 			};
 
-			static const half4 quadCoordsAndTexCoords[6] = {
+			/*static const half4 quadCoordsAndTexCoords[6] = {
 				half4(-1.0, -1.0, 0.0, 0.0),
 				half4(1.0, 1.0, 1.0, 1.0),
 				half4(1.0, -1.0, 1.0, 0.0),
@@ -63,7 +57,7 @@ Shader "Unlit/SortingTest" {
 				half4(-1.0, 1.0, 0.0, 1.0),
 				half4(1.0, 1.0, 1.0, 1.0),
 				half4(-1.0, -1.0, 0.0, 0.0)
-			};
+			};*/
 
 
 			/*static const half2 quadCoordsAndTexCoords[6] = {
@@ -112,7 +106,7 @@ Shader "Unlit/SortingTest" {
 
 			//half2 quadCoordsAndTexCoord = half2(half((bitCoord & 2) >> 1), half(bitCoord & 1));
 
-			/*static const half2 quadCoords[6] = {
+			static const half2 quadCoords[6] = {
 				half2(-0.1, -0.1),
 				half2(0.1, 0.1),
 				half2(0.1, -0.1),
@@ -130,7 +124,7 @@ Shader "Unlit/SortingTest" {
 				float2(0.0, 1.0),
 				float2(1.0, 1.0),
 				float2(0.0, 0.0)
-			};*/
+			};
 
 			static const float inv6 = 1.0 / 6.0;
 			static const float inv255 = 1.0 / 255.0;
@@ -150,16 +144,16 @@ Shader "Unlit/SortingTest" {
 
 				float quadId = v.id * inv6;
 				
-				uint value = _IndicesValues[quadId];
+				uint value = uint(quadId);//_IndicesValues[quadId];
 				//uint quad_vertexID = v.id % 6;
 				//uint quad_vertexID = -6.0 * floor(quadId) + v.id;
 				uint quad_vertexID = mad(-6.0, floor(quadId), v.id);  //Useful trick: foo % n == foo & (n - 1), if n is a power of 2
 
-				uint index = value >> 8;
+				uint index = value /*>> 8*/;
 				float4 position = float4(-_Points[index], 1.0);
-				float colorValue = (value & 0xFF) * inv255;
+				float colorValue = 0.5;//(value & 0xFF) * inv255;
 
-				o.color = tex2Dlod(_ColorTex, half4(pow((colorValue*2.0), .0625), 0, 0, 0)).rgb /** modifier*/;
+				o.color = tex2Dlod(_ColorTex, half4(pow((colorValue/**2.0*/), .0625), 0, 0, 0)).rgb /** modifier*/;
 				//o.colorValue = pow((colorValue*2.0), .0625);
 				
 				
@@ -175,8 +169,8 @@ Shader "Unlit/SortingTest" {
 				//Translating the vertices in a quad shape:
 				//half size = 0.4 * exp(1.0 - value) /** modifier*/;
 
-				half size = 0.002 /** exp(1.0 - colorValue)*/ /** modifier*/;
-				///half size = 0.02 /** exp(1.0 - colorValue)*/ /** modifier*/;
+				///half size = 0.001 /** exp(1.0 - colorValue)*/ /** modifier*/;
+				half size = 0.01 /** exp(1.0 - colorValue)*/ /** modifier*/;
 				//half size = 0.15 * exp(value) /** modifier*/;
 				half2 quadSize = half2(size, size * aspect);
 
@@ -187,22 +181,22 @@ Shader "Unlit/SortingTest" {
 				//bool bit = (quad_vertexID == 1) || (quad_vertexID == 4);
 				//half2 quadCoordsAndTexCoord = half2(bit || (quad_vertexID == 2), bit || (quad_vertexID == 3));
 
-				half4 quadCoordsAndTexCoord = quadCoordsAndTexCoords[quad_vertexID];
+				//half4 quadCoordsAndTexCoord = quadCoordsAndTexCoords[quad_vertexID];
 				//half2 quadCoordsAndTexCoord = quadCoordsAndTexCoords[quad_vertexID];
 				//half2 quadCoordsAndTexCoord = half2(half((bitCoord & 2) >> 1), half(bitCoord & 1));
 				//half4 quadCoordsAndTexCoord = _CoordsTex[quad_vertexID];
 				//half4 quadCoordsAndTexCoord = _CoordsTex.Load(int3(quad_vertexID, 0, 0));
 
-				half2 deltaSize = quadCoordsAndTexCoord.xy * quadSize;
+				//half2 deltaSize = quadCoordsAndTexCoord.xy * quadSize;
 				//half2 deltaSize = (quadCoordsAndTexCoord * 2.0 - 1.0) * quadSize;
 
-				//half2 deltaSize = quadCoords[quad_vertexID] * quadSize;
+				half2 deltaSize = quadCoords[quad_vertexID] * quadSize;
 				
 				o.vertex.xy += deltaSize;
 
-				o.texCoord = quadCoordsAndTexCoord.zw;
+				//o.texCoord = quadCoordsAndTexCoord.zw;
 				//o.texCoord = quadCoordsAndTexCoord;
-				//o.texCoord = quadTexCoords[quad_vertexID];
+				o.texCoord = quadTexCoords[quad_vertexID];
 			}
 
 			struct fragOutput
@@ -230,8 +224,8 @@ Shader "Unlit/SortingTest" {
 
 				//_ROV1[0] = a + float3(1.0, 1.0, 1.0);
 
-				//good for fireball:
-				o.color = fixed4(i.color /*color*/, albedo/*albedo*//**0.25*/);
+				o.color.rgb = i.color;
+				o.color.a = albedo;
 				return o;
 			}
 			ENDCG

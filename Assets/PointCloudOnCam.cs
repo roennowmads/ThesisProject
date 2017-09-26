@@ -139,6 +139,22 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
         Screen.SetResolution(950, 720, true);
 
+        Vector3[] ppoints = new Vector3[1048576];
+
+        int sideLength = (int)Math.Sqrt(ppoints.Length);
+
+        for (int i = 0; i < sideLength; i++) {
+            for (int j = 0; j < sideLength; j++) {
+                int index = i + j * sideLength;
+
+                ppoints[index] = new Vector3(j / 10.0f - 45.0f, 80.0f, i / 10.0f - 52.5f);
+
+            }
+        }
+        m_pointsCount = ppoints.Length;
+
+
+
         m_indexComputeBuffers = new List<ComputeBuffer>();
 
         readIndicesAndValues(m_indexComputeBuffers);
@@ -203,7 +219,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         //m_material.SetBuffer("_CoordsTex", coords);
 
         m_pointsBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
-        m_pointsBuffer.SetData(points);
+        m_pointsBuffer.SetData(/*points*/ ppoints);
         m_material.SetBuffer("_Points", m_pointsBuffer);
         m_accumMaterial.SetBuffer("_Points", m_pointsBuffer);
         m_revealageMaterial.SetBuffer("_Points", m_pointsBuffer);
@@ -260,7 +276,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         Graphics.SetRenderTarget(m_renderTex.colorBuffer, m_opaqueTex.depthBuffer);
         GL.Clear(false, true, m_clear0s);
         m_material.SetPass(0);
-        Graphics.DrawProcedural(MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count) * 6);
+        Graphics.DrawProcedural(MeshTopology.Triangles, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount * 6);
 
         //Clear the colorbuffers:
         Graphics.SetRenderTarget(m_accumTex.colorBuffer, m_opaqueTex.depthBuffer);
@@ -271,7 +287,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         Graphics.SetRenderTarget(/*m_accumTex.colorBuffer*/m_renderBuffers, m_opaqueTex.depthBuffer);
         //GL.Clear(false, true, new Color(0.0f, 0.0f, 0.0f, 0.0f));
         m_accumMaterial.SetPass(0);
-        Graphics.DrawProcedural(MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count) * 6);
+        Graphics.DrawProcedural(MeshTopology.Triangles, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount * 6);
 
         /*Graphics.SetRenderTarget(m_revealageTex.colorBuffer, m_opaqueTex.depthBuffer);
         GL.Clear(false, true, new Color(1.0f, 1.0f, 1.0f, 1.0f));
@@ -303,7 +319,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         Graphics.SetRenderTarget(m_renderTex.colorBuffer, m_opaqueTex.depthBuffer);
         GL.Clear(false, true, m_clear0s);
         m_material.SetPass(0);
-        Graphics.DrawProcedural(MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count) * 6);
+        Graphics.DrawProcedural(MeshTopology.Triangles, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount * 6);
 
         //Clear the colorbuffers:
         Graphics.SetRenderTarget(m_accumTex.colorBuffer, m_opaqueTex.depthBuffer);
@@ -313,7 +329,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
         Graphics.SetRenderTarget(/*m_accumTex.colorBuffer*/m_renderBuffers, m_opaqueTex.depthBuffer);
         m_accumMaterial.SetPass(0);
-        Graphics.DrawProcedural(MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count) * 6);
+        Graphics.DrawProcedural(MeshTopology.Triangles, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount * 6);
 
         /*Graphics.SetRenderTarget(m_revealageTex.colorBuffer, m_opaqueTex.depthBuffer);
         GL.Clear(false, true, new Color(1.0f, 1.0f, 1.0f, 1.0f));
@@ -327,7 +343,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
     private void renderDirect () {
         Graphics.SetRenderTarget(null);
         m_material.SetPass(0);
-        Graphics.DrawProcedural(MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count) * 6);
+        Graphics.DrawProcedural(MeshTopology.Triangles, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount * 6);
     }
 
     private void OnRenderObject() {
