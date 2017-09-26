@@ -11,13 +11,31 @@ Shader "Unlit/SortingTest" { // defines the name of the shader
 			Tags{ "QUEUE" = "Transparent" "IGNOREPROJECTOR" = "true" "RenderType" = "Transparent" }
 
 			GLSLPROGRAM
-
 			#version 310 es
-
-
 
 			#ifdef VERTEX
 			//#version 310 es
+
+			const vec4 quadCoordsAndTexCoords[6] = vec4[6] (
+				vec4(-1.0, -1.0, 0.0, 0.0),
+				vec4(1.0, 1.0, 1.0, 1.0),
+				vec4(1.0, -1.0, 1.0, 0.0),
+
+				vec4(-1.0, 1.0, 0.0, 1.0),
+				vec4(1.0, 1.0, 1.0, 1.0),
+				vec4(-1.0, -1.0, 0.0, 0.0)
+			);
+
+			/*const vec2 quadCoordsAndTexCoords[6] = vec2[6] (
+				vec2(0.0, 0.0),
+				vec2(1.0, 1.0),
+				vec2(1.0, 0.0),
+
+				vec2(0.0, 1.0),
+				vec2(1.0, 1.0),
+				vec2(0.0, 0.0)
+			);*/
+
 
 			uniform 	vec4 hlslcc_mtx4x4unity_ObjectToWorld[4];
 			uniform 	vec4 hlslcc_mtx4x4unity_MatrixVP[4];
@@ -25,6 +43,10 @@ Shader "Unlit/SortingTest" { // defines the name of the shader
 			uniform lowp sampler2D _ColorTex;
 			struct _Points_type {
 				float[3] value;
+				//float value1;
+				//float value2;
+				//float value3;
+				//vec3 value;
 			};
 
 			layout(std430, binding = 0) readonly buffer _Points {
@@ -47,23 +69,32 @@ Shader "Unlit/SortingTest" { // defines the name of the shader
 				int quadId = int(float(gl_VertexID) * inv6);
 				int quad_vertexID = -6 * quadId + gl_VertexID;
 
-				bvec4 bits = equal(ivec4(quad_vertexID), ivec4(1, 4, 2, 3));
-				bool bit = bits.x || bits.y;
-				vec2 quadCoordsAndTexCoord = vec2(bit || bits.z, bit || bits.w);
+				//bvec4 bits = equal(ivec4(quad_vertexID), ivec4(1, 4, 2, 3));
+				//bool bit = bits.x || bits.y;
+				//vec2 quadCoordsAndTexCoord = vec2(bit || bits.z, bit || bits.w);
+
+				//vec2 quadCoordsAndTexCoord = quadCoordsAndTexCoords[quad_vertexID];
+				vec4 quadCoordsAndTexCoord = quadCoordsAndTexCoords[quad_vertexID];
 				
 				float size = 0.002;//0.02;
 				vec2 quadSize = vec2(size, size * aspect);
 
-				vec2 deltaSize = (quadCoordsAndTexCoord * 2.0 - 1.0) * quadSize;
+				//vec2 deltaSize = (quadCoordsAndTexCoord * 2.0 - 1.0) * quadSize;
+				vec2 deltaSize = quadCoordsAndTexCoord.xy * quadSize;
 
 				uint value = _IndicesValues_buf[quadId];
 
 				uint index = value >> 8u;
 				float colorValue = float(value & 255u) * inv255;
 
-				vec4 position = vec4((_Points_buf[index].value[0]), (_Points_buf[index].value[1]), (_Points_buf[index].value[2]), -1.0);
 
-				vs_TEXCOORD0 = quadCoordsAndTexCoord;
+				//vec3 pos =  vec3(_Points_buf[index].value);
+				//vec3 pos =  vec3(_Points_buf[index].value1, _Points_buf[index].value2, _Points_buf[index].value3); 
+
+				vec4 position = /*vec4(pos, -1.0);*/vec4(_Points_buf[index].value[0], _Points_buf[index].value[1], _Points_buf[index].value[2], -1.0);
+
+				//vs_TEXCOORD0 = quadCoordsAndTexCoord;
+				vs_TEXCOORD0 = quadCoordsAndTexCoord.zw;
 				
 				gl_Position = gl_ModelViewProjectionMatrix * (-position);
 				gl_Position.xy += deltaSize;
@@ -76,6 +107,8 @@ Shader "Unlit/SortingTest" { // defines the name of the shader
 			#ifdef FRAGMENT	
 
 			uniform highp sampler2D _AlbedoTex;
+
+			//layout(early_fragment_tests) in;
 
 			in mediump vec3 vs_COLOR0;
 			in highp vec2 vs_TEXCOORD0;

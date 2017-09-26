@@ -9,10 +9,10 @@ Shader "Unlit/SortingTest" {
 	SubShader {
 		Tags{ "Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent" }
 		//Tags{"RenderType" = "Opaque"}
-		//Blend SrcAlpha OneMinusSrcAlpha
+		Blend SrcAlpha OneMinusSrcAlpha
 		//Blend One OneMinusSrcAlpha		
 		//Cull Off
-		//ZWrite Off
+		ZWrite Off
 		//LOD 3000
 		//AlphaToMask Off
 
@@ -55,7 +55,7 @@ Shader "Unlit/SortingTest" {
 				//float colorValue : TEXCOORD1;
 			};
 
-			/*static const half4 quadCoordsAndTexCoords[6] = {
+			static const half4 quadCoordsAndTexCoords[6] = {
 				half4(-1.0, -1.0, 0.0, 0.0),
 				half4(1.0, 1.0, 1.0, 1.0),
 				half4(1.0, -1.0, 1.0, 0.0),
@@ -63,7 +63,7 @@ Shader "Unlit/SortingTest" {
 				half4(-1.0, 1.0, 0.0, 1.0),
 				half4(1.0, 1.0, 1.0, 1.0),
 				half4(-1.0, -1.0, 0.0, 0.0)
-			};*/
+			};
 
 
 			/*static const half2 quadCoordsAndTexCoords[6] = {
@@ -112,7 +112,7 @@ Shader "Unlit/SortingTest" {
 
 			//half2 quadCoordsAndTexCoord = half2(half((bitCoord & 2) >> 1), half(bitCoord & 1));
 
-			static const half2 quadCoords[6] = {
+			/*static const half2 quadCoords[6] = {
 				half2(-0.1, -0.1),
 				half2(0.1, 0.1),
 				half2(0.1, -0.1),
@@ -130,7 +130,7 @@ Shader "Unlit/SortingTest" {
 				float2(0.0, 1.0),
 				float2(1.0, 1.0),
 				float2(0.0, 0.0)
-			};
+			};*/
 
 			static const float inv6 = 1.0 / 6.0;
 			static const float inv255 = 1.0 / 255.0;
@@ -175,8 +175,8 @@ Shader "Unlit/SortingTest" {
 				//Translating the vertices in a quad shape:
 				//half size = 0.4 * exp(1.0 - value) /** modifier*/;
 
-				///half size = 0.002 /** exp(1.0 - colorValue)*/ /** modifier*/;
-				half size = 0.02 /** exp(1.0 - colorValue)*/ /** modifier*/;
+				half size = 0.002 /** exp(1.0 - colorValue)*/ /** modifier*/;
+				///half size = 0.02 /** exp(1.0 - colorValue)*/ /** modifier*/;
 				//half size = 0.15 * exp(value) /** modifier*/;
 				half2 quadSize = half2(size, size * aspect);
 
@@ -187,22 +187,22 @@ Shader "Unlit/SortingTest" {
 				//bool bit = (quad_vertexID == 1) || (quad_vertexID == 4);
 				//half2 quadCoordsAndTexCoord = half2(bit || (quad_vertexID == 2), bit || (quad_vertexID == 3));
 
-				//half4 quadCoordsAndTexCoord = quadCoordsAndTexCoords[quad_vertexID];
+				half4 quadCoordsAndTexCoord = quadCoordsAndTexCoords[quad_vertexID];
 				//half2 quadCoordsAndTexCoord = quadCoordsAndTexCoords[quad_vertexID];
 				//half2 quadCoordsAndTexCoord = half2(half((bitCoord & 2) >> 1), half(bitCoord & 1));
 				//half4 quadCoordsAndTexCoord = _CoordsTex[quad_vertexID];
 				//half4 quadCoordsAndTexCoord = _CoordsTex.Load(int3(quad_vertexID, 0, 0));
 
-				//half2 deltaSize = quadCoordsAndTexCoord.xy * quadSize;
+				half2 deltaSize = quadCoordsAndTexCoord.xy * quadSize;
 				//half2 deltaSize = (quadCoordsAndTexCoord * 2.0 - 1.0) * quadSize;
 
-				half2 deltaSize = quadCoords[quad_vertexID] * quadSize;
+				//half2 deltaSize = quadCoords[quad_vertexID] * quadSize;
 				
 				o.vertex.xy += deltaSize;
 
-				//o.texCoord = quadCoordsAndTexCoord.zw;
+				o.texCoord = quadCoordsAndTexCoord.zw;
 				//o.texCoord = quadCoordsAndTexCoord;
-				o.texCoord = quadTexCoords[quad_vertexID];
+				//o.texCoord = quadTexCoords[quad_vertexID];
 			}
 
 			struct fragOutput
