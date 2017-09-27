@@ -1,15 +1,16 @@
 ﻿
-Shader "Unlit/SortingTestGLSL" { // defines the name of the shader 
-
-	SubShader{ // Unity chooses the subshader that fits the GPU best
-		Tags{ "QUEUE" = "Transparent" "IGNOREPROJECTOR" = "true" "RenderType" = "Transparent" }
-
-		Blend SrcAlpha OneMinusSrcAlpha
+Shader "Unlit/AccumShader"
+{
+	SubShader
+	{
+		Tags{ "Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Accumulate" }
+		Cull Off
 		ZWrite Off
+		Blend 0 One One
+		Blend 1 Zero OneMinusSrcColor
 
-		Pass{ // some shaders require multiple passes
-			Tags{ "QUEUE" = "Transparent" "IGNOREPROJECTOR" = "true" "RenderType" = "Transparent" }
-
+		Pass
+		{
 			GLSLPROGRAM
 			#version 310 es
 
@@ -110,18 +111,43 @@ Shader "Unlit/SortingTestGLSL" { // defines the name of the shader
 			in mediump vec3 vs_COLOR0;
 			in highp vec2 vs_TEXCOORD0;
 
-			layout(location = 0) out highp vec4 SV_Target0;
+			layout(location = 0) out mediump vec4 SV_Target0;
+			layout(location = 1) out mediump float SV_Target1;
+
+			float w(float z, float alpha) {
+			//#ifdef _WEIGHTED0
+			//return pow(z, -2.5);
+			//#elif _WEIGHTED1
+				//return alpha * max(1e-2, min(3e3, 10.0 / (1e-5 + pow(z / 5, 2) + pow(z / 200, 6))));
+			//#elif _WEIGHTED2
+			//	return alpha * max(1e-2, min(3e3, 0.03 / (1e-5 + pow(z / 200, 4))));
+			//#endif
+			//	return 1.0;
+
+			//  return clamp(pow(min(1.0, alpha * 10.0) + 0.01, 3.0) * 1e8 * pow(1.0 - z * 0.9, 3.0), 1e-2, 3e3);
+
+			//  return pow(z, -2.5);
+
+				//from Phenomenological Transparency paper:
+				return min(max(pow(10.0*(1.0 - 0.99 * z) * alpha, 3.0), 0.01), 30.0); 
+			}
 
 			void main()
 			{
-				float albedo = textureLod(_AlbedoTex, vs_TEXCOORD0.xy, 0.0).a;
-				if (albedo < 0.7) {
+				float alpha = textureLod(_AlbedoTex, vs_TEXCOORD0.xy, 0.0).a;
+				if (alpha < 0.7) {
 					discard; 
 				}
 
-				SV_Target0.xyz = vs_COLOR0;
-				SV_Target0.w = albedo;
-				
+				vec3 C = vs_COLOR0 * alpha;
+
+				//#ifdef _WEIGHTED_ON
+				SV_Target0 = vec4(C, alpha) * w(gl_FragCoord.z, alpha);
+				//#else
+				//	o.col0 = half4(C, alpha);
+				//#endif
+
+				SV_Target1 = alpha;
 			}
 
 			#endif

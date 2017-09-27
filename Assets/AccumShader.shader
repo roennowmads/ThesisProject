@@ -1,9 +1,6 @@
-﻿Shader "Unlit/AccumShader"
+﻿
+Shader "Unlit/AccumShader"
 {
-	Properties
-	{
-		_MainTex ("Texture", 2D) = "white" {}
-	}
 	SubShader
 	{
 		Tags{ "Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Accumulate" }
@@ -32,6 +29,7 @@
 			StructuredBuffer<uint> _IndicesValues;
 
 			uniform float aspect;
+			uniform float3 camPos;
 
 			struct appdata
 			{
@@ -48,11 +46,21 @@
 
 			struct f2o
 			{
-				half4 col0 : COLOR0;
-				half col1 : COLOR1;
+				half4 col0 : SV_Target0;
+				half col1 : SV_Target1;
 			};
 
-			static const half2 quadCoords[6] = {
+			static const half4 quadCoordsAndTexCoords[6] = {
+				half4(-1.0, -1.0, 0.0, 0.0),
+				half4(1.0, 1.0, 1.0, 1.0),
+				half4(1.0, -1.0, 1.0, 0.0),
+
+				half4(-1.0, 1.0, 0.0, 1.0),
+				half4(1.0, 1.0, 1.0, 1.0),
+				half4(-1.0, -1.0, 0.0, 0.0)
+			};
+
+			/*static const half2 quadCoords[6] = {
 				half2(-0.1, -0.1),
 				half2(0.1, 0.1),
 				half2(0.1, -0.1),
@@ -70,7 +78,7 @@
 				float2(0.0, 1.0),
 				float2(1.0, 1.0),
 				float2(0.0, 0.0)
-			};
+			};*/
 
 			static const float inv6 = 1.0 / 6.0;
 			static const float inv255 = 1.0 / 255.0;
@@ -97,36 +105,56 @@
 				//	return o;
 				//}
 
-				half size = 0.02;
+				half size = 0.001;
 				half2 quadSize = half2(size, size * aspect);
-				half2 deltaSize = quadCoords[quad_vertexID] * quadSize;
+
+				half4 quadCoordsAndTexCoord = quadCoordsAndTexCoords[quad_vertexID];
+
+				half2 deltaSize = quadCoordsAndTexCoord.xy * quadSize;
+				//half2 deltaSize = quadCoords[quad_vertexID] * quadSize;
 				o.vertex.xy += deltaSize;
 
-				o.texCoord = quadTexCoords[quad_vertexID];
+				o.texCoord = quadCoordsAndTexCoord.zw;
+				//o.texCoord = quadTexCoords[quad_vertexID];
 
 				// Camera-space depth
-				o.z = abs(mul(UNITY_MATRIX_MV, position).z);
+				float4 transVert = mul(UNITY_MATRIX_MV, position);
+				//float depth = transVert.z / transVert.w;
+				float depth = distance(camPos, transVert.xyz);
+
+				o.z = depth;
+				//o.z = transVert.z / transVert.w;
+
+				//o.z = abs(mul(UNITY_MATRIX_MV, position).z);
 
 				return o;
 			}
 
 			float w(float z, float alpha) {
 			//#ifdef _WEIGHTED0
-			//	return pow(z, -2.5);
+			//return pow(z, -2.5);
 			//#elif _WEIGHTED1
-			//	return alpha * max(1e-2, min(3e3, 10.0 / (1e-5 + pow(z / 5, 2) + pow(z / 200, 6))));
+				//return alpha * max(1e-2, min(3e3, 10.0 / (1e-5 + pow(z / 5, 2) + pow(z / 200, 6))));
 			//#elif _WEIGHTED2
-				return alpha * max(1e-2, min(3e3, 0.03 / (1e-5 + pow(z / 200, 4))));
+			//	return alpha * max(1e-2, min(3e3, 0.03 / (1e-5 + pow(z / 200, 4))));
 			//#endif
 			//	return 1.0;
+
+			//  return clamp(pow(min(1.0, alpha * 10.0) + 0.01, 3.0) * 1e8 * pow(1.0 - z * 0.9, 3.0), 1e-2, 3e3);
+
+			//  return pow(z, -2.5);
+
+				//from Phenomenological Transparency paper:
+				return min(max(pow(10.0*(1.0 - 0.99 * z) * alpha, 3.0), 0.01), 30.0); 
 			}
 			
 			//w = clamp(pow(min(1.0, premultipliedReflect.a * 10.0) + 0.01, 3.0) * 1e8 * pow(1.0 - gl_FragCoord.z * 0.9, 3.0), 1e-2, 3e3);
 
 			//float weight = max(min(1.0, max(max(color.r, color.g), color.b) * color.a)), color.a) * clamp(0.03 / (1e-5 + pow(z / 200, 4.0)), 1e-2, 3e3);
 
+			
 
-			f2o frag (v2f i) : SV_Target
+			f2o frag (v2f i)
 			{
 				f2o o;
 
@@ -138,7 +166,7 @@
 				half3 C = i.color * alpha;
 
 			//#ifdef _WEIGHTED_ON
-				o.col0 = half4(C, alpha) * w(i.z, alpha);
+				o.col0 = float4(C, alpha) * w(i.z, alpha);
 			//#else
 			//	o.col0 = half4(C, alpha);
 			//#endif

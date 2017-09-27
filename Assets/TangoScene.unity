@@ -975,6 +975,16 @@ Prefab:
       propertyPath: shader
       value: 
       objectReference: {fileID: 4800000, guid: 3c6dd6a8d9052c346b81b60082c2aea4, type: 3}
+    - target: {fileID: 114172207063235284, guid: 94b76e50c03828949a1995c8df14f660,
+        type: 2}
+      propertyPath: particleTexture
+      value: 
+      objectReference: {fileID: 2800000, guid: 25829737ed2695041a4f6457b32a4d88, type: 3}
+    - target: {fileID: 114172207063235284, guid: 94b76e50c03828949a1995c8df14f660,
+        type: 2}
+      propertyPath: m_accumShader
+      value: 
+      objectReference: {fileID: 4800000, guid: d79654c16844dda4fbc2f0fab47e20a8, type: 3}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 94b76e50c03828949a1995c8df14f660, type: 2}
   m_IsPrefabParent: 0
@@ -992,7 +1002,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &2121910845
 Transform:
   m_ObjectHideFlags: 0

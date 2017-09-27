@@ -30,7 +30,7 @@ Shader "Unlit/SortingTest" {
 
 			//StructuredBuffer<float4> _CoordsTex;
 
-			Texture2D _CoordsTex;
+			//Texture2D _CoordsTex;
 
 
 			StructuredBuffer<float3> _Points;
@@ -175,7 +175,7 @@ Shader "Unlit/SortingTest" {
 				//Translating the vertices in a quad shape:
 				//half size = 0.4 * exp(1.0 - value) /** modifier*/;
 
-				half size = 0.002 /** exp(1.0 - colorValue)*/ /** modifier*/;
+				half size = 0.001 /** exp(1.0 - colorValue)*/ /** modifier*/;
 				///half size = 0.02 /** exp(1.0 - colorValue)*/ /** modifier*/;
 				//half size = 0.15 * exp(value) /** modifier*/;
 				half2 quadSize = half2(size, size * aspect);
