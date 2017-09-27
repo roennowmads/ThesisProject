@@ -127,6 +127,22 @@ Shader "Unlit/SortingTest" { // defines the name of the shader
 
 			#endif
 
+			#ifdef GEOMETRY
+			//#version 310 es
+			/*#extension GL_ARB_geometry_shader : enable
+			#extension GL_OES_geometry_shader : enable
+			#extension GL_EXT_geometry_shader : enable*/
+
+			in mediump vec3 vs_COLOR0 [3];
+			in highp vec2 vs_TEXCOORD0 [3];
+			layout(triangles) in;
+			layout(max_vertices = 3) out;
+			void main()
+			{
+				return;
+			}
+
+			#endif
 
 			ENDGLSL 
 

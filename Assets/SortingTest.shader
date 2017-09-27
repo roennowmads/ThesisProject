@@ -15,6 +15,7 @@ Shader "Unlit/SortingTest" {
 
 			#pragma vertex vert
 			#pragma fragment frag
+			#pragma geometry geom
 
 			#include "UnityCG.cginc"
 			#pragma target es3.1
@@ -198,6 +199,20 @@ Shader "Unlit/SortingTest" {
 				//o.texCoord = quadCoordsAndTexCoord;
 				o.texCoord = quadTexCoords[quad_vertexID];
 			}
+
+			[maxvertexcount(3)]
+            void geom(triangle v2f input[3], inout TriangleStream<v2f> OutputStream)
+            {
+                v2f test = (v2f)0;
+                /*float3 normal = normalize(cross(input[1].worldPosition.xyz - input[0].worldPosition.xyz, input[2].worldPosition.xyz - input[0].worldPosition.xyz));
+                for(int i = 0; i < 3; i++)
+                {
+                    test.normal = normal;
+                    test.vertex = input[i].vertex;
+                    test.uv = input[i].uv;
+                    OutputStream.Append(test);
+                }*/
+            }
 
 			struct fragOutput
 			{
