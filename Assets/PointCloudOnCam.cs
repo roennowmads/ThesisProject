@@ -343,7 +343,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
     private void renderDirect () {
         Graphics.SetRenderTarget(null);
         m_material.SetPass(0);
-        Graphics.DrawProcedural(MeshTopology.Triangles, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount * 6);
+        Graphics.DrawProcedural(MeshTopology.Points, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount /** 6*/);
     }
 
     private void OnRenderObject() {

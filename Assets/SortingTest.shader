@@ -1,11 +1,19 @@
-﻿
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+
 Shader "Unlit/SortingTest" {
+	Properties{
+		_MainTex("Texture", 2D) = "white" {}
+		_MainTex2("_MainTex2", 2D) = "white" {}
+		_AlbedoTex("AlbedoTex", 2D) = "white" {}
+		_ColorTex("_ColorTex", 2D) = "white" {}
+	}
 	SubShader {
 		Tags{ "Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent" }
 		//Tags{"RenderType" = "Opaque"}
 		Blend SrcAlpha OneMinusSrcAlpha
 		//Blend One OneMinusSrcAlpha		
-		//Cull Off
+		Cull Off
 		ZWrite Off
 		//LOD 3000
 		//AlphaToMask Off
@@ -42,15 +50,28 @@ Shader "Unlit/SortingTest" {
 				uint id : SV_VertexID;
 			};
 
-			struct v2f
+			/*struct v2f
 			{
 				float4 vertex : SV_POSITION;
 				fixed3 color : COLOR;
 				float2 texCoord : TEXCOORD0;
 				//float colorValue : TEXCOORD1;
+			};*/
+
+			struct v2g
+			{
+				float4 vertex : SV_POSITION;
+				fixed3 color : COLOR;
 			};
 
-			/*static const half4 quadCoordsAndTexCoords[6] = {
+			struct g2f
+			{
+				float4 vertex : SV_POSITION;
+				fixed3 color : COLOR;
+				float2 texCoord : TEXCOORD0;
+			};
+
+			static const half4 quadCoordsAndTexCoords[6] = {
 				half4(-1.0, -1.0, 0.0, 0.0),
 				half4(1.0, 1.0, 1.0, 1.0),
 				half4(1.0, -1.0, 1.0, 0.0),
@@ -58,7 +79,7 @@ Shader "Unlit/SortingTest" {
 				half4(-1.0, 1.0, 0.0, 1.0),
 				half4(1.0, 1.0, 1.0, 1.0),
 				half4(-1.0, -1.0, 0.0, 0.0)
-			};*/
+			};
 
 
 			/*static const half2 quadCoordsAndTexCoords[6] = {
@@ -107,7 +128,7 @@ Shader "Unlit/SortingTest" {
 
 			//half2 quadCoordsAndTexCoord = half2(half((bitCoord & 2) >> 1), half(bitCoord & 1));
 
-			static const half2 quadCoords[6] = {
+			/*static const half2 quadCoords[6] = {
 				half2(-0.1, -0.1),
 				half2(0.1, 0.1),
 				half2(0.1, -0.1),
@@ -125,7 +146,7 @@ Shader "Unlit/SortingTest" {
 				float2(0.0, 1.0),
 				float2(1.0, 1.0),
 				float2(0.0, 0.0)
-			};
+			};*/
 
 			static const float inv6 = 1.0 / 6.0;
 			static const float inv255 = 1.0 / 255.0;
@@ -139,80 +160,53 @@ Shader "Unlit/SortingTest" {
 			//	UNITY_DEFINE_INSTANCED_PROP(float4, _Pos)	// Make _Color an instanced property (i.e. an array)
 			//	UNITY_INSTANCING_CBUFFER_END
 
-			void vert(in appdata v, out v2f o)
+			void vert(in appdata v, out v2g o)
 			{
-				UNITY_INITIALIZE_OUTPUT(v2f, o)
-
-				float quadId = v.id * inv6;
-				
-				uint value = uint(quadId);//_IndicesValues[quadId];
-				//uint quad_vertexID = v.id % 6;
-				//uint quad_vertexID = -6.0 * floor(quadId) + v.id;
-				uint quad_vertexID = mad(-6.0, floor(quadId), v.id);  //Useful trick: foo % n == foo & (n - 1), if n is a power of 2
+				UNITY_INITIALIZE_OUTPUT(v2g, o)				
+				uint value = v.id;//_IndicesValues[v.id];
 
 				uint index = value /*>> 8*/;
 				float4 position = float4(-_Points[index], 1.0);
 				float colorValue = 0.5;//(value & 0xFF) * inv255;
 
-				o.color = tex2Dlod(_ColorTex, half4(pow((colorValue/**2.0*/), .0625), 0, 0, 0)).rgb /** modifier*/;
-				//o.colorValue = pow((colorValue*2.0), .0625);
-				
-				
-				
-				//o.color = float3(value, value, value);
+				o.color = tex2Dlod(_ColorTex, half4(pow((colorValue*2.0), .0625), 0, 0, 0)).rgb /** modifier*/;
 
 				o.vertex = UnityObjectToClipPos(position);
-
-				//if (/*int(quadId) % 4 != 0 ||*/ int(quadId) < 50000) {
-				//	return;
-				//}
-
-				//Translating the vertices in a quad shape:
-				//half size = 0.4 * exp(1.0 - value) /** modifier*/;
-
-				///half size = 0.001 /** exp(1.0 - colorValue)*/ /** modifier*/;
-				half size = 0.01 /** exp(1.0 - colorValue)*/ /** modifier*/;
-				//half size = 0.15 * exp(value) /** modifier*/;
-				half2 quadSize = half2(size, size * aspect);
-
-
-				//int bitCoord = (quad_vertexID & 1) | (quad_vertexID & 2) | (quad_vertexID & 4);  
-				//int bitCoord = bitCoords[quad_vertexID];
-
-				//bool bit = (quad_vertexID == 1) || (quad_vertexID == 4);
-				//half2 quadCoordsAndTexCoord = half2(bit || (quad_vertexID == 2), bit || (quad_vertexID == 3));
-
-				//half4 quadCoordsAndTexCoord = quadCoordsAndTexCoords[quad_vertexID];
-				//half2 quadCoordsAndTexCoord = quadCoordsAndTexCoords[quad_vertexID];
-				//half2 quadCoordsAndTexCoord = half2(half((bitCoord & 2) >> 1), half(bitCoord & 1));
-				//half4 quadCoordsAndTexCoord = _CoordsTex[quad_vertexID];
-				//half4 quadCoordsAndTexCoord = _CoordsTex.Load(int3(quad_vertexID, 0, 0));
-
-				//half2 deltaSize = quadCoordsAndTexCoord.xy * quadSize;
-				//half2 deltaSize = (quadCoordsAndTexCoord * 2.0 - 1.0) * quadSize;
-
-				half2 deltaSize = quadCoords[quad_vertexID] * quadSize;
-				
-				o.vertex.xy += deltaSize;
-
-				//o.texCoord = quadCoordsAndTexCoord.zw;
-				//o.texCoord = quadCoordsAndTexCoord;
-				o.texCoord = quadTexCoords[quad_vertexID];
 			}
 
-			[maxvertexcount(3)]
-            void geom(triangle v2f input[3], inout TriangleStream<v2f> OutputStream)
-            {
-                v2f test = (v2f)0;
-                /*float3 normal = normalize(cross(input[1].worldPosition.xyz - input[0].worldPosition.xyz, input[2].worldPosition.xyz - input[0].worldPosition.xyz));
-                for(int i = 0; i < 3; i++)
-                {
-                    test.normal = normal;
-                    test.vertex = input[i].vertex;
-                    test.uv = input[i].uv;
-                    OutputStream.Append(test);
-                }*/
-            }
+			// Geometry Shader -----------------------------------------------------
+			[maxvertexcount(4)]
+			void geom(point v2g p[1], inout TriangleStream<g2f> triStream)
+			{
+				half size = 0.001;
+				half2 quadSize = half2(size, size * aspect);
+
+				g2f pIn;
+
+				pIn.color = p[0].color;
+				pIn.vertex.zw = p[0].vertex.zw;
+
+				float2 v0 = float2(p[0].vertex.x + quadSize.x, p[0].vertex.y - quadSize.y);
+				pIn.vertex.xy = v0;
+				pIn.texCoord = float2(1.0f, 0.0f);
+				triStream.Append(pIn);
+
+				v0.y += quadSize.y * 2.0;
+				pIn.vertex.xy = v0;
+				pIn.texCoord = float2(1.0f, 1.0f);
+				triStream.Append(pIn);
+
+				v0.xy -= quadSize.xy * 2.0;
+				pIn.vertex.xy = v0;
+				pIn.texCoord = float2(0.0f, 0.0f);
+				triStream.Append(pIn);
+
+				v0.y += quadSize.y * 2.0;
+				pIn.vertex.xy = v0;
+				pIn.texCoord = float2(0.0f, 1.0f);
+				triStream.Append(pIn);
+			}
+
 
 			struct fragOutput
 			{
@@ -220,7 +214,7 @@ Shader "Unlit/SortingTest" {
 			};
 
 
-			fragOutput frag(v2f i)
+			fragOutput frag(g2f i)
 			{
 				fragOutput o;
 
@@ -239,8 +233,7 @@ Shader "Unlit/SortingTest" {
 
 				//_ROV1[0] = a + float3(1.0, 1.0, 1.0);
 
-				o.color.rgb = i.color;
-				o.color.a = albedo;
+				o.color = fixed4(i.color/*color*/, albedo/*albedo*//**0.25*/);
 				return o;
 			}
 			ENDCG
