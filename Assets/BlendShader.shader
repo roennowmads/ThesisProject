@@ -13,7 +13,7 @@ Shader "Unlit/BlendShader"
 		ZTest Always 
 		Cull Off ZWrite Off 
 		Fog{ Mode Off }
-		Blend SrcAlpha OneMinusSrcAlpha
+		//Blend SrcAlpha OneMinusSrcAlpha
 
 		Pass
 		{

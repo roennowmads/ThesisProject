@@ -1,5 +1,5 @@
 ﻿
-Shader "Unlit/AccumShader"
+Shader "Unlit/AccumShaderGLSL"
 {
 	SubShader
 	{
