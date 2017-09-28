@@ -255,6 +255,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         }
         else {
             Camera.main.targetTexture = m_opaqueTex;
+            Graphics.SetRenderTarget(m_opaqueTex);
         }
         GL.Clear(true, true, m_clear0s);
     }
