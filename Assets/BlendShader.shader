@@ -48,6 +48,15 @@ Shader "Unlit/BlendShader"
 			
 			fixed4 frag (v2f i) : SV_Target
 			{
+				/*float revealage = tex2D(_RevealageTex, i.texcoord).r;
+				if (revealage == 1.0) {
+					// Save the blending and color texture fetch cost
+					return fixed4(0, 0, 0, 0);
+				}
+
+				fixed4 background = tex2D(_MainTex, i.texcoord);
+				float4 accum = tex2D(_AccumTex, i.texcoord);*/
+
 				fixed4 background = tex2D(_MainTex, i.texcoord);
 				float4 accum = tex2D(_AccumTex, i.texcoord);
 				float revealage = tex2D(_RevealageTex, i.texcoord).r;

@@ -169,7 +169,7 @@ Shader "Unlit/SortingTest" {
 				float4 position = float4(-_Points[index], 1.0);
 				float colorValue = 0.5;//(value & 0xFF) * inv255;
 
-				o.color = tex2Dlod(_ColorTex, half4(pow((colorValue*2.0), .0625), 0, 0, 0)).rgb /** modifier*/;
+				o.color = tex2Dlod(_ColorTex, half4(pow((colorValue), .0625), 0, 0, 0)).rgb /** modifier*/;
 
 				o.vertex = UnityObjectToClipPos(position);
 			}
