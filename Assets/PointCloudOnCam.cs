@@ -139,15 +139,17 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
         Screen.SetResolution(950, 720, true);
 
-        Vector3[] ppoints = new Vector3[1048576];
+        int numberOfPoints = 2000000;
 
-        int sideLength = (int)Math.Sqrt(ppoints.Length);
+        Vector3[] ppoints = new Vector3[numberOfPoints];
+
+        int sideLength = (int)Math.Sqrt(numberOfPoints);
 
         for (int i = 0; i < sideLength; i++) {
             for (int j = 0; j < sideLength; j++) {
                 int index = i + j * sideLength;
 
-                ppoints[index] = new Vector3(j / 10.0f - 45.0f, 80.0f, i / 10.0f - 52.5f);
+                ppoints[index] = new Vector3(j / 10.0f - 65.0f, 115.0f, i / 10.0f - 82.0f);
 
             }
         }
