@@ -175,11 +175,11 @@ Shader "Unlit/SortingTest" {
 			}
 
 			// Geometry Shader -----------------------------------------------------
-			[maxvertexcount(6)]
-			//[maxvertexcount(4)]
+			//[maxvertexcount(6)]
+			[maxvertexcount(4)]
 			void geom(point v2g p[1], inout TriangleStream<g2f> triStream)
 			{
-				half size = 0.0005;
+				half size = 0.0002;
 				half2 quadSize = half2(size, size * aspect);
 				half2 quadSizeDouble = quadSize * 2.0;
 
@@ -188,7 +188,7 @@ Shader "Unlit/SortingTest" {
 				pIn.color = p[0].color;
 				pIn.vertex.zw = p[0].vertex.zw;
 
-				float2 v0 = p[0].vertex.xy - quadSize.xy;
+				/*float2 v0 = p[0].vertex.xy - quadSize.xy;
 				pIn.vertex.xy = v0;
 				pIn.texCoord = float2(0.0, 0.0);
 				triStream.Append(pIn);
@@ -219,9 +219,9 @@ Shader "Unlit/SortingTest" {
 				v0.xy -= quadSizeDouble;
 				pIn.vertex.xy = v0;
 				pIn.texCoord = float2(0.0, 0.0);
-				triStream.Append(pIn);
+				triStream.Append(pIn);*/
 
-				/*float2 v0 = float2(p[0].vertex.x + quadSize.x, p[0].vertex.y - quadSize.y);
+				float2 v0 = float2(p[0].vertex.x + quadSize.x, p[0].vertex.y - quadSize.y);
 				pIn.vertex.xy = v0;
 				pIn.texCoord = float2(1.0, 0.0);
 				triStream.Append(pIn);
@@ -239,7 +239,7 @@ Shader "Unlit/SortingTest" {
 				v0.y += quadSizeDouble.y;
 				pIn.vertex.xy = v0;
 				pIn.texCoord = float2(0.0, 1.0);
-				triStream.Append(pIn);*/
+				triStream.Append(pIn);
 			}
 
 
@@ -261,8 +261,8 @@ Shader "Unlit/SortingTest" {
 				
 				//float3 a = _ROV1[0];
 
-				if (albedo < 0.7) 
-					discard;
+				//if (albedo < 0.7) 
+				//	discard;
 
 				//o.color = fixed4(/*i.color*/fixed3(0.5,0.1,0.1), albedo*0.0525);
 

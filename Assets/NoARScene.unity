@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44038203, g: 0.4889627, b: 0.56912315, a: 1}
+  m_IndirectSpecularColor: {r: 0.44032604, g: 0.48889995, b: 0.5690704, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -151,7 +151,7 @@ Prefab:
         type: 2}
       propertyPath: shader
       value: 
-      objectReference: {fileID: 4800000, guid: 268cbeb370ac3e844a78195221d5f9f9, type: 3}
+      objectReference: {fileID: 4800000, guid: 3c6dd6a8d9052c346b81b60082c2aea4, type: 3}
     - target: {fileID: 114787706331157086, guid: 0d086da6e768ba144a9036fcbbfe1fde,
         type: 2}
       propertyPath: particleTexture

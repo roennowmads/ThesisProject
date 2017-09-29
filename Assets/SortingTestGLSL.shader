@@ -1,5 +1,5 @@
 ﻿
-Shader "Unlit/SortingTest" { // defines the name of the shader 
+Shader "Unlit/SortingTestGLSL" { // defines the name of the shader 
 
 	SubShader{ // Unity chooses the subshader that fits the GPU best
 		Tags{ "QUEUE" = "Transparent" "IGNOREPROJECTOR" = "true" "RenderType" = "Transparent" }
@@ -74,7 +74,7 @@ Shader "Unlit/SortingTest" { // defines the name of the shader
 				//vec2 quadCoordsAndTexCoord = quadCoordsAndTexCoords[quad_vertexID];
 				//vec4 quadCoordsAndTexCoord = quadCoordsAndTexCoords[quad_vertexID];
 				
-				float size = 0.002;//0.02;
+				float size = 0.0002;//0.02;
 				vec2 quadSize = vec2(size, size * aspect);
 
 				vec2 deltaSize = (quadCoordsAndTexCoord * 2.0 - 1.0) * quadSize;
@@ -116,30 +116,13 @@ Shader "Unlit/SortingTest" { // defines the name of the shader
 			void main()
 			{
 				float albedo = textureLod(_AlbedoTex, vs_TEXCOORD0.xy, 0.0).a;
-				if (albedo < 0.7) {
-					discard; 
-				}
+				//if (albedo < 0.7) {
+				//	discard; 
+				//}
 
 				SV_Target0.xyz = vs_COLOR0;
 				SV_Target0.w = albedo;
 				
-			}
-
-			#endif
-
-			#ifdef GEOMETRY
-			//#version 310 es
-			/*#extension GL_ARB_geometry_shader : enable
-			#extension GL_OES_geometry_shader : enable
-			#extension GL_EXT_geometry_shader : enable*/
-
-			in mediump vec3 vs_COLOR0 [3];
-			in highp vec2 vs_TEXCOORD0 [3];
-			layout(triangles) in;
-			layout(max_vertices = 3) out;
-			void main()
-			{
-				return;
 			}
 
 			#endif
