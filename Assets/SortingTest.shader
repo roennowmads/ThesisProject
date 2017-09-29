@@ -71,7 +71,7 @@ Shader "Unlit/SortingTest" {
 				float2 texCoord : TEXCOORD0;
 			};
 
-			static const half4 quadCoordsAndTexCoords[6] = {
+			/*static const half4 quadCoordsAndTexCoords[6] = {
 				half4(-1.0, -1.0, 0.0, 0.0),
 				half4(1.0, 1.0, 1.0, 1.0),
 				half4(1.0, -1.0, 1.0, 0.0),
@@ -79,7 +79,7 @@ Shader "Unlit/SortingTest" {
 				half4(-1.0, 1.0, 0.0, 1.0),
 				half4(1.0, 1.0, 1.0, 1.0),
 				half4(-1.0, -1.0, 0.0, 0.0)
-			};
+			};*/
 
 
 			/*static const half2 quadCoordsAndTexCoords[6] = {
@@ -175,36 +175,71 @@ Shader "Unlit/SortingTest" {
 			}
 
 			// Geometry Shader -----------------------------------------------------
-			[maxvertexcount(4)]
+			[maxvertexcount(6)]
+			//[maxvertexcount(4)]
 			void geom(point v2g p[1], inout TriangleStream<g2f> triStream)
 			{
-				half size = 0.001;
+				half size = 0.0005;
 				half2 quadSize = half2(size, size * aspect);
+				half2 quadSizeDouble = quadSize * 2.0;
 
 				g2f pIn;
 
 				pIn.color = p[0].color;
 				pIn.vertex.zw = p[0].vertex.zw;
 
-				float2 v0 = float2(p[0].vertex.x + quadSize.x, p[0].vertex.y - quadSize.y);
+				float2 v0 = p[0].vertex.xy - quadSize.xy;
 				pIn.vertex.xy = v0;
-				pIn.texCoord = float2(1.0f, 0.0f);
+				pIn.texCoord = float2(0.0, 0.0);
 				triStream.Append(pIn);
 
-				v0.y += quadSize.y * 2.0;
+				v0.xy += quadSizeDouble;
 				pIn.vertex.xy = v0;
-				pIn.texCoord = float2(1.0f, 1.0f);
+				pIn.texCoord = float2(1.0, 1.0);
 				triStream.Append(pIn);
 
-				v0.xy -= quadSize.xy * 2.0;
+				v0.y -= quadSizeDouble.y;
 				pIn.vertex.xy = v0;
-				pIn.texCoord = float2(0.0f, 0.0f);
+				pIn.texCoord = float2(1.0, 0.0);
 				triStream.Append(pIn);
 
-				v0.y += quadSize.y * 2.0;
+				triStream.RestartStrip();
+
+				v0.x -= quadSizeDouble.x;
+				v0.y += quadSizeDouble.y;
 				pIn.vertex.xy = v0;
-				pIn.texCoord = float2(0.0f, 1.0f);
+				pIn.texCoord = float2(0.0, 1.0);
 				triStream.Append(pIn);
+
+				v0.x += quadSizeDouble.x;
+				pIn.vertex.xy = v0;
+				pIn.texCoord = float2(1.0, 1.0);
+				triStream.Append(pIn);
+
+				v0.xy -= quadSizeDouble;
+				pIn.vertex.xy = v0;
+				pIn.texCoord = float2(0.0, 0.0);
+				triStream.Append(pIn);
+
+				/*float2 v0 = float2(p[0].vertex.x + quadSize.x, p[0].vertex.y - quadSize.y);
+				pIn.vertex.xy = v0;
+				pIn.texCoord = float2(1.0, 0.0);
+				triStream.Append(pIn);
+
+				v0.y += quadSizeDouble.y;
+				pIn.vertex.xy = v0;
+				pIn.texCoord = float2(1.0, 1.0);
+				triStream.Append(pIn);
+
+				v0 -= quadSizeDouble;
+				pIn.vertex.xy = v0;
+				pIn.texCoord = float2(0.0, 0.0);
+				triStream.Append(pIn);
+
+				v0.y += quadSizeDouble.y;
+				pIn.vertex.xy = v0;
+				pIn.texCoord = float2(0.0, 1.0);
+				triStream.Append(pIn);*/
 			}
 
 
