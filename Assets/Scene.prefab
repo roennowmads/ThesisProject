@@ -2279,6 +2279,7 @@ MonoBehaviour:
   m_blendShader: {fileID: 4800000, guid: a62a63e0cd9feaf4899dc6871975445b, type: 3}
   m_textureShader: {fileID: 4800000, guid: 96127768bc216ed4d96604a405b5ab41, type: 3}
   particleTexture: {fileID: 2800000, guid: 178a3c459598d8c4a8d70f9f353607f1, type: 3}
+  psys: {fileID: 0}
 --- !u!114 &114800236048718574
 MonoBehaviour:
   m_ObjectHideFlags: 1

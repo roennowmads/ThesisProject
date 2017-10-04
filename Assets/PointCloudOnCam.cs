@@ -36,6 +36,9 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
     private Color m_clear0s, m_clear1s;
 
+    public ParticleSystem psys;
+    private ParticleSystem.Particle[] cloud;
+
     public static void Shuffle(uint[] list) {
         int n = list.Length;
         while (n > 1) {
@@ -149,6 +152,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
             for (int j = 0; j < sideLength; j++) {
                 int index = i + j * sideLength;
 
+                //ppoints[index] = new Vector3(j / 2.0f - 65.0f, 115.0f, i / 2.0f - 82.0f);
                 ppoints[index] = new Vector3(j / 10.0f - 65.0f, 115.0f, i / 10.0f - 82.0f);
 
             }
@@ -252,6 +256,17 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
         m_clear0s = new Color(0.0f, 0.0f, 0.0f, 0.0f);
         m_clear1s = new Color(1.0f, 0.0f, 0.0f, 0.0f);
+
+
+        cloud = new ParticleSystem.Particle[m_pointsCount];
+
+        for (int ii = 0; ii < ppoints.Length; ++ii) {
+            cloud[ii].position = ppoints[ii];
+            //cloud[ii].color = colors[ii];
+            //cloud[ii].size = 0.1f;
+        }
+
+        psys.SetParticles(cloud, cloud.Length);
 
         /*Shader.EnableKeyword("_WEIGHTED_ON");
         Shader.DisableKeyword("_WEIGHTED0");
