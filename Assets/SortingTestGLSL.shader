@@ -57,6 +57,8 @@ Shader "Unlit/SortingTestGLSL" { // defines the name of the shader
 			out mediump vec3 vs_COLOR0;
 			out highp vec2 vs_TEXCOORD0;
 
+			out highp vec4 pos;
+
 			const float inv6 = 1.0 / 6.0;
 			const float inv255 = 2.0 / 255.0;
 
@@ -69,15 +71,16 @@ Shader "Unlit/SortingTestGLSL" { // defines the name of the shader
 
 				bvec4 bits = equal(ivec4(quad_vertexID), ivec4(1, 4, 2, 3));
 				bool bit = bits.x || bits.y;
-				vec2 quadCoordsAndTexCoord = vec2(bit || bits.z, bit || bits.w);
+				vec2 quadCoordsAndTexCoord = vec2(bit || bits.z, bit || bits.w) * 2.0 - 1.0;
 
 				//vec2 quadCoordsAndTexCoord = quadCoordsAndTexCoords[quad_vertexID];
 				//vec4 quadCoordsAndTexCoord = quadCoordsAndTexCoords[quad_vertexID];
 				
-				float size = 0.0002;//0.02;
+				float size = 0.002;//0.02;
 				vec2 quadSize = vec2(size, size * aspect);
 
-				vec2 deltaSize = (quadCoordsAndTexCoord * 2.0 - 1.0) * quadSize;
+				//vec2 deltaSize = (quadCoordsAndTexCoord * 2.0 - 1.0) * quadSize;
+				vec2 deltaSize = quadCoordsAndTexCoord * quadSize;
 				//vec2 deltaSize = quadCoordsAndTexCoord.xy * quadSize;
 
 				uint value = uint(quadId);//_IndicesValues_buf[quadId];
@@ -91,11 +94,18 @@ Shader "Unlit/SortingTestGLSL" { // defines the name of the shader
 
 				vec4 position = /*vec4(pos, -1.0);*/vec4(_Points_buf[index].value[0], _Points_buf[index].value[1], _Points_buf[index].value[2], -1.0);
 
+				
+
 				vs_TEXCOORD0 = quadCoordsAndTexCoord;
 				//vs_TEXCOORD0 = quadCoordsAndTexCoord.zw;
 				
 				gl_Position = gl_ModelViewProjectionMatrix * (-position);
+
+				pos = gl_Position;
+
 				gl_Position.xy += deltaSize;
+
+				
 
 				colorCoords.x = pow((colorValue), .0625);
 				vs_COLOR0 = textureLod(_ColorTex, colorCoords, 0.0).xyz;
@@ -106,21 +116,42 @@ Shader "Unlit/SortingTestGLSL" { // defines the name of the shader
 
 			uniform highp sampler2D _AlbedoTex;
 
+			uniform 	vec4 _ScreenParams;
+
 			//layout(early_fragment_tests) in;
 
 			in mediump vec3 vs_COLOR0;
 			in highp vec2 vs_TEXCOORD0;
+			in highp vec4 pos;
 
 			layout(location = 0) out highp vec4 SV_Target0;
 
 			void main()
 			{
-				float albedo = textureLod(_AlbedoTex, vs_TEXCOORD0.xy, 0.0).a;
-				//if (albedo < 0.7) {
-				//	discard; 
-				//}
+				//float albedo = length(gl_FragCoord.xy);
+
+				//float albedo = length(gl_PointCoord.xy);
+
+				//float c = pos.x;//1.0 - distance(pos.xy / pos.w, gl_FragCoord.xy / _ScreenParams.xy);
+				//vec2 c = gl_FragCoord.xy / _ScreenParams.xy;
+				//c = (c - 0.5) * 2.0;
+
+				//float d = length(pos.xy - (gl_FragCoord.xy / _ScreenParams.xy)) - 10.0;
+				//float t = d;//clamp(d, 0.0, 1.0);
+				//float albedo = 1.0 - t;
+
+				adjusting point size so it fits with the original texture lookup. (so we can easily do performance comparison)
+
+				float albedo = 1.0 - pow(dot(vs_TEXCOORD0, vs_TEXCOORD0), 0.72);
+				//float albedo = 1.0 - length(vs_TEXCOORD0);
+
+				//float albedo = textureLod(_AlbedoTex, vs_TEXCOORD0.xy, 0.0).a;
+				if (albedo < 0.7) {
+					discard; 
+				}
 
 				SV_Target0.xyz = vs_COLOR0;
+				//SV_Target0.xyz = vec3(c);//vec3(gl_FragCoord.xy / _ScreenParams.xy, 0.0);//vs_COLOR0;
 				SV_Target0.w = albedo;
 				
 			}
