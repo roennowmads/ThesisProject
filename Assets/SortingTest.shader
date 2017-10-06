@@ -21,6 +21,10 @@ Shader "Unlit/SortingTest" {
 		Pass {
 			CGPROGRAM
 
+			#define PENTAGON
+			//#define QUAD
+			//#define SIXVERTEXQUAD
+
 			#pragma vertex vert
 			#pragma fragment frag
 			#pragma geometry geom
@@ -190,7 +194,8 @@ Shader "Unlit/SortingTest" {
 				pIn.color = p[0].color;
 				pIn.vertex.zw = p[0].vertex.zw;
 
-				/*float2 v0 = p[0].vertex.xy - quadSize.xy;
+			#ifdef SIXVERTEXQUAD
+				float2 v0 = p[0].vertex.xy - quadSize.xy;
 				pIn.vertex.xy = v0;
 				pIn.texCoord = float2(0.0, 0.0);
 				triStream.Append(pIn);
@@ -221,9 +226,11 @@ Shader "Unlit/SortingTest" {
 				v0.xy -= quadSizeDouble;
 				pIn.vertex.xy = v0;
 				pIn.texCoord = float2(0.0, 0.0);
-				triStream.Append(pIn);*/
+				triStream.Append(pIn);
+			#endif
 
-				/*float2 v0 = float2(p[0].vertex.x + quadSize.x, p[0].vertex.y - quadSize.y);
+			#ifdef QUAD
+				float2 v0 = float2(p[0].vertex.x + quadSize.x, p[0].vertex.y - quadSize.y);
 				pIn.vertex.xy = v0;
 				pIn.texCoord = float2(1.02, -0.015);
 				triStream.Append(pIn);
@@ -241,10 +248,12 @@ Shader "Unlit/SortingTest" {
 				v0.y += quadSizeDouble.y;
 				pIn.vertex.xy = v0;
 				pIn.texCoord = float2(0.02, 0.985);
-				triStream.Append(pIn);*/
+				triStream.Append(pIn);
+			#endif
 
+			#ifdef PENTAGON
 				//vertex coordinates found here: http://mathworld.wolfram.com/Pentagon.html
-				float radius = 0.5;
+				float radius = 0.65;
 				pentagonParams *= radius;
 
 				//texture coordinates found here: http://manual.starling-framework.org/en/img/pentagon-texcoords.png
@@ -272,6 +281,7 @@ Shader "Unlit/SortingTest" {
 				pIn.vertex.xy = v0;
 				pIn.texCoord = float2(0.215, 0.05);
 				triStream.Append(pIn);
+			#endif
 			}
 
 
@@ -293,13 +303,17 @@ Shader "Unlit/SortingTest" {
 				
 				//float3 a = _ROV1[0];
 
-				//if (albedo < 0.325) {  //for quad
+			#if defined(QUAD)
+				if (albedo < 0.325) {  //for quad
+			#elif defined(PENTAGON)
 				if (albedo < 0.43) { //for pentagon
+			#endif
 					o.color = fixed4(fixed3(0.0,1.0,0.0), 1.0/*albedo*//**0.25*/);
 				}
 				else {
 					o.color = fixed4(i.color/*color*/, albedo/*albedo*//**0.25*/);
 				}
+			
 
 
 				//if (albedo < 0.7) 

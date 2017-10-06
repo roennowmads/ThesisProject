@@ -250,11 +250,11 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
 
         Vector4 pentagonParams = new Vector4();
-        float c1 = 0.25f * (Mathf.Sqrt(5.0f) - 1.0f) * aspect;
-        float c2 = 0.25f * (Mathf.Sqrt(5.0f) + 1.0f) * aspect;
+        float c1 = 0.25f * (Mathf.Sqrt(5.0f) - 1.0f);
+        float c2 = 0.25f * (Mathf.Sqrt(5.0f) + 1.0f);
 
-        float s1 = 0.25f * (Mathf.Sqrt(10.0f + 2.0f * Mathf.Sqrt(5.0f))) * 0.9f;
-        float s2 = 0.25f * (Mathf.Sqrt(10.0f - 2.0f * Mathf.Sqrt(5.0f))) * 0.9f;
+        float s1 = 0.25f * (Mathf.Sqrt(10.0f + 2.0f * Mathf.Sqrt(5.0f))) * 0.9f / aspect;
+        float s2 = 0.25f * (Mathf.Sqrt(10.0f - 2.0f * Mathf.Sqrt(5.0f))) * 0.9f / aspect;
 
         pentagonParams.x = c1;
         pentagonParams.y = c2;
