@@ -143,9 +143,14 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         Screen.SetResolution(950, 720, true);
 
 
-        int width = 64;
-        int height = 1;
-        int depth = 64;
+        /*int width = 64;
+        int height = 32;//128;//128;
+        int depth = 64;*/
+
+        int width = 1;
+        int height = 1;//128;//128;
+        int depth = 1;
+
         int numberOfPoints = width * height * depth;
 
         Vector3[] ppoints = new Vector3[numberOfPoints];
@@ -242,6 +247,21 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         m_material.SetFloat("aspect", aspect);
         m_accumMaterial.SetFloat("aspect", aspect);
         m_revealageMaterial.SetFloat("aspect", aspect);
+
+
+        Vector4 pentagonParams = new Vector4();
+        float c1 = 0.25f * (Mathf.Sqrt(5.0f) - 1.0f) * aspect;
+        float c2 = 0.25f * (Mathf.Sqrt(5.0f) + 1.0f) * aspect;
+
+        float s1 = 0.25f * (Mathf.Sqrt(10.0f + 2.0f * Mathf.Sqrt(5.0f))) * 0.9f;
+        float s2 = 0.25f * (Mathf.Sqrt(10.0f - 2.0f * Mathf.Sqrt(5.0f))) * 0.9f;
+
+        pentagonParams.x = c1;
+        pentagonParams.y = c2;
+        pentagonParams.z = s1;
+        pentagonParams.w = s2;
+
+        m_material.SetVector("pentagonParams", pentagonParams);
 
         m_material.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
         m_accumMaterial.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
