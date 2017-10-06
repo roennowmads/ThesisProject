@@ -39,6 +39,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
     public ParticleSystem psys;
     private ParticleSystem.Particle[] cloud;
 
+    private bool m_directRender = true;
+
     public static void Shuffle(uint[] list) {
         int n = list.Length;
         while (n > 1) {
@@ -309,7 +311,14 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
     private void OnPreRender() {
         //Make sure all opaque geometry (everything not rendered with drawProcedural) is rendered into opaqueTex.
-        Camera.main.targetTexture = m_opaqueTex;
+        if (m_directRender) {
+            Graphics.SetRenderTarget(null);
+            Camera.main.targetTexture = null;
+        }
+        else {
+            Graphics.SetRenderTarget(m_opaqueTex);
+            Camera.main.targetTexture = m_opaqueTex;
+        }
         GL.Clear(true, true, m_clear0s);
     }
 
@@ -397,7 +406,9 @@ private List<ComputeBuffer> m_indexComputeBuffers;
             m_accumMaterial.SetVector("camPos", Camera.main.transform.position);
             GL.MultMatrix(m_pointCloudObj.transform.localToWorldMatrix);
 
-            renderDirect();
+            if (m_directRender) {
+                renderDirect();
+            }
             //renderToTextures();
             //renderToScreenSideBySide();
 
