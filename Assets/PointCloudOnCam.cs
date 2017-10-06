@@ -257,9 +257,9 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         float s2 = 0.25f * (Mathf.Sqrt(10.0f - 2.0f * Mathf.Sqrt(5.0f))) * 0.9f / aspect;
 
         pentagonParams.x = c1;
-        pentagonParams.y = c2;
-        pentagonParams.z = s1;
-        pentagonParams.w = s2;
+        pentagonParams.y = c2 * 0.89f;
+        pentagonParams.z = s1 * 0.97f;
+        pentagonParams.w = s2 * 0.95f;
 
         m_material.SetVector("pentagonParams", pentagonParams);
 

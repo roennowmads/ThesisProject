@@ -262,24 +262,24 @@ Shader "Unlit/SortingTest" {
 				pIn.texCoord = float2(0.515, 1.0);
 				triStream.Append(pIn);
 
-				v0 = float2(p[0].vertex.x + pentagonParams.z * 0.97, p[0].vertex.y - pentagonParams.x);
+				v0 = float2(p[0].vertex.x + pentagonParams.z, p[0].vertex.y - pentagonParams.x);
 				pIn.vertex.xy = v0;
 				pIn.texCoord = float2(1.015, 0.66);
 				triStream.Append(pIn);
 
-				v0 = float2(p[0].vertex.x - pentagonParams.z * 0.97, p[0].vertex.y - pentagonParams.x);
+				v0 = float2(p[0].vertex.x - pentagonParams.z, p[0].vertex.y - pentagonParams.x);
 				pIn.vertex.xy = v0;
 				pIn.texCoord = float2(0.015, 0.66);
 				triStream.Append(pIn);
 
-				v0 = float2(p[0].vertex.x + pentagonParams.w * 0.95, p[0].vertex.y + pentagonParams.y * 0.9);
+				v0 = float2(p[0].vertex.x + pentagonParams.w, p[0].vertex.y + pentagonParams.y);
 				pIn.vertex.xy = v0;
-				pIn.texCoord = float2(0.815, 0.05);
+				pIn.texCoord = float2(0.815, 0.06);
 				triStream.Append(pIn);
 
-				v0 = float2(p[0].vertex.x - pentagonParams.w * 0.95, p[0].vertex.y + pentagonParams.y * 0.9);
+				v0 = float2(p[0].vertex.x - pentagonParams.w, p[0].vertex.y + pentagonParams.y);
 				pIn.vertex.xy = v0;
-				pIn.texCoord = float2(0.215, 0.05);
+				pIn.texCoord = float2(0.215, 0.06);
 				triStream.Append(pIn);
 			#endif
 			}
