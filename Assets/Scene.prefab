@@ -1132,7 +1132,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1038019780055756}
   m_LocalRotation: {x: -0.0020715632, y: 0.99304193, z: -0.11640967, w: -0.017671634}
-  m_LocalPosition: {x: 2.2790136, y: 3.6413279, z: 3.0625572}
+  m_LocalPosition: {x: 1, y: 5.33, z: 5.14}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 4040903701269740}
@@ -2273,12 +2273,12 @@ MonoBehaviour:
   m_accumTex: {fileID: 8400000, guid: fb853de2019f4264d8a25a801aa4571c, type: 2}
   m_revealageTex: {fileID: 8400000, guid: d3a2eda195652dc47ad9da4b29564f3f, type: 2}
   m_resultTex: {fileID: 8400000, guid: 62baa5f4dc51e9140b73a80f80710f6f, type: 2}
-  shader: {fileID: 4800000, guid: 3c6dd6a8d9052c346b81b60082c2aea4, type: 3}
+  shader: {fileID: 4800000, guid: 268cbeb370ac3e844a78195221d5f9f9, type: 3}
   m_accumShader: {fileID: 4800000, guid: fc7ab1d5535385847a1d1d239b59abab, type: 3}
   m_revealageShader: {fileID: 4800000, guid: 9bb6da422985e0e44bc728094d7d8b9e, type: 3}
   m_blendShader: {fileID: 4800000, guid: a62a63e0cd9feaf4899dc6871975445b, type: 3}
   m_textureShader: {fileID: 4800000, guid: 96127768bc216ed4d96604a405b5ab41, type: 3}
-  particleTexture: {fileID: 2800000, guid: 178a3c459598d8c4a8d70f9f353607f1, type: 3}
+  particleTexture: {fileID: 2800000, guid: 25829737ed2695041a4f6457b32a4d88, type: 3}
   psys: {fileID: 0}
 --- !u!114 &114800236048718574
 MonoBehaviour:

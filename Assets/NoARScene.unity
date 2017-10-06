@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.37298703, g: 0.38071066, b: 0.35867384, a: 1}
+  m_IndirectSpecularColor: {r: 0.44032604, g: 0.48889995, b: 0.5690704, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -123,7 +123,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &729820461
 Transform:
   m_ObjectHideFlags: 0
@@ -158,7 +158,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!81 &794298189
 AudioListener:
   m_ObjectHideFlags: 0
@@ -282,23 +282,22 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 114787706331157086, guid: 0d086da6e768ba144a9036fcbbfe1fde,
         type: 2}
-      propertyPath: shader
+      propertyPath: psys
       value: 
-      objectReference: {fileID: 4800000, guid: 3c6dd6a8d9052c346b81b60082c2aea4, type: 3}
+      objectReference: {fileID: 2008091921}
     - target: {fileID: 114787706331157086, guid: 0d086da6e768ba144a9036fcbbfe1fde,
         type: 2}
       propertyPath: particleTexture
       value: 
       objectReference: {fileID: 2800000, guid: 25829737ed2695041a4f6457b32a4d88, type: 3}
-    - target: {fileID: 1890342875285252, guid: 0d086da6e768ba144a9036fcbbfe1fde, type: 2}
-      propertyPath: m_IsActive
-      value: 0
+    - target: {fileID: 4901076483243704, guid: 0d086da6e768ba144a9036fcbbfe1fde, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 5.61
       objectReference: {fileID: 0}
-    - target: {fileID: 114787706331157086, guid: 0d086da6e768ba144a9036fcbbfe1fde,
-        type: 2}
-      propertyPath: psys
-      value: 
-      objectReference: {fileID: 2008091921}
+    - target: {fileID: 4901076483243704, guid: 0d086da6e768ba144a9036fcbbfe1fde, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 5.43
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 0d086da6e768ba144a9036fcbbfe1fde, type: 2}
   m_IsPrefabParent: 0

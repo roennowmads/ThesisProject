@@ -142,19 +142,27 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
         Screen.SetResolution(950, 720, true);
 
-        int numberOfPoints = 2000000;
+
+        int width = 64;
+        int height = 1;
+        int depth = 64;
+        int numberOfPoints = width * height * depth;
 
         Vector3[] ppoints = new Vector3[numberOfPoints];
 
-        int sideLength = (int)Math.Sqrt(numberOfPoints);
+        //int sideLength = (int)Math.Sqrt(numberOfPoints);
 
-        for (int i = 0; i < sideLength; i++) {
-            for (int j = 0; j < sideLength; j++) {
-                int index = i + j * sideLength;
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                for (int z = 0; z < depth; z++) {
+                    int index = x + y * width + z * height * depth;
 
-                //ppoints[index] = new Vector3(j / 2.0f - 65.0f, 115.0f, i / 2.0f - 82.0f);
-                ppoints[index] = new Vector3(j / 10.0f - 65.0f, 115.0f, i / 10.0f - 82.0f);
+                    //ppoints[index] = new Vector3(j / 2.0f - 65.0f, 115.0f, i / 2.0f - 82.0f);
+                    //ppoints[index] = new Vector3(j / 10.0f - 65.0f, 115.0f, i / 10.0f - 82.0f);
 
+                    //ppoints[index] = new Vector3(x / 0.22f - 0.0f, y / 0.22f, z / 0.22f - 0.0f);
+                    ppoints[index] = new Vector3(x / 0.10f - 0.0f, y / 0.22f, z / 0.10f - 0.0f);
+                }
             }
         }
         m_pointsCount = ppoints.Length;
@@ -360,8 +368,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
     private void renderDirect () {
         Graphics.SetRenderTarget(null);
         m_material.SetPass(0);
-        //Graphics.DrawProcedural(MeshTopology.Points, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount /** 6*/);
-        Graphics.DrawProcedural(MeshTopology.Triangles, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount * 6);
+        Graphics.DrawProcedural(MeshTopology.Points, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount /** 6*/);
+        //Graphics.DrawProcedural(MeshTopology.Triangles, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount * 6);
     }
 
     private void OnRenderObject() {

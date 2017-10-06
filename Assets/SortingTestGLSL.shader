@@ -76,7 +76,7 @@ Shader "Unlit/SortingTestGLSL" { // defines the name of the shader
 				//vec2 quadCoordsAndTexCoord = quadCoordsAndTexCoords[quad_vertexID];
 				//vec4 quadCoordsAndTexCoord = quadCoordsAndTexCoords[quad_vertexID];
 				
-				float size = 0.002;//0.02;
+				float size = 0.001;//0.02;
 				vec2 quadSize = vec2(size, size * aspect);
 
 				//vec2 deltaSize = (quadCoordsAndTexCoord * 2.0 - 1.0) * quadSize;
@@ -140,7 +140,7 @@ Shader "Unlit/SortingTestGLSL" { // defines the name of the shader
 				//float t = d;//clamp(d, 0.0, 1.0);
 				//float albedo = 1.0 - t;
 
-				adjusting point size so it fits with the original texture lookup. (so we can easily do performance comparison)
+				//adjusting point size so it fits with the original texture lookup. (so we can easily do performance comparison)
 
 				float albedo = 1.0 - pow(dot(vs_TEXCOORD0, vs_TEXCOORD0), 0.72);
 				//float albedo = 1.0 - length(vs_TEXCOORD0);
