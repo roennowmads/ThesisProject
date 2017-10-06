@@ -21,8 +21,8 @@ Shader "Unlit/SortingTest" {
 		Pass {
 			CGPROGRAM
 
-			#define PENTAGON
-			//#define QUAD
+			//#define PENTAGON
+			#define QUAD
 			//#define SIXVERTEXQUAD
 
 			#pragma vertex vert
@@ -308,10 +308,11 @@ Shader "Unlit/SortingTest" {
 			#elif defined(PENTAGON)
 				if (albedo < 0.43) { //for pentagon
 			#endif
-					o.color = fixed4(fixed3(0.0,1.0,0.0), 1.0/*albedo*//**0.25*/);
+					discard;
+					//o.color = fixed4(fixed3(0.0,1.0,0.0), 1.0/*albedo*//**0.25*/);
 				}
 				else {
-					o.color = fixed4(i.color/*color*/, albedo/*albedo*//**0.25*/);
+					o.color = fixed4(i.color/*color*/, albedo*0.25/*albedo*//**0.25*/);
 				}
 			
 

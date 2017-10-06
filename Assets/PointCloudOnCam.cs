@@ -149,9 +149,9 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         int height = 32;//128;//128;
         int depth = 64;*/
 
-        int width = 1;
-        int height = 1;//128;//128;
-        int depth = 1;
+        int width = 10;
+        int height = 1000;//128;//128;
+        int depth = 10;
 
         int numberOfPoints = width * height * depth;
 
@@ -168,7 +168,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
                     //ppoints[index] = new Vector3(j / 10.0f - 65.0f, 115.0f, i / 10.0f - 82.0f);
 
                     //ppoints[index] = new Vector3(x / 0.22f - 0.0f, y / 0.22f, z / 0.22f - 0.0f);
-                    ppoints[index] = new Vector3(x / 0.10f - 0.0f, y / 0.22f, z / 0.10f - 0.0f);
+                    ppoints[index] = new Vector3(x / 0.015f - 0.0f, y / 0.22f, z / 0.015f - 0.0f);
                 }
             }
         }
