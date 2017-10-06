@@ -293,8 +293,8 @@ Shader "Unlit/SortingTest" {
 				
 				//float3 a = _ROV1[0];
 
-				//if (albedo < 0.325) {
-				if (albedo < 0.43) {
+				//if (albedo < 0.325) {  //for quad
+				if (albedo < 0.43) { //for pentagon
 					o.color = fixed4(fixed3(0.0,1.0,0.0), 1.0/*albedo*//**0.25*/);
 				}
 				else {
