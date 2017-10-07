@@ -149,30 +149,35 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         int height = 32;//128;//128;
         int depth = 64;*/
 
-        int width = 10;
-        int height = 2000;//128;//128;
+        int width = 20;
+        int height = 1000;//128;//128;
         int depth = 10;
 
         int numberOfPoints = width * height * depth;
 
-        Vector3[] ppoints = new Vector3[numberOfPoints];
+        List<Vector3> ppoints = new List<Vector3>();
+
+        //Vector3[] ppoints = new Vector3[numberOfPoints];
 
         //int sideLength = (int)Math.Sqrt(numberOfPoints);
 
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 for (int z = 0; z < depth; z++) {
-                    int index = x + y * width + z * height * depth;
+                    //int index = x + y * depth + z * height * width;
 
                     //ppoints[index] = new Vector3(j / 2.0f - 65.0f, 115.0f, i / 2.0f - 82.0f);
                     //ppoints[index] = new Vector3(j / 10.0f - 65.0f, 115.0f, i / 10.0f - 82.0f);
 
                     //ppoints[index] = new Vector3(x / 0.22f - 0.0f, y / 0.22f, z / 0.22f - 0.0f);
-                    ppoints[index] = new Vector3(x / 0.015f - 0.0f, y / 0.22f, z / 0.015f - 0.0f);
+                    Vector3 point = new Vector3(x / 0.015f - 0.0f, y / 0.22f, z / 0.015f - 0.0f);
+
+                    ppoints.Add(point);
+
                 }
             }
         }
-        m_pointsCount = ppoints.Length;
+        m_pointsCount = ppoints.Count;
 
 
 
@@ -240,7 +245,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         //m_material.SetBuffer("_CoordsTex", coords);
 
         m_pointsBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
-        m_pointsBuffer.SetData(/*points*/ ppoints);
+        m_pointsBuffer.SetData(/*points*/ ppoints.ToArray());
         m_material.SetBuffer("_Points", m_pointsBuffer);
         m_accumMaterial.SetBuffer("_Points", m_pointsBuffer);
         m_revealageMaterial.SetBuffer("_Points", m_pointsBuffer);
@@ -290,7 +295,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
         cloud = new ParticleSystem.Particle[m_pointsCount];
 
-        for (int ii = 0; ii < ppoints.Length; ++ii) {
+        for (int ii = 0; ii < ppoints.Count; ++ii) {
             cloud[ii].position = ppoints[ii];
             //cloud[ii].color = colors[ii];
             //cloud[ii].size = 0.1f;

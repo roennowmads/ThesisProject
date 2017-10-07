@@ -172,11 +172,10 @@ Shader "Unlit/SortingTest" {
 
 				uint index = value /*>> 8*/;
 				float4 position = float4(-_Points[index], 1.0);
-				float colorValue = 0.5;//(value & 0xFF) * inv255;
-
-				o.color = tex2Dlod(_ColorTex, half4(pow((colorValue), .0625), 0, 0, 0)).rgb /** modifier*/;
-
 				o.vertex = UnityObjectToClipPos(position);
+
+				float colorValue = 0.5;//(value & 0xFF) * inv255;
+				o.color = tex2Dlod(_ColorTex, half4(pow((colorValue), .0625), 0, 0, 0)).rgb /** modifier*/;
 			}
 
 			// Geometry Shader -----------------------------------------------------
@@ -322,7 +321,12 @@ Shader "Unlit/SortingTest" {
 					//o.color = fixed4(fixed3(0.0,1.0,0.0), 0.75/*albedo*//**0.25*/);
 				}
 				else {
+			#if defined(QUAD)
 					o.color = fixed4(i.color/*color*/, albedo*0.25/*albedo*//**0.25*/);
+			#elif defined(PENTAGON)
+					o.color = fixed4(i.color/*color*/, albedo*0.225/*albedo*//**0.25*/);
+			#endif
+					
 				}
 			
 
