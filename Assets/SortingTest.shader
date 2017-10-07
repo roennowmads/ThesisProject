@@ -21,8 +21,8 @@ Shader "Unlit/SortingTest" {
 		Pass {
 			CGPROGRAM
 
-			//#define PENTAGON
-			#define QUAD
+			#define PENTAGON
+			//#define QUAD
 			//#define SIXVERTEXQUAD
 
 			#pragma vertex vert
@@ -181,8 +181,11 @@ Shader "Unlit/SortingTest" {
 
 			// Geometry Shader -----------------------------------------------------
 			//[maxvertexcount(6)]
-			//[maxvertexcount(4)]
+		#if defined(QUAD)
+			[maxvertexcount(4)]
+		#else
 			[maxvertexcount(5)]
+		#endif
 			void geom(point v2g p[1], inout TriangleStream<g2f> triStream)
 			{
 				half size = 0.352;
@@ -253,7 +256,7 @@ Shader "Unlit/SortingTest" {
 
 			#ifdef PENTAGON
 				//vertex coordinates found here: http://mathworld.wolfram.com/Pentagon.html
-				float radius = 0.65;
+				float radius = 0.65;//0.9;//0.8725;  //nvidia tablet closer to: 0.65
 				pentagonParams *= radius;
 
 				//texture coordinates found here: http://manual.starling-framework.org/en/img/pentagon-texcoords.png
@@ -267,12 +270,12 @@ Shader "Unlit/SortingTest" {
 				pIn.texCoord = float2(1.015, 0.66);
 				triStream.Append(pIn);
 
-				v0 = float2(p[0].vertex.x - pentagonParams.z, p[0].vertex.y - pentagonParams.x);
+				v0 = p[0].vertex.xy - pentagonParams.zx;
 				pIn.vertex.xy = v0;
 				pIn.texCoord = float2(0.015, 0.66);
 				triStream.Append(pIn);
 
-				v0 = float2(p[0].vertex.x + pentagonParams.w, p[0].vertex.y + pentagonParams.y);
+				v0 = p[0].vertex.xy + pentagonParams.wy;
 				pIn.vertex.xy = v0;
 				pIn.texCoord = float2(0.815, 0.06);
 				triStream.Append(pIn);
@@ -309,7 +312,7 @@ Shader "Unlit/SortingTest" {
 				if (albedo < 0.43) { //for pentagon
 			#endif
 					discard;
-					//o.color = fixed4(fixed3(0.0,1.0,0.0), 1.0/*albedo*//**0.25*/);
+					//o.color = fixed4(fixed3(0.0,1.0,0.0), 0.75/*albedo*//**0.25*/);
 				}
 				else {
 					o.color = fixed4(i.color/*color*/, albedo*0.25/*albedo*//**0.25*/);

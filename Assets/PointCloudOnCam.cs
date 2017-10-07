@@ -150,7 +150,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         int depth = 64;*/
 
         int width = 10;
-        int height = 1000;//128;//128;
+        int height = 2000;//128;//128;
         int depth = 10;
 
         int numberOfPoints = width * height * depth;
