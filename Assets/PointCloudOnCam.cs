@@ -149,9 +149,9 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         int height = 32;//128;//128;
         int depth = 64;*/
 
-        int width = 20;
-        int height = 1000;//128;//128;
-        int depth = 10;
+        int width = 1;//20;
+        int height = 1; //1000;//128;//128;
+        int depth = 1; //10;
 
         int numberOfPoints = width * height * depth;
 
@@ -256,6 +256,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         m_revealageMaterial.SetFloat("aspect", aspect);
 
 
+        //vertex coordinates found here: http://mathworld.wolfram.com/Pentagon.html
         Vector4 pentagonParams = new Vector4();
         float c1 = 0.25f * (Mathf.Sqrt(5.0f) - 1.0f);
         float c2 = 0.25f * (Mathf.Sqrt(5.0f) + 1.0f);
@@ -264,7 +265,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         float s2 = 0.25f * (Mathf.Sqrt(10.0f - 2.0f * Mathf.Sqrt(5.0f))) * 0.9f / aspect;
 
         pentagonParams.x = c1;
-        pentagonParams.y = c2 * 0.89f;
+        pentagonParams.y = c2 * 0.87f;//0.89f;
         pentagonParams.z = s1 * 0.97f;
         pentagonParams.w = s2 * 0.95f;
 
