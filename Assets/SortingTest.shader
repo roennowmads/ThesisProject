@@ -21,8 +21,8 @@ Shader "Unlit/SortingTest" {
 		Pass {
 			CGPROGRAM
 
-			#define PENTAGON
-			//#define QUAD
+			//#define PENTAGON
+			#define QUAD
 			//#define SIXVERTEXQUAD
 
 			#pragma vertex vert
@@ -256,7 +256,14 @@ Shader "Unlit/SortingTest" {
 
 			#ifdef PENTAGON
 				//vertex coordinates found here: http://mathworld.wolfram.com/Pentagon.html
-				float radius = 0.65;//0.9;//0.8725;  //nvidia tablet closer to: 0.65
+				//float radius = 0.87;//0.8725;//0.65;//0.9;//0.8725;  //nvidia tablet closer to: 0.65
+
+				float radius = 0.87; //angle view Tango device
+				//float radius = 0.65;
+				
+				//0.8725;//0.65;//0.9;//0.8725;  //nvidia tablet closer to: 0.65
+
+
 				pentagonParams *= radius;
 
 				//texture coordinates found here: http://manual.starling-framework.org/en/img/pentagon-texcoords.png
