@@ -142,16 +142,16 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         float[] points = readPointsFile3Attribs();
         m_pointsCount = points.Length / 3;
 
-        Screen.SetResolution(950, 720, true);
+        //Screen.SetResolution(950, 720, true);
 
 
         /*int width = 64;
         int height = 32;//128;//128;
         int depth = 64;*/
 
-        int width = 1;//20;
-        int height = 1; //1000;//128;//128;
-        int depth = 1; //10;
+        int width = 20;
+        int height = 20;//128;//128;
+        int depth = 12;
 
         int numberOfPoints = width * height * depth;
 
@@ -170,7 +170,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
                     //ppoints[index] = new Vector3(j / 10.0f - 65.0f, 115.0f, i / 10.0f - 82.0f);
 
                     //ppoints[index] = new Vector3(x / 0.22f - 0.0f, y / 0.22f, z / 0.22f - 0.0f);
-                    Vector3 point = new Vector3(x / 0.015f - 0.0f, y / 0.22f, z / 0.015f - 0.0f);
+                    Vector3 point = new Vector3(x / 0.012f - 0.0f, y / 0.22f, z / 0.01f - 0.0f);
 
                     ppoints.Add(point);
 

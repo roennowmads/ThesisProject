@@ -187,7 +187,7 @@ Shader "Unlit/SortingTest" {
 		#endif
 			void geom(point v2g p[1], inout TriangleStream<g2f> triStream)
 			{
-				half size = 0.352;
+				half size = 0.345;//0.352;
 				half2 quadSize = half2(size, size * aspect);
 				half2 quadSizeDouble = quadSize * 2.0;
 
@@ -257,8 +257,8 @@ Shader "Unlit/SortingTest" {
 				//vertex coordinates found here: http://mathworld.wolfram.com/Pentagon.html
 				//float radius = 0.87;//0.8725;//0.65;//0.9;//0.8725;  //nvidia tablet closer to: 0.65
 
-				//float radius = 0.87; //angle view Tango device
-				float radius = 0.77;
+				float radius = 0.87; //angle view Tango device
+				//float radius = 0.77; //single particle view
 				//float radius = 0.65;
 				
 				//0.8725;//0.65;//0.9;//0.8725;  //nvidia tablet closer to: 0.65
@@ -318,8 +318,8 @@ Shader "Unlit/SortingTest" {
 			#elif defined(PENTAGON)
 				if (albedo < 0.43) { //for pentagon
 			#endif
-					//discard;
-					o.color = fixed4(fixed3(0.0,1.0,0.0), 0.75/*albedo*//**0.25*/);
+					discard;
+					//o.color = fixed4(fixed3(0.0,1.0,0.0), 0.75/*albedo*//**0.25*/);
 				}
 				else {
 			#if defined(QUAD)
