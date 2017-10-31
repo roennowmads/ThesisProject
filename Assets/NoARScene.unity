@@ -322,15 +322,15 @@ Prefab:
       objectReference: {fileID: 2800000, guid: 25829737ed2695041a4f6457b32a4d88, type: 3}
     - target: {fileID: 4901076483243704, guid: 0d086da6e768ba144a9036fcbbfe1fde, type: 2}
       propertyPath: m_LocalPosition.x
-      value: -5.56
+      value: -7.6
       objectReference: {fileID: 0}
     - target: {fileID: 4901076483243704, guid: 0d086da6e768ba144a9036fcbbfe1fde, type: 2}
       propertyPath: m_LocalPosition.y
-      value: 15.27
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 4901076483243704, guid: 0d086da6e768ba144a9036fcbbfe1fde, type: 2}
       propertyPath: m_LocalPosition.z
-      value: 11.2
+      value: 14.8
       objectReference: {fileID: 0}
     - target: {fileID: 4901076483243704, guid: 0d086da6e768ba144a9036fcbbfe1fde, type: 2}
       propertyPath: m_LocalRotation.x
@@ -338,11 +338,11 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 4901076483243704, guid: 0d086da6e768ba144a9036fcbbfe1fde, type: 2}
       propertyPath: m_LocalRotation.y
-      value: 0.97257334
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4901076483243704, guid: 0d086da6e768ba144a9036fcbbfe1fde, type: 2}
       propertyPath: m_LocalRotation.z
-      value: -0.23259674
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4901076483243704, guid: 0d086da6e768ba144a9036fcbbfe1fde, type: 2}
       propertyPath: m_LocalRotation.w
@@ -350,7 +350,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 4901076483243704, guid: 0d086da6e768ba144a9036fcbbfe1fde, type: 2}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 26.9
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4901076483243704, guid: 0d086da6e768ba144a9036fcbbfe1fde, type: 2}
       propertyPath: m_LocalEulerAnglesHint.y
@@ -364,7 +364,7 @@ Prefab:
         type: 2}
       propertyPath: shader
       value: 
-      objectReference: {fileID: 4800000, guid: 925d032507cee354989e4ecafc0411b7, type: 3}
+      objectReference: {fileID: 4800000, guid: 268cbeb370ac3e844a78195221d5f9f9, type: 3}
     - target: {fileID: 114397575331289426, guid: 0d086da6e768ba144a9036fcbbfe1fde,
         type: 2}
       propertyPath: m_FontData.m_FontSize
@@ -394,6 +394,15 @@ Prefab:
         type: 2}
       propertyPath: m_LocalScale.z
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 114800236048718574, guid: 0d086da6e768ba144a9036fcbbfe1fde,
+        type: 2}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1652693802442956, guid: 0d086da6e768ba144a9036fcbbfe1fde, type: 2}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 0d086da6e768ba144a9036fcbbfe1fde, type: 2}

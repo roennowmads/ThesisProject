@@ -144,14 +144,25 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
         //Screen.SetResolution(950, 720, true);
 
+        //float pointSizeScale = .0625f;//1.0f;//1.0f;//0.125f;   //for one point: 12.0f
+
+        float pointSizeScale = 3.0f;
 
         /*int width = 64;
         int height = 32;//128;//128;
         int depth = 64;*/
 
-        int width = 20;
-        int height = 20;//128;//128;
-        int depth = 12;
+        /*int width = 20;
+        int height = 20;//20;//128;//128;
+        int depth = 12;*/
+
+        /*int width = 80;//20;
+        int height = 20;//20;//128;//128;
+        int depth = 48;//12;*/
+
+        int width = (int)(27 / pointSizeScale);
+        int height = 10;//20;//20;//128;//128;
+        int depth = (int)(18 / pointSizeScale);
 
         int numberOfPoints = width * height * depth;
 
@@ -161,16 +172,43 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
         //int sideLength = (int)Math.Sqrt(numberOfPoints);
 
+        /*float xDelta = 1.0f / 0.011f;
+        float xDeltaHalf = xDelta * 0.5f;
+        float yDelta = 1.0f / 0.009f;
+        float yDeltaHalf = yDelta * 0.5f;*/
+
+        /*float xDelta = 1.0f / 0.044f;
+        float xDeltaHalf = xDelta * 0.5f;
+        float yDelta = 1.0f / 0.036f;
+        float yDeltaHalf = yDelta * 0.5f;*/
+
+        float xDelta = 1.0f / (0.0135f / pointSizeScale);
+        float xDeltaHalf = xDelta * 0.5f;
+        float yDelta = 1.0f / (0.0135f / pointSizeScale);
+        float yDeltaHalf = yDelta * 0.5f;
+        
         for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                for (int z = 0; z < depth; z++) {
-                    //int index = x + y * depth + z * height * width;
+            for (int z = 0; z < depth; z++) {
+                for (int y = 0; y < height; y++) {
 
-                    //ppoints[index] = new Vector3(j / 2.0f - 65.0f, 115.0f, i / 2.0f - 82.0f);
-                    //ppoints[index] = new Vector3(j / 10.0f - 65.0f, 115.0f, i / 10.0f - 82.0f);
+                    float swapTranslationX = 0.0f;
+                    float swapTranslationY = 0.0f;
+                    if (y % 2 == 0) {
+                        swapTranslationX = xDeltaHalf;
+                        swapTranslationY = yDeltaHalf;
+                        //swapTranslation = 40.0f;
+                    }
+                        //int index = x + y * depth + z * height * width;
 
-                    //ppoints[index] = new Vector3(x / 0.22f - 0.0f, y / 0.22f, z / 0.22f - 0.0f);
-                    Vector3 point = new Vector3(x / 0.012f - 0.0f, y / 0.22f, z / 0.01f - 0.0f);
+                        //ppoints[index] = new Vector3(j / 2.0f - 65.0f, 115.0f, i / 2.0f - 82.0f);
+                        //ppoints[index] = new Vector3(j / 10.0f - 65.0f, 115.0f, i / 10.0f - 82.0f);
+
+                        //ppoints[index] = new Vector3(x / 0.22f - 0.0f, y / 0.22f, z / 0.22f - 0.0f);
+
+
+                    
+
+                    Vector3 point = new Vector3(x * xDelta - 0.0f + swapTranslationX, y / 0.22f, z * yDelta - 0.0f + swapTranslationY);
 
                     ppoints.Add(point);
 
@@ -270,6 +308,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         pentagonParams.w = s2 * 0.95f;
 
         m_material.SetVector("pentagonParams", pentagonParams);
+
+        m_material.SetFloat("pointSizeScale", pointSizeScale);
 
         m_material.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
         m_accumMaterial.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);

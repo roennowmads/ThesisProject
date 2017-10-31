@@ -39,6 +39,7 @@ Shader "Unlit/SortingTestGLSLPoints" { // defines the name of the shader
 
 			uniform 	float aspect;
 			uniform lowp sampler2D _ColorTex;
+			uniform lowp float pointSizeScale;
 			struct _Points_type {
 				float[3] value;
 				//float value1;
@@ -106,11 +107,11 @@ Shader "Unlit/SortingTestGLSLPoints" { // defines the name of the shader
 
 				//gl_Position.xy += deltaSize;
 
-				gl_PointSize = 100.0 * (gl_Position.z / gl_Position.w);
+				//gl_PointSize = 100.0 * (gl_Position.z / gl_Position.w);
 
 				float radius = 1.0;
 
-				gl_PointSize = 500.0 * gl_ProjectionMatrix[1][1] * radius / gl_Position.w;
+				gl_PointSize = pointSizeScale*511.0 * gl_ProjectionMatrix[1][1] * radius / gl_Position.w;
 				
 
 				colorCoords.x = pow((colorValue), .0625);
@@ -158,7 +159,7 @@ Shader "Unlit/SortingTestGLSLPoints" { // defines the name of the shader
 
 				SV_Target0.xyz = vs_COLOR0;
 				//SV_Target0.xyz = vec3(c);//vec3(gl_FragCoord.xy / _ScreenParams.xy, 0.0);//vs_COLOR0;
-				SV_Target0.w = albedo*0.25;
+				SV_Target0.w = 0.1;//albedo*0.25;
 				
 			}
 
