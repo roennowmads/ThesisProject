@@ -107,6 +107,10 @@ Shader "Unlit/SortingTestGLSLPoints" { // defines the name of the shader
 				//gl_Position.xy += deltaSize;
 
 				gl_PointSize = 100.0 * (gl_Position.z / gl_Position.w);
+
+				float radius = 1.0;
+
+				gl_PointSize = 500.0 * gl_ProjectionMatrix[1][1] * radius / gl_Position.w;
 				
 
 				colorCoords.x = pow((colorValue), .0625);
@@ -147,7 +151,7 @@ Shader "Unlit/SortingTestGLSLPoints" { // defines the name of the shader
 				//float albedo = 1.0 - pow(dot(vs_TEXCOORD0, vs_TEXCOORD0), 0.72);
 				//float albedo = 1.0 - length(vs_TEXCOORD0);
 
-				float albedo = textureLod(_AlbedoTex, gl_PointCoord.xy, 0.0).a;
+				float albedo = textureLod(_AlbedoTex, vec2(gl_PointCoord.x + 0.02, gl_PointCoord.y - 0.02), 0.0).a;
 				if (albedo < 0.325) {
 					discard; 
 				}
