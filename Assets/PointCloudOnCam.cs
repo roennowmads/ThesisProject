@@ -146,7 +146,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
         //float pointSizeScale = .0625f;//1.0f;//1.0f;//0.125f;   //for one point: 12.0f
 
-        float pointSizeScale = 3.0f;
+        float pointSizeScale = 1.0f;
 
         /*int width = 64;
         int height = 32;//128;//128;
@@ -160,8 +160,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         int height = 20;//20;//128;//128;
         int depth = 48;//12;*/
 
-        int width = (int)(27 / pointSizeScale);
-        int height = 10;//20;//20;//128;//128;
+        int width = (int)(28 / pointSizeScale);
+        int height = 30;//20;//20;//128;//128;
         int depth = (int)(18 / pointSizeScale);
 
         int numberOfPoints = width * height * depth;
@@ -182,9 +182,9 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         float yDelta = 1.0f / 0.036f;
         float yDeltaHalf = yDelta * 0.5f;*/
 
-        float xDelta = 1.0f / (0.0135f / pointSizeScale);
+        float xDelta = 1.0f / (0.015f / pointSizeScale);
         float xDeltaHalf = xDelta * 0.5f;
-        float yDelta = 1.0f / (0.0135f / pointSizeScale);
+        float yDelta = 1.0f / (0.015f / pointSizeScale);
         float yDeltaHalf = yDelta * 0.5f;
         
         for (int x = 0; x < width; x++) {
@@ -193,11 +193,10 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
                     float swapTranslationX = 0.0f;
                     float swapTranslationY = 0.0f;
-                    if (y % 2 == 0) {
+                    /*if (y % 2 == 0) {
                         swapTranslationX = xDeltaHalf;
                         swapTranslationY = yDeltaHalf;
-                        //swapTranslation = 40.0f;
-                    }
+                    }*/
                         //int index = x + y * depth + z * height * width;
 
                         //ppoints[index] = new Vector3(j / 2.0f - 65.0f, 115.0f, i / 2.0f - 82.0f);
@@ -445,8 +444,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         m_material.SetPass(0);
         //Graphics.DrawProcedural(MeshTopology.Points, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount /** 6*/);
 
-        //Graphics.DrawProcedural(MeshTopology.Triangles, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount * 6);
-        Graphics.DrawProcedural(MeshTopology.Points, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount);
+        Graphics.DrawProcedural(MeshTopology.Triangles, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount * 6);
+        //Graphics.DrawProcedural(MeshTopology.Points, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount);
     }
 
     private void OnRenderObject() {
