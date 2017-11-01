@@ -40,6 +40,7 @@ Shader "Unlit/SortingTestGLSL" { // defines the name of the shader
 			uniform 	float aspect;
 			uniform lowp sampler2D _ColorTex;
 			uniform lowp float pointSizeScale;
+			uniform lowp float pointSizeScaleIndependent;
 			struct _Points_type {
 				float[3] value;
 				//float value1;
@@ -78,7 +79,7 @@ Shader "Unlit/SortingTestGLSL" { // defines the name of the shader
 				//vec2 quadCoordsAndTexCoord = quadCoordsAndTexCoords[quad_vertexID];
 				//vec4 quadCoordsAndTexCoord = quadCoordsAndTexCoords[quad_vertexID];
 				
-				float size = pointSizeScale*0.345;//0.02;
+				float size = pointSizeScaleIndependent*pointSizeScale*0.345;//0.02;
 				vec2 quadSize = vec2(size, size * aspect);
 
 				vec2 deltaSize = (quadCoordsAndTexCoord * 2.0 - 1.0) * quadSize;
@@ -154,7 +155,7 @@ Shader "Unlit/SortingTestGLSL" { // defines the name of the shader
 
 				SV_Target0.xyz = vs_COLOR0;
 				//SV_Target0.xyz = vec3(c);//vec3(gl_FragCoord.xy / _ScreenParams.xy, 0.0);//vs_COLOR0;
-				SV_Target0.w = 0.5;//0.1;//albedo*0.25;
+				SV_Target0.w = 0.1;//0.1;//albedo*0.25;
 				
 			}
 

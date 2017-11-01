@@ -146,7 +146,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
         //float pointSizeScale = .0625f;//1.0f;//1.0f;//0.125f;   //for one point: 12.0f
 
-        float pointSizeScale = 1.0f;
+        float pointSizeScale = 0.125f;
 
         /*int width = 64;
         int height = 32;//128;//128;
@@ -161,7 +161,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         int depth = 48;//12;*/
 
         int width = (int)(28 / pointSizeScale);
-        int height = 30;//20;//20;//128;//128;
+        int height = 100;//20;//20;//128;//128;
         int depth = (int)(18 / pointSizeScale);
 
         int numberOfPoints = width * height * depth;
@@ -309,6 +309,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         m_material.SetVector("pentagonParams", pentagonParams);
 
         m_material.SetFloat("pointSizeScale", pointSizeScale);
+        m_material.SetFloat("pointSizeScaleIndependent", 1.0f/*1.0f / 3.0f*/);
 
         m_material.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
         m_accumMaterial.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
@@ -444,8 +445,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         m_material.SetPass(0);
         //Graphics.DrawProcedural(MeshTopology.Points, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount /** 6*/);
 
-        Graphics.DrawProcedural(MeshTopology.Triangles, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount * 6);
-        //Graphics.DrawProcedural(MeshTopology.Points, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount);
+        //Graphics.DrawProcedural(MeshTopology.Triangles, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount * 6);
+        Graphics.DrawProcedural(MeshTopology.Points, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount);
     }
 
     private void OnRenderObject() {

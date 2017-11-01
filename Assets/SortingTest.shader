@@ -50,6 +50,7 @@ Shader "Unlit/SortingTest" {
 			uniform uint _Magnitude;
 			uniform int _TextureSwitchFrameNumber;
 			uniform float pointSizeScale;
+			uniform float pointSizeScaleIndependent;
 
 			struct appdata
 			{
@@ -188,7 +189,7 @@ Shader "Unlit/SortingTest" {
 		#endif
 			void geom(point v2g p[1], inout TriangleStream<g2f> triStream)
 			{
-				half size = pointSizeScale*0.345;//0.352;
+				half size = pointSizeScaleIndependent*pointSizeScale*0.345;//0.352;
 				half2 quadSize = half2(size, size * aspect);
 				half2 quadSizeDouble = quadSize * 2.0;
 
@@ -260,7 +261,7 @@ Shader "Unlit/SortingTest" {
 
 				//float radius = pointSizeScale*0.87; //Tango device
 				//float radius = 0.77; //single particle view
-				float radius = pointSizeScale*0.785; //Tegra tablet
+				float radius = pointSizeScaleIndependent*pointSizeScale*0.785; //Tegra tablet
 				
 				//0.8725;//0.65;//0.9;//0.8725;  //nvidia tablet closer to: 0.65
 
@@ -324,9 +325,9 @@ Shader "Unlit/SortingTest" {
 				}
 				else {
 			#if defined(QUAD)
-					o.color = fixed4(i.color/*color*/, 0.5/*albedo*0.25*//*albedo*//**0.25*/);
+					o.color = fixed4(i.color/*color*/, 0.1/*albedo*0.25*//*albedo*//**0.25*/);
 			#elif defined(PENTAGON)
-					o.color = fixed4(i.color/*color*/, 0.5/*albedo*0.225*//*albedo*//**0.25*/);
+					o.color = fixed4(i.color/*color*/, 0.1/*albedo*0.225*//*albedo*//**0.25*/);
 			#endif
 					
 				}
