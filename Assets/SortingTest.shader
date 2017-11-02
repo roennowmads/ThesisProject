@@ -13,7 +13,7 @@ Shader "Unlit/SortingTest" {
 		//Tags{"RenderType" = "Opaque"}
 		Blend SrcAlpha OneMinusSrcAlpha
 		//Blend One OneMinusSrcAlpha		
-		Cull Off
+		Cull Front
 		ZWrite Off
 		//LOD 3000
 		//AlphaToMask Off
