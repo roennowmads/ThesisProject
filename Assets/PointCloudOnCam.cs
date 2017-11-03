@@ -46,9 +46,10 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
     private float m_timeSinceUpdate, m_updateInterval;
 
-    private bool m_fixedParticleCountTests = true;
-    private bool m_fixedParticleSizeTests = false;
+    private bool m_fixedParticleCountTests = false;
+    private bool m_fixedParticleSizeTests = true;
 
+    private int m_particelSizeTestsXSize;
     private ComputeBuffer m_indexComputeBuffer;
 
     public static void Shuffle(uint[] list) {
@@ -157,7 +158,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
         //float pointSizeScale = .0625f;//1.0f;//1.0f;//0.125f;   //for one point: 12.0f
 
-        m_pointSizeScale = 1.0f;
+        m_pointSizeScale = 0.0625f;
         m_pointSizeScaleIndependent = 0.25f;
         m_timeSinceUpdate = 0.0f;
         m_updateInterval = 7.0f;
@@ -174,9 +175,9 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         int height = 20;//20;//128;//128;
         int depth = 48;//12;*/
 
-        int width = (int)(10 / m_pointSizeScale);
-        int height = 200;//20;//20;//128;//128;
-        int depth = (int)(6 / m_pointSizeScale);
+        int width = (int)(9 / m_pointSizeScale);  //decrease decrease to get different particle count results
+        int height = 50;//20;//20;//128;//128;
+        int depth = (int)(6.25f / m_pointSizeScale);
 
         int numberOfPoints = width * height * depth;
 
@@ -223,7 +224,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
             Camera.main.transform.position = (new Vector3(-0.7f, 5.3f - m_pointSizeScale * 0.25f, 21.7f)); //5.05
         }
         else if (m_fixedParticleSizeTests) {
-            Camera.main.transform.position = (new Vector3(-0.7f, 5.3f - m_pointSizeScale * 0.25f, 21.7f)); //5.05
+            m_particelSizeTestsXSize = 9;
+            Camera.main.transform.position = (new Vector3(-0.7f, 5.45f - m_pointSizeScale * 0.25f, 21.7f)); //5.05
         }
         else {
             Camera.main.transform.position = (new Vector3(-13.2f, 13.9f - m_pointSizeScale * 0.25f, 21.7f));
@@ -406,41 +408,55 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         }
         else if (m_fixedParticleSizeTests) {
              if (m_timeSinceUpdate > m_updateInterval) {
-                //m_pointSizeScaleIndependent *= 0.5f;
-                /*m_pointSizeScaleIndependent -= 0.05f;
-                if (m_pointSizeScaleIndependent < 0.05f) {
-                    m_pointSizeScaleIndependent = 0.25f;
-                }*/
+                m_particelSizeTestsXSize--;
+                if (m_particelSizeTestsXSize <= 0) {
+                    m_particelSizeTestsXSize = 9;
+                }
                 m_timeSinceUpdate = 0.0f;
 
-                Camera.main.transform.position = (new Vector3(-0.7f, 5.3f - m_pointSizeScale * 0.25f, 21.7f));
+                //Camera.main.transform.position = (new Vector3(-0.7f, 5.3f - m_pointSizeScale * 0.25f, 21.7f));
 
-                /*int width = (int)(48 / m_pointSizeScale);
-                int height = 30;//20;//20;//128;//128;
-                int depth = (int)(32 / m_pointSizeScale);
+                int width = (int)(m_particelSizeTestsXSize / m_pointSizeScale);
+                int height = 50;//20;//20;//128;//128;
+                int depth = (int)(6.25f / m_pointSizeScale);
+
+                int numberOfPoints = width * height * depth;
 
                 List<Vector3> ppoints = new List<Vector3>();
+                List<uint> indices = new List<uint>();
+                m_indexComputeBuffer.Dispose();
+                m_indexComputeBuffer = new ComputeBuffer(numberOfPoints, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
 
                 float xDelta = 1.0f / (0.015f / m_pointSizeScale);
                 float xDeltaHalf = xDelta * 0.5f;
                 float yDelta = 1.0f / (0.015f / m_pointSizeScale);
                 float yDeltaHalf = yDelta * 0.5f;
-        
+
+                uint index = 0;
                 for (int x = 0; x < width; x++) {
                     for (int z = 0; z < depth; z++) {
                         for (int y = 0; y < height; y++) {
                             Vector3 point = new Vector3(x * xDelta, y / 0.22f, z * yDelta);
                             ppoints.Add(point);
+
+                            uint value = index;
+                            value = (value << 8) + 127;
+
+                            indices.Add(value);
+                            index++;
                         }
                     }
                 }
                 m_pointsCount = ppoints.Count;
+
+                m_indexComputeBuffer.SetData(indices.ToArray());
+                
                 m_pointsBuffer.Dispose();
                 m_pointsBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
                 m_pointsBuffer.SetData(ppoints.ToArray());
-                m_material.SetBuffer("_Points", m_pointsBuffer);*/
-                //m_accumMaterial.SetBuffer("_Points", m_pointsBuffer);
-                //m_revealageMaterial.SetBuffer("_Points", m_pointsBuffer);
+
+                m_material.SetBuffer("_IndicesValues", m_indexComputeBuffer);
+                m_material.SetBuffer("_Points", m_pointsBuffer);
 
                 m_material.SetFloat("pointSizeScale", m_pointSizeScale);
                 m_material.SetFloat("pointSizeScaleIndependent", m_pointSizeScaleIndependent);
