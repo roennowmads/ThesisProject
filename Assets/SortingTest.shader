@@ -170,13 +170,13 @@ Shader "Unlit/SortingTest" {
 			void vert(in appdata v, out v2g o)
 			{
 				UNITY_INITIALIZE_OUTPUT(v2g, o)				
-				uint value = v.id;//_IndicesValues[v.id];
+				uint value = _IndicesValues[v.id];
 
-				uint index = value /*>> 8*/;
+				uint index = value >> 8;
 				float4 position = float4(-_Points[index], 1.0);
 				o.vertex = UnityObjectToClipPos(position);
 
-				float colorValue = 0.5;//(value & 0xFF) * inv255;
+				float colorValue = (value & 0xFF) * inv255;
 				o.color = tex2Dlod(_ColorTex, half4(pow((colorValue), .0625), 0, 0, 0)).rgb /** modifier*/;
 			}
 
@@ -325,9 +325,9 @@ Shader "Unlit/SortingTest" {
 				}
 				else {
 			#if defined(QUAD)
-					o.color = fixed4(i.color/*color*/, 0.1/*albedo*0.25*//*albedo*//**0.25*/);
+					o.color = fixed4(i.color/*color*/, 0.1 + albedo*0.00000001/*albedo*0.25*//*albedo*//**0.25*/);
 			#elif defined(PENTAGON)
-					o.color = fixed4(i.color/*color*/, 0.1/*albedo*0.225*//*albedo*//**0.25*/);
+					o.color = fixed4(i.color/*color*/, 0.1 + albedo*0.00000001/*albedo*0.225*//*albedo*//**0.25*/);
 			#endif
 					
 				}

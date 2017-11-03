@@ -46,8 +46,10 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
     private float m_timeSinceUpdate, m_updateInterval;
 
-    private bool m_fixedParticleCountTests = false;
-    private bool m_fixedParticleSizeTests = true;
+    private bool m_fixedParticleCountTests = true;
+    private bool m_fixedParticleSizeTests = false;
+
+    private ComputeBuffer m_indexComputeBuffer;
 
     public static void Shuffle(uint[] list) {
         int n = list.Length;
@@ -179,6 +181,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         int numberOfPoints = width * height * depth;
 
         List<Vector3> ppoints = new List<Vector3>();
+        List<uint> indices = new List<uint>();
+        m_indexComputeBuffer = new ComputeBuffer(numberOfPoints, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
 
         //Vector3[] ppoints = new Vector3[numberOfPoints];
 
@@ -188,16 +192,26 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         float xDeltaHalf = xDelta * 0.5f;
         float yDelta = 1.0f / (0.015f / m_pointSizeScale);
         float yDeltaHalf = yDelta * 0.5f;
-        
+
+        uint index = 0;
         for (int x = 0; x < width; x++) {
             for (int z = 0; z < depth; z++) {
                 for (int y = 0; y < height; y++) {
                     Vector3 point = new Vector3(x * xDelta, y / 0.22f, z * yDelta);
                     ppoints.Add(point);
+
+                    uint value = index;
+                    value = (value << 8) + 127;
+
+                    indices.Add(value);
+                    index++;
                 }
             }
         }
         m_pointsCount = ppoints.Count;
+
+        m_indexComputeBuffer.SetData(indices.ToArray());
+
 
         m_indexComputeBuffers = new List<ComputeBuffer>();
 
@@ -302,9 +316,13 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         m_material.SetFloat("pointSizeScale", m_pointSizeScale);
         m_material.SetFloat("pointSizeScaleIndependent", m_pointSizeScaleIndependent);
 
-        m_material.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
+        /*m_material.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
         m_accumMaterial.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
-        m_revealageMaterial.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
+        m_revealageMaterial.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);*/
+
+        m_material.SetBuffer("_IndicesValues", m_indexComputeBuffer);
+        m_accumMaterial.SetBuffer("_IndicesValues", m_indexComputeBuffer);
+        m_revealageMaterial.SetBuffer("_IndicesValues", m_indexComputeBuffer);
 
         m_blendMaterial.SetTexture("_AccumTex", m_accumTex);
         m_blendMaterial.SetTexture("_RevealageTex", m_revealageTex);
@@ -561,8 +579,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         m_material.SetPass(0);
         //Graphics.DrawProcedural(MeshTopology.Points, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount /** 6*/);
 
-        Graphics.DrawProcedural(MeshTopology.Triangles, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount * 6);
-        //Graphics.DrawProcedural(MeshTopology.Points, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount);
+        //Graphics.DrawProcedural(MeshTopology.Triangles, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount * 6);
+        Graphics.DrawProcedural(MeshTopology.Points, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount);
     }
 
     private void OnRenderObject() {

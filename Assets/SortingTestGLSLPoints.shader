@@ -86,10 +86,10 @@ Shader "Unlit/SortingTestGLSLPoints" { // defines the name of the shader
 				//vec2 deltaSize = quadCoordsAndTexCoord * quadSize;
 				//vec2 deltaSize = quadCoordsAndTexCoord.xy * quadSize;
 
-				uint value = uint(quadId);//_IndicesValues_buf[quadId];
+				uint value = _IndicesValues_buf[quadId];
 
-				uint index = value /*>> 8u*/;
-				float colorValue = 0.5;//float(value & 255u) * inv255;
+				uint index = value >> 8u;
+				float colorValue = float(value & 255u) * inv255;
 
 
 				//vec3 pos =  vec3(_Points_buf[index].value);

@@ -86,10 +86,10 @@ Shader "Unlit/SortingTestGLSL" { // defines the name of the shader
 				//vec2 deltaSize = quadCoordsAndTexCoord * quadSize;
 				//vec2 deltaSize = quadCoordsAndTexCoord.xy * quadSize;
 
-				uint value = uint(quadId);//_IndicesValues_buf[quadId];
+				uint value = _IndicesValues_buf[quadId];
 
-				uint index = value /*>> 8u*/;
-				float colorValue = 0.5;//float(value & 255u) * inv255;
+				uint index = value >> 8u;
+				float colorValue = float(value & 255u) * inv255;
 
 
 				//vec3 pos =  vec3(_Points_buf[index].value);
@@ -155,7 +155,7 @@ Shader "Unlit/SortingTestGLSL" { // defines the name of the shader
 
 				SV_Target0.xyz = vs_COLOR0;
 				//SV_Target0.xyz = vec3(c);//vec3(gl_FragCoord.xy / _ScreenParams.xy, 0.0);//vs_COLOR0;
-				SV_Target0.w = 0.1;//0.1;//albedo*0.25;
+				SV_Target0.w = 0.1 + albedo*0.00000001;//0.1;//albedo*0.25;
 				
 			}
 
