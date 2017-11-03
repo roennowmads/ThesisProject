@@ -161,7 +161,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         m_pointSizeScale = 4.0f;//0.0625f;
         m_pointSizeScaleIndependent = 0.175f;
         m_timeSinceUpdate = 0.0f;
-        m_updateInterval = 7.0f;
+        m_updateInterval = 12.0f;
 
         /*int width = 64;
         int height = 32;//128;//128;
@@ -176,8 +176,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         int depth = 48;//12;*/
 
         int width = (int)(12 / m_pointSizeScale);  //decrease decrease to get different particle count results
-        int height = 50;//20;//20;//128;//128;
-        int depth = (int)(8 / m_pointSizeScale);
+        int height = 100;//20;//20;//128;//128;
+        int depth = (int)(4 / m_pointSizeScale);
 
         int numberOfPoints = width * height * depth;
 
@@ -466,8 +466,14 @@ private List<ComputeBuffer> m_indexComputeBuffers;
             //Camera.main.transform.position = (new Vector3(-1.5f + m_pointSizeScale * 0.25f, 6.0f - m_pointSizeScale * 0.3f, 21.7f));
 
             if (m_timeSinceUpdate > m_updateInterval) {
-                m_pointSizeScale *= 0.5f;
-                if (m_pointSizeScale < 0.0625f) {
+                if (m_pointSizeScale == 0.125f) {
+                    m_pointSizeScale = 0.1f;
+                }
+                else {
+                     m_pointSizeScale *= 0.5f;
+                }
+               
+                if (m_pointSizeScale < 0.1f) {
                     m_pointSizeScale = 4.0f;
                 }
                 m_timeSinceUpdate = 0.0f;
@@ -475,8 +481,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
                 Camera.main.transform.position = (new Vector3(-1.5f + m_pointSizeScale * 0.25f, 6.0f - m_pointSizeScale * 0.3f, 21.7f));
 
                 int width = (int)(12 / m_pointSizeScale);
-                int height = 50;//20;//20;//128;//128;
-                int depth = (int)(8 / m_pointSizeScale);
+                int height = 100;//20;//20;//128;//128;
+                int depth = (int)(4 / m_pointSizeScale);
 
                 int numberOfPoints = width * height * depth;
 
