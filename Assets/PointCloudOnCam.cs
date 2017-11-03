@@ -41,6 +41,13 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
     private bool m_directRender = true;
 
+    public static float m_pointSizeScale;
+    public static float m_pointSizeScaleIndependent;
+
+    private float m_timeSinceUpdate, m_updateInterval;
+
+    private bool m_fixedParticleCountTests = true;
+
     public static void Shuffle(uint[] list) {
         int n = list.Length;
         while (n > 1) {
@@ -143,15 +150,19 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         m_pointsCount = points.Length / 3;
 
         //Screen.SetResolution(950, 720, true);
+        Screen.SetResolution(1920, 1080, true);
 
         //float pointSizeScale = .0625f;//1.0f;//1.0f;//0.125f;   //for one point: 12.0f
 
-        float pointSizeScale = 0.125f;
+        m_pointSizeScale = 1.0f;
+        m_pointSizeScaleIndependent = 0.25f;
+        m_timeSinceUpdate = 0.0f;
+        m_updateInterval = 7.0f;
 
         /*int width = 64;
         int height = 32;//128;//128;
         int depth = 64;*/
-
+        
         /*int width = 20;
         int height = 20;//20;//128;//128;
         int depth = 12;*/
@@ -160,9 +171,9 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         int height = 20;//20;//128;//128;
         int depth = 48;//12;*/
 
-        int width = (int)(28 / pointSizeScale);
-        int height = 100;//20;//20;//128;//128;
-        int depth = (int)(18 / pointSizeScale);
+        int width = (int)(10 / m_pointSizeScale);
+        int height = 200;//20;//20;//128;//128;
+        int depth = (int)(6 / m_pointSizeScale);
 
         int numberOfPoints = width * height * depth;
 
@@ -172,57 +183,33 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
         //int sideLength = (int)Math.Sqrt(numberOfPoints);
 
-        /*float xDelta = 1.0f / 0.011f;
+        float xDelta = 1.0f / (0.015f / m_pointSizeScale);
         float xDeltaHalf = xDelta * 0.5f;
-        float yDelta = 1.0f / 0.009f;
-        float yDeltaHalf = yDelta * 0.5f;*/
-
-        /*float xDelta = 1.0f / 0.044f;
-        float xDeltaHalf = xDelta * 0.5f;
-        float yDelta = 1.0f / 0.036f;
-        float yDeltaHalf = yDelta * 0.5f;*/
-
-        float xDelta = 1.0f / (0.015f / pointSizeScale);
-        float xDeltaHalf = xDelta * 0.5f;
-        float yDelta = 1.0f / (0.015f / pointSizeScale);
+        float yDelta = 1.0f / (0.015f / m_pointSizeScale);
         float yDeltaHalf = yDelta * 0.5f;
         
         for (int x = 0; x < width; x++) {
             for (int z = 0; z < depth; z++) {
                 for (int y = 0; y < height; y++) {
-
-                    float swapTranslationX = 0.0f;
-                    float swapTranslationY = 0.0f;
-                    /*if (y % 2 == 0) {
-                        swapTranslationX = xDeltaHalf;
-                        swapTranslationY = yDeltaHalf;
-                    }*/
-                        //int index = x + y * depth + z * height * width;
-
-                        //ppoints[index] = new Vector3(j / 2.0f - 65.0f, 115.0f, i / 2.0f - 82.0f);
-                        //ppoints[index] = new Vector3(j / 10.0f - 65.0f, 115.0f, i / 10.0f - 82.0f);
-
-                        //ppoints[index] = new Vector3(x / 0.22f - 0.0f, y / 0.22f, z / 0.22f - 0.0f);
-
-
-                    
-
-                    Vector3 point = new Vector3(x * xDelta - 0.0f + swapTranslationX, y / 0.22f, z * yDelta - 0.0f + swapTranslationY);
-
+                    Vector3 point = new Vector3(x * xDelta, y / 0.22f, z * yDelta);
                     ppoints.Add(point);
-
                 }
             }
         }
         m_pointsCount = ppoints.Count;
-
-
 
         m_indexComputeBuffers = new List<ComputeBuffer>();
 
         readIndicesAndValues(m_indexComputeBuffers);
 
         Texture2D colorTexture = createColorLookupTexture();
+
+        if (m_fixedParticleCountTests) {
+            Camera.main.transform.position = (new Vector3(-0.7f, 5.3f - m_pointSizeScale * 0.25f, 21.7f)); //5.05
+        }
+        else {
+            Camera.main.transform.position = (new Vector3(-13.2f, 13.9f - m_pointSizeScale * 0.25f, 21.7f));
+        }
 
         //ComputeBuffer coords = new ComputeBuffer(6, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
        /* Texture2D coordsTex = new Texture2D(6, 1, TextureFormat.R8, false, false);
@@ -308,8 +295,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
         m_material.SetVector("pentagonParams", pentagonParams);
 
-        m_material.SetFloat("pointSizeScale", pointSizeScale);
-        m_material.SetFloat("pointSizeScaleIndependent", 1.0f/*1.0f / 3.0f*/);
+        m_material.SetFloat("pointSizeScale", m_pointSizeScale);
+        m_material.SetFloat("pointSizeScaleIndependent", m_pointSizeScaleIndependent);
 
         m_material.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
         m_accumMaterial.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
@@ -350,10 +337,93 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         Shader.EnableKeyword("_WEIGHTED2");*/
     }
 
-    //void OnRenderImage(RenderTexture src, RenderTexture dest) {        
-    //    Graphics.Blit(src, m_renderTex);
-    //    Graphics.Blit(src, dest);
-    //}
+    private void Update() {
+        m_timeSinceUpdate += Time.deltaTime;
+
+        if (m_fixedParticleCountTests) {
+             if (m_timeSinceUpdate > m_updateInterval) {
+                //m_pointSizeScaleIndependent *= 0.5f;
+                m_pointSizeScaleIndependent -= 0.05f;
+                if (m_pointSizeScaleIndependent < 0.05f) {
+                    m_pointSizeScaleIndependent = 0.25f;
+                }
+                m_timeSinceUpdate = 0.0f;
+
+                Camera.main.transform.position = (new Vector3(-0.7f, 5.3f - m_pointSizeScale * 0.25f, 21.7f));
+
+                /*int width = (int)(48 / m_pointSizeScale);
+                int height = 30;//20;//20;//128;//128;
+                int depth = (int)(32 / m_pointSizeScale);
+
+                List<Vector3> ppoints = new List<Vector3>();
+
+                float xDelta = 1.0f / (0.015f / m_pointSizeScale);
+                float xDeltaHalf = xDelta * 0.5f;
+                float yDelta = 1.0f / (0.015f / m_pointSizeScale);
+                float yDeltaHalf = yDelta * 0.5f;
+        
+                for (int x = 0; x < width; x++) {
+                    for (int z = 0; z < depth; z++) {
+                        for (int y = 0; y < height; y++) {
+                            Vector3 point = new Vector3(x * xDelta, y / 0.22f, z * yDelta);
+                            ppoints.Add(point);
+                        }
+                    }
+                }
+                m_pointsCount = ppoints.Count;
+                m_pointsBuffer.Dispose();
+                m_pointsBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
+                m_pointsBuffer.SetData(ppoints.ToArray());
+                m_material.SetBuffer("_Points", m_pointsBuffer);*/
+                //m_accumMaterial.SetBuffer("_Points", m_pointsBuffer);
+                //m_revealageMaterial.SetBuffer("_Points", m_pointsBuffer);
+
+                m_material.SetFloat("pointSizeScale", m_pointSizeScale);
+                m_material.SetFloat("pointSizeScaleIndependent", m_pointSizeScaleIndependent);
+            }
+        }
+        else {
+            if (m_timeSinceUpdate > m_updateInterval) {
+                m_pointSizeScale *= 0.5f;
+                if (m_pointSizeScale < 0.0625f) {
+                    m_pointSizeScale = 4.0f;
+                }
+                m_timeSinceUpdate = 0.0f;
+
+                Camera.main.transform.position = (new Vector3(-13.2f, 13.9f - m_pointSizeScale * 0.25f, 21.7f));
+
+                int width = (int)(48 / m_pointSizeScale);
+                int height = 30;//20;//20;//128;//128;
+                int depth = (int)(32 / m_pointSizeScale);
+
+                List<Vector3> ppoints = new List<Vector3>();
+
+                float xDelta = 1.0f / (0.015f / m_pointSizeScale);
+                float xDeltaHalf = xDelta * 0.5f;
+                float yDelta = 1.0f / (0.015f / m_pointSizeScale);
+                float yDeltaHalf = yDelta * 0.5f;
+        
+                for (int x = 0; x < width; x++) {
+                    for (int z = 0; z < depth; z++) {
+                        for (int y = 0; y < height; y++) {
+                            Vector3 point = new Vector3(x * xDelta, y / 0.22f, z * yDelta);
+                            ppoints.Add(point);
+                        }
+                    }
+                }
+                m_pointsCount = ppoints.Count;
+                m_pointsBuffer.Dispose();
+                m_pointsBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
+                m_pointsBuffer.SetData(ppoints.ToArray());
+                m_material.SetBuffer("_Points", m_pointsBuffer);
+                //m_accumMaterial.SetBuffer("_Points", m_pointsBuffer);
+                //m_revealageMaterial.SetBuffer("_Points", m_pointsBuffer);
+
+                m_material.SetFloat("pointSizeScale", m_pointSizeScale);
+            }        
+        }
+    }
+
 
     private void OnPreRender() {
         //Make sure all opaque geometry (everything not rendered with drawProcedural) is rendered into opaqueTex.
@@ -445,8 +515,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         m_material.SetPass(0);
         //Graphics.DrawProcedural(MeshTopology.Points, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount /** 6*/);
 
-        //Graphics.DrawProcedural(MeshTopology.Triangles, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount * 6);
-        Graphics.DrawProcedural(MeshTopology.Points, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount);
+        Graphics.DrawProcedural(MeshTopology.Triangles, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount * 6);
+        //Graphics.DrawProcedural(MeshTopology.Points, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount);
     }
 
     private void OnRenderObject() {
