@@ -1,5 +1,5 @@
 ﻿
-Shader "Unlit/SortingTestGLSL" { // defines the name of the shader 
+Shader "Unlit/SortingTestRegular6VertsGLSL" { // defines the name of the shader 
 
 	SubShader{ // Unity chooses the subshader that fits the GPU best
 		Tags{ "QUEUE" = "Transparent" "IGNOREPROJECTOR" = "true" "RenderType" = "Transparent" }

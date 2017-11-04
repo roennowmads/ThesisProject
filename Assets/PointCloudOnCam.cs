@@ -614,8 +614,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         m_material.SetPass(0);
         //Graphics.DrawProcedural(MeshTopology.Points, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount /** 6*/);
 
-        //Graphics.DrawProcedural(MeshTopology.Triangles, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount * 6);
-        Graphics.DrawProcedural(MeshTopology.Points, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount);
+        Graphics.DrawProcedural(MeshTopology.Triangles, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount * 6);
+        //Graphics.DrawProcedural(MeshTopology.Points, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount);
         //Graphics.DrawProcedural(MeshTopology.Triangles, /*(m_indexComputeBuffers[m_frameIndex].count)*/6, m_pointsCount);
     }
 

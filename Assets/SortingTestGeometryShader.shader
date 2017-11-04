@@ -1,7 +1,7 @@
 ﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
 
 
-Shader "Unlit/SortingTest" {
+Shader "Unlit/SortingTestGeometryShader" {
 	Properties{
 		_MainTex("Texture", 2D) = "white" {}
 		_MainTex2("_MainTex2", 2D) = "white" {}

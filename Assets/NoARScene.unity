@@ -364,7 +364,7 @@ Prefab:
         type: 2}
       propertyPath: shader
       value: 
-      objectReference: {fileID: 4800000, guid: 268cbeb370ac3e844a78195221d5f9f9, type: 3}
+      objectReference: {fileID: 4800000, guid: 45c55a72e4d059940ba1fb92f53d98ef, type: 3}
     - target: {fileID: 114397575331289426, guid: 0d086da6e768ba144a9036fcbbfe1fde,
         type: 2}
       propertyPath: m_FontData.m_FontSize
