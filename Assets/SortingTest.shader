@@ -21,6 +21,9 @@ Shader "Unlit/SortingTest" {
 		Pass {
 			CGPROGRAM
 
+			#define TANGO_DEVICE
+			//#define TEGRA_TABLET
+
 			#define PENTAGON
 			//#define QUAD
 			//#define SIXVERTEXQUAD
@@ -259,9 +262,12 @@ Shader "Unlit/SortingTest" {
 				//vertex coordinates found here: http://mathworld.wolfram.com/Pentagon.html
 				//float radius = 0.87;//0.8725;//0.65;//0.9;//0.8725;  //nvidia tablet closer to: 0.65
 
-				//float radius = pointSizeScaleIndependent*pointSizeScale*0.87; //Tango device
-				//float radius = 0.77; //single particle view
+			#if defined(TANGO_DEVICE)
+				float radius = pointSizeScaleIndependent*pointSizeScale*0.87; //Tango device
+			#elif defined(TEGRA_TABLET)
 				float radius = pointSizeScaleIndependent*pointSizeScale*0.785; //Tegra tablet
+			#endif
+				//float radius = 0.77; //single particle view
 				
 				//0.8725;//0.65;//0.9;//0.8725;  //nvidia tablet closer to: 0.65
 
