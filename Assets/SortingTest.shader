@@ -259,9 +259,9 @@ Shader "Unlit/SortingTest" {
 				//vertex coordinates found here: http://mathworld.wolfram.com/Pentagon.html
 				//float radius = 0.87;//0.8725;//0.65;//0.9;//0.8725;  //nvidia tablet closer to: 0.65
 
-				//float radius = pointSizeScale*0.87; //Tango device
+				float radius = pointSizeScaleIndependent*pointSizeScale*0.87; //Tango device
 				//float radius = 0.77; //single particle view
-				float radius = pointSizeScaleIndependent*pointSizeScale*0.785; //Tegra tablet
+				//float radius = pointSizeScaleIndependent*pointSizeScale*0.785; //Tegra tablet
 				
 				//0.8725;//0.65;//0.9;//0.8725;  //nvidia tablet closer to: 0.65
 

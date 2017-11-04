@@ -176,8 +176,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         int depth = 48;//12;*/
 
         int width = (int)(12 / m_pointSizeScale);  //decrease decrease to get different particle count results
-        int height = 100;//20;//20;//128;//128;
-        int depth = (int)(4 / m_pointSizeScale);
+        int height = 50;//20;//20;//128;//128;
+        int depth = (int)(8 / m_pointSizeScale);
 
         int numberOfPoints = width * height * depth;
 
@@ -481,8 +481,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
                 Camera.main.transform.position = (new Vector3(-1.5f + m_pointSizeScale * 0.25f, 6.0f - m_pointSizeScale * 0.3f, 21.7f));
 
                 int width = (int)(12 / m_pointSizeScale);
-                int height = 100;//20;//20;//128;//128;
-                int depth = (int)(4 / m_pointSizeScale);
+                int height = 50;//20;//20;//128;//128;
+                int depth = (int)(8 / m_pointSizeScale);
 
                 int numberOfPoints = width * height * depth;
 
