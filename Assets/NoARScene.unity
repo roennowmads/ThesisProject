@@ -364,7 +364,7 @@ Prefab:
         type: 2}
       propertyPath: shader
       value: 
-      objectReference: {fileID: 4800000, guid: 925d032507cee354989e4ecafc0411b7, type: 3}
+      objectReference: {fileID: 4800000, guid: 268cbeb370ac3e844a78195221d5f9f9, type: 3}
     - target: {fileID: 114397575331289426, guid: 0d086da6e768ba144a9036fcbbfe1fde,
         type: 2}
       propertyPath: m_FontData.m_FontSize
@@ -422,7 +422,7 @@ Prefab:
     - target: {fileID: 20071312246145388, guid: 0d086da6e768ba144a9036fcbbfe1fde,
         type: 2}
       propertyPath: orthographic size
-      value: 2.85
+      value: 2.1
       objectReference: {fileID: 0}
     - target: {fileID: 224335935655774704, guid: 0d086da6e768ba144a9036fcbbfe1fde,
         type: 2}

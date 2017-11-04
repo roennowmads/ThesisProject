@@ -47,7 +47,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
     private float m_timeSinceUpdate, m_updateInterval;
 
     private bool m_fixedParticleCountTests = false;
-    private bool m_fixedParticleSizeTests = false;
+    private bool m_fixedParticleSizeTests = true;
 
     private int m_particelSizeTestsXSize;
     private ComputeBuffer m_indexComputeBuffer;
@@ -158,8 +158,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
         //float pointSizeScale = .0625f;//1.0f;//1.0f;//0.125f;   //for one point: 12.0f
 
-        m_pointSizeScale = 4.0f;//0.0625f;
-        m_pointSizeScaleIndependent = 0.175f;
+        m_pointSizeScale = 0.0625f;
+        m_pointSizeScaleIndependent = 0.25f;
         m_timeSinceUpdate = 0.0f;
         m_updateInterval = 12.0f;
 
@@ -175,9 +175,9 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         int height = 20;//20;//128;//128;
         int depth = 48;//12;*/
 
-        int width = (int)(12 / m_pointSizeScale);  //decrease decrease to get different particle count results
+        int width = (int)(9 / m_pointSizeScale);  //decrease decrease to get different particle count results
         int height = 50;//20;//20;//128;//128;
-        int depth = (int)(8 / m_pointSizeScale);
+        int depth = (int)(6.25f / m_pointSizeScale);
 
         int numberOfPoints = width * height * depth;
 
