@@ -114,7 +114,7 @@ Shader "Unlit/SortingTestGLSLPoints" { // defines the name of the shader
 				float radius = 1.0;
 
 				//gl_PointSize = pointSizeScaleIndependent*pointSizeScale* 511.0 * gl_ProjectionMatrix[1][1] * radius / gl_Position.w; //Tango device 
-				gl_PointSize = pointSizeScaleIndependent*pointSizeScale* 402.0 * gl_ProjectionMatrix[1][1] * orthographicSizeScale * radius / gl_Position.w; // for orthographic 
+				gl_PointSize = pointSizeScaleIndependent*pointSizeScale* 402.0 * gl_ProjectionMatrix[1][1] * orthographicSizeScale * radius / gl_Position.w; // Tango tablet // for orthographic 
 
 				//gl_PointSize = pointSizeScaleIndependent*pointSizeScale*382.0 * gl_ProjectionMatrix[1][1] * orthographicSizeScale * radius / gl_Position.w; //Tegra tablet // for orthographic 
 				//gl_PointSize = pointSizeScaleIndependent*pointSizeScale*382.0 * gl_ProjectionMatrix[1][1] * radius / gl_Position.w; //Tegra tablet

@@ -21,7 +21,7 @@ Shader "Unlit/SortingTestGeometryShader" {
 		Pass {
 			CGPROGRAM
 
-			#define TANGO_DEVICE
+			#define TANGO_DEVICE_HOLOLENS
 			//#define TEGRA_TABLET
 
 			#define PENTAGON
@@ -262,7 +262,7 @@ Shader "Unlit/SortingTestGeometryShader" {
 				//vertex coordinates found here: http://mathworld.wolfram.com/Pentagon.html
 				//float radius = 0.87;//0.8725;//0.65;//0.9;//0.8725;  //nvidia tablet closer to: 0.65
 
-			#if defined(TANGO_DEVICE)
+			#if defined(TANGO_DEVICE_HOLOLENS)
 				float radius = pointSizeScaleIndependent*pointSizeScale*0.87; //Tango device
 			#elif defined(TEGRA_TABLET)
 				float radius = pointSizeScaleIndependent*pointSizeScale*0.785; //Tegra tablet

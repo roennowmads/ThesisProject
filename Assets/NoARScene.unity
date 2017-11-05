@@ -443,7 +443,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 221237789}
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: -0.7, y: 5.05, z: 21.7}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 878655471}
@@ -482,7 +482,7 @@ MonoBehaviour:
   m_accumTex: {fileID: 8400000, guid: fb853de2019f4264d8a25a801aa4571c, type: 2}
   m_revealageTex: {fileID: 8400000, guid: d3a2eda195652dc47ad9da4b29564f3f, type: 2}
   m_resultTex: {fileID: 8400000, guid: 62baa5f4dc51e9140b73a80f80710f6f, type: 2}
-  shader: {fileID: 4800000, guid: 45c55a72e4d059940ba1fb92f53d98ef, type: 3}
+  shader: {fileID: 4800000, guid: 284c13440d59c5b4e9ed96204e30ba5e, type: 3}
   m_accumShader: {fileID: 4800000, guid: fc7ab1d5535385847a1d1d239b59abab, type: 3}
   m_revealageShader: {fileID: 4800000, guid: 9bb6da422985e0e44bc728094d7d8b9e, type: 3}
   m_blendShader: {fileID: 4800000, guid: a62a63e0cd9feaf4899dc6871975445b, type: 3}
@@ -1606,7 +1606,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 878655470}
   m_LocalRotation: {x: -0, y: -1, z: -0, w: 0}
-  m_LocalPosition: {x: -3, y: -1.63, z: 0}
+  m_LocalPosition: {x: -3, y: -2.05, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1092177629}
