@@ -144,11 +144,7 @@
 
 				//Correcting the translation:
 				o.vertex = float4(-_Points[index], 1.0);
-				o.vertex = UnityObjectToClipPos(o.vertex);
-				//o.vertex += trans;
-				//o.vertex = UnityWorldToClipPos(o.vertex.xyz);
-				
-				
+				o.vertex = UnityObjectToClipPos(o.vertex);				
 
 				//Translating the vertices in a quad shape:
 				//half size = 0.4 * exp(1.0 - value) /** modifier*/;

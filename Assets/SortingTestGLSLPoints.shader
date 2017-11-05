@@ -41,6 +41,7 @@ Shader "Unlit/SortingTestGLSLPoints" { // defines the name of the shader
 			uniform lowp sampler2D _ColorTex;
 			uniform lowp float pointSizeScale;
 			uniform lowp float pointSizeScaleIndependent;
+			uniform lowp float orthographicSizeScale;
 			struct _Points_type {
 				float[3] value;
 				//float value1;
@@ -113,11 +114,9 @@ Shader "Unlit/SortingTestGLSLPoints" { // defines the name of the shader
 				float radius = 1.0;
 
 				//gl_PointSize = pointSizeScaleIndependent*pointSizeScale* 511.0 * gl_ProjectionMatrix[1][1] * radius / gl_Position.w; //Tango device 
-				//gl_PointSize = pointSizeScaleIndependent*pointSizeScale* 402.0 * gl_ProjectionMatrix[1][1] * 4.68 * radius / gl_Position.w; //Tango device // for orthographic view with size 2.85
-				gl_PointSize = pointSizeScaleIndependent*pointSizeScale* 402.0 * gl_ProjectionMatrix[1][1] * 3.45 * radius / gl_Position.w; //Tango device // for orthographic view with size 2.1
+				gl_PointSize = pointSizeScaleIndependent*pointSizeScale* 402.0 * gl_ProjectionMatrix[1][1] * orthographicSizeScale * radius / gl_Position.w; // for orthographic 
 
-				//gl_PointSize = pointSizeScaleIndependent*pointSizeScale*382.0 * gl_ProjectionMatrix[1][1] * 4.68 * radius / gl_Position.w; //Tegra tablet // for orthographic view with size 2.85
-				//gl_PointSize = pointSizeScaleIndependent*pointSizeScale*382.0 * gl_ProjectionMatrix[1][1] * 3.45 * radius / gl_Position.w; //Tegra tablet // for orthographic view with size 2.1
+				//gl_PointSize = pointSizeScaleIndependent*pointSizeScale*382.0 * gl_ProjectionMatrix[1][1] * orthographicSizeScale * radius / gl_Position.w; //Tegra tablet // for orthographic 
 				//gl_PointSize = pointSizeScaleIndependent*pointSizeScale*382.0 * gl_ProjectionMatrix[1][1] * radius / gl_Position.w; //Tegra tablet
 				
 

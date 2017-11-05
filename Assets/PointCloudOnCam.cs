@@ -361,8 +361,19 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         //m_revealageTex = RenderTexture.GetTemporary(1024, 600, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
         //m_tempTex.Create();
 
+        Camera cam = GetComponent<Camera>();
 
-        Camera.main.targetTexture = m_opaqueTex;
+        cam.orthographic = true;
+            
+        if (cam.orthographicSize == 2.1f) {
+            m_material.SetFloat("orthographicSizeScale", 3.45f);
+        }
+        else if  (cam.orthographicSize == 2.85f) {
+            m_material.SetFloat("orthographicSizeScale", 4.68f);
+        }
+        
+
+        //Camera.main.targetTexture = m_opaqueTex;
 
         //m_renderTex = new RenderTexture(Screen.width, Screen.height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
         //m_renderTex.Create();
@@ -521,10 +532,13 @@ private List<ComputeBuffer> m_indexComputeBuffers;
                 m_material.SetFloat("pointSizeScaleIndependent", m_pointSizeScaleIndependent);
             }        
         }
+        Camera cam = GetComponent<Camera>();
+        cam.orthographic = true;
     }
 
 
     private void OnPreRender() {
+        return;
         //Make sure all opaque geometry (everything not rendered with drawProcedural) is rendered into opaqueTex.
         if (m_directRender) {
             Graphics.SetRenderTarget(null);
@@ -538,6 +552,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
     }
 
     private void OnPostRender() {
+        return;
         Camera.main.targetTexture = null;
     }
 
@@ -610,7 +625,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
     }
 
     private void renderDirect () {
-        Graphics.SetRenderTarget(null);
+        //Graphics.SetRenderTarget(null);
         m_material.SetPass(0);
         //Graphics.DrawProcedural(MeshTopology.Points, /*(m_indexComputeBuffers[m_frameIndex].count)*/m_pointsCount /** 6*/);
 
@@ -621,6 +636,15 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
     private void OnRenderObject() {
         if (Camera.current == Camera.main) {
+            Camera cam = GetComponent<Camera>();
+
+            float screenRatio = cam.aspect;
+
+            Matrix4x4 ortho = Matrix4x4.Ortho(-screenRatio* cam.orthographicSize, screenRatio*cam.orthographicSize, -1.0f* cam.orthographicSize, 1.0f* cam.orthographicSize, 0.1f, 100.0f);
+           
+            GL.LoadProjectionMatrix(GL.GetGPUProjectionMatrix(ortho, false));
+            
+            cam.orthographic = true;
             m_accumMaterial.SetVector("camPos", Camera.main.transform.position);
             GL.MultMatrix(m_pointCloudObj.transform.localToWorldMatrix);
 
