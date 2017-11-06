@@ -15,8 +15,8 @@ Shader "Unlit/SortingTest" {
 	SubShader {
 		Tags{ "Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent" }
 		//Tags{"RenderType" = "Opaque"}
-		//Blend SrcAlpha OneMinusSrcAlpha
-		//Cull Off
+		Blend SrcAlpha OneMinusSrcAlpha
+		Cull Back
 		ZWrite Off
 		//LOD 200
 
@@ -135,7 +135,7 @@ Shader "Unlit/SortingTest" {
 
 				//Translating the vertices in a quad shape:
 				//half size = 0.4 * exp(1.0 - value) /** modifier*/;
-				half size = 0.02 /** exp(1.0 - colorValue)*/ /** modifier*/;
+				half size = 0.16 /** exp(1.0 - colorValue)*/ /** modifier*/;
 				//half size = 0.15 * exp(value) /** modifier*/;
 				half2 quadSize = half2(size, size * aspect);
 				half2 deltaSize = quadCoords[quad_vertexID] * quadSize;

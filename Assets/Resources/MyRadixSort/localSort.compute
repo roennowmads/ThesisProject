@@ -2,7 +2,7 @@
 #pragma kernel GlobalPrefixSum
 #pragma kernel RadixReorder
 
-#define GROUP_SIZE 512
+#define GROUP_SIZE 64
 
 struct Particle {
 	uint key;

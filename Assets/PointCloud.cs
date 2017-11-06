@@ -60,6 +60,8 @@ public class PointCloud : MonoBehaviour {
     private ComputeBuffer[] m_inOutBuffers;
     private int m_actualNumberOfThreadGroups;
 
+    private ComputeBuffer m_indexComputeBuffer;
+
     struct PartInt : IComparable {
         public uint key;
 
@@ -301,10 +303,6 @@ public class PointCloud : MonoBehaviour {
 
         tex.LoadRawTextureData(vals);
         tex.Apply();
-        //tex2.LoadRawTextureData(vals2);
-        //tex2.Apply();
-
-
     } 
 
     float[] readPointsFile3Attribs()
@@ -321,19 +319,15 @@ public class PointCloud : MonoBehaviour {
         m_textureSize = m_textureSideSize * m_textureSideSize;
 
         //Set up mesh:
-        float[] points = readPointsFile3Attribs();
-        m_pointsCount = points.Length / 3;
+        //float[] points = readPointsFile3Attribs();
+        //m_pointsCount = points.Length / 3;
 
          //Set up textures:
         Texture2D colorTexture = createColorLookupTexture();
 
-        //We don't need more precision than the resolution of the colorTexture. 10 bits is sufficient for 1024 different color values.
-        //That means we can pack 3 10bit integer values into a pixel 
-        //Texture2D texture = new Texture2D(m_textureSize, m_textureSize, TextureFormat.RFloat, false, false);
+        //m_indexComputeBuffers = new List<ComputeBuffer>();
 
-        m_indexComputeBuffers = new List<ComputeBuffer>();
-
-        readIndicesAndValues(m_indexComputeBuffers);
+        //readIndicesAndValues(m_indexComputeBuffers);
 
         //texture.anisoLevel = 1;
         //readPointsFile1Value(texture, texture2);
@@ -349,22 +343,42 @@ public class PointCloud : MonoBehaviour {
         //    new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 0.0f),
         //    new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 0.0f)};
 
-       /* Vector3[] pointPositions = new Vector3[512];
+        /* Vector3[] pointPositions = new Vector3[512];
 
-        for (int i = 0; i < pointPositions.Length; i++) {
-            pointPositions[i] = new Vector3(0, 0, 0);
-            pointPositions[i].x = pointPositions.Length*0.01f - i*0.01f;
+         for (int i = 0; i < pointPositions.Length; i++) {
+             pointPositions[i] = new Vector3(0, 0, 0);
+             pointPositions[i].x = pointPositions.Length*0.01f - i*0.01f;
+         }
+
+         m_pointsBuffer = new ComputeBuffer (pointPositions.Length, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
+         m_pointsBuffer.SetData(pointPositions);
+         pointRenderer.material.SetBuffer ("_Points", m_pointsBuffer);*/
+
+        List<int> indices = new List<int>();
+
+        int numberOfParticles = 64;
+
+        m_pointsCount = numberOfParticles;
+
+        for (int i = 0; i < numberOfParticles; i++) {
+            indices.Add((i << 8) + (i % 255));
         }
 
-        m_pointsBuffer = new ComputeBuffer (pointPositions.Length, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
-        m_pointsBuffer.SetData(pointPositions);
-        pointRenderer.material.SetBuffer ("_Points", m_pointsBuffer);*/
+        List<Vector3> ppoints = new List<Vector3>();
 
+        for (int i = 0; i < numberOfParticles; i++) {
+            ppoints.Add(new Vector3(0.0f + i*0.1f ,0.0f ,0.0f ));
+        }
 
         
         m_pointsBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
-        m_pointsBuffer.SetData(points);
+        //m_pointsBuffer.SetData(points);
+        m_pointsBuffer.SetData(ppoints.ToArray());
         pointRenderer.material.SetBuffer("_Points", m_pointsBuffer);
+
+
+        m_indexComputeBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(int)), ComputeBufferType.Default);
+        m_indexComputeBuffer.SetData(indices.ToArray());
 
         //pointRenderer.material.SetInt("_PointsCount", /*m_pointsCount*/pointPositions.Length);
         pointRenderer.material.SetInt("_PointsCount", m_pointsCount);
@@ -375,8 +389,6 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.material.SetInt("_Magnitude", m_textureSideSizePower);
         pointRenderer.material.SetInt("_TextureSwitchFrameNumber", m_textureSwitchFrameNumber);
 
-        //m_kernel = m_radixShader.FindKernel("CSMain");
-
         m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort", typeof(ComputeShader));
         LocalPrefixSum = m_myRadixSort.FindKernel("LocalPrefixSum");
         GlobalPrefixSum = m_myRadixSort.FindKernel("GlobalPrefixSum");
@@ -386,45 +398,14 @@ public class PointCloud : MonoBehaviour {
         m_myRadixSort.GetKernelThreadGroupSizes(LocalPrefixSum, out x, out y, out z);
         m_threadGroupSize = (int)x;
 
-        int threadGroupsNeeded = 16 /** 16*/;
-        inputSize = m_indexComputeBuffers[m_frameIndex].count;//m_threadGroupSize * threadGroupsNeeded;
+        int threadGroupsNeeded = 16;
+        inputSize = m_indexComputeBuffer.count;//m_indexComputeBuffers[m_frameIndex].count;
         m_actualNumberOfThreadGroups = inputSize / m_threadGroupSize;
 
-        /*uint[] bufInRadix = new uint[inputSize];
-
-        //uint[] bufInRadix = { 5, 10, 2, 1, 0, 20, 30, 45, 12, 63, 48, 3, 6, 32, 87, 39 };
-
-        for (uint i = 0; i < bufInRadix.Length; i++)
-        {
-            bufInRadix[i] = i % 16;
-            bufInRadix[i] = bufInRadix[i] == 5 ? 6 : bufInRadix[i];
-            if (i % 3 == 0) {
-                bufInRadix[i] = 10;
-            }
-        }*/
 
         int Min = 0;
         int Max = 2047;
         System.Random randNum = new System.Random();
-
-        /*PartInt[] bufInRadix = new PartInt[inputSize];
-        uint[] bufInRadix = Enumerable
-            .Repeat(0, inputSize)
-            .Select(i => (uint)randNum.Next(Min, Max) << 8)
-            .ToArray();*/
-
-        /*for (int i = 0; i < inputSize; i++) {
-            bufInRadix[i].key = (uint)i << 8;
-        }*/
-
-
-        /*Vector3[] myPoints = new Vector3[inputSize];
-        for (int i = 0; i < myPoints.Length; i++) {
-            myPoints[i] = new Vector3(1000 - i, 1000 - i, 1000 - i);
-        }
-
-        ComputeBuffer myPointsBuffer = new ComputeBuffer(inputSize, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
-        myPointsBuffer.SetData(myPoints);*/
 
         uint[] bufOutRadix = new uint[m_actualNumberOfThreadGroups * 16];
 
@@ -436,7 +417,7 @@ public class PointCloud : MonoBehaviour {
         }
 
         m_inOutBuffers = new ComputeBuffer[2];
-        m_inOutBuffers[0] = m_indexComputeBuffers[m_frameIndex];//new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(PartInt)), ComputeBufferType.Default);
+        m_inOutBuffers[0] = m_indexComputeBuffer;//m_indexComputeBuffers[m_frameIndex];//new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(PartInt)), ComputeBufferType.Default);
         //m_inOutBuffers[0].SetData(bufInRadix);
         m_inOutBuffers[1] = new ComputeBuffer(m_inOutBuffers[0].count, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
         m_inOutBuffers[1].SetData(bufOutFinal);
@@ -474,111 +455,11 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.material.SetBuffer("_IndicesValues", m_inOutBuffers[0]);
 
 
-        /*m_computeBufferOutFinal.GetData(bufOutFinal);
-
-
-        uint[] bufOutValueScans = new uint[inputSize*16];
-        m_computeBufferValueScans.GetData(bufOutValueScans);
-
-        List<uint> prefixSumOfAValueLocal = new List<uint>();
-        for (int i = 0; i < bufOutValueScans.Length; i++) {
-            if (i % 16 == 0) {
-                prefixSumOfAValueLocal.Add(bufOutValueScans[i + 1]); // + 1 means the partial sums of 1's. 
-            }   
-        }*/
-
-        //Array.Sort<PartInt>(bufInRadix);
-
-        /* m_computeBufferOutPrefixSum.GetData(bufOutPrefixSum);
-         m_computeBufferIn.GetData(bufOutFinal);*/
-
-        /*bool theSame = true;
-        for (int i = 0; i < inputSize; i++) {
-	        if (bufOutFinal[i].key != bufInRadix[i].key) {
-		        theSame = false;
-		        break;
-	        }
-        }*/
-
-        /*Vector3 viewDir = new Vector3(0.0f, 0.0f, 1.0f);
-        radixSort = new RadixSort(256, 128);
-
-        radixSort.sort(m_computeBufferIn, m_computeBufferOut, -viewDir, -2.0f, 2.0f);
-        m_computeBufferIn.GetData(bufInRadix);
-        m_computeBufferOut.GetData(bufOutRadix);
-
-         m_radixShader.SetBuffer(m_kernel, "Input", m_computeBufferIn);
-         m_radixShader.SetBuffer(m_kernel, "Result", m_computeBufferOut);
-         m_radixShader.Dispatch(m_kernel, 2, 1, 1);
-         m_radixShader.SetBuffer(m_kernel, "Input", m_computeBufferOut);
-         m_radixShader.SetBuffer(m_kernel, "Result", m_computeBufferIn);
-         m_radixShader.Dispatch(m_kernel, 2, 1, 1);
-
-         m_computeBufferIn.GetData(bufOutRadix);*/
-
-        /*uint[] bufIn = new uint[pointPositions.Length];
-        //uint[] bufOut = new uint[16];
-
-        for (uint i = 0; i < bufIn.Length; i++)
-        {
-            bufIn[i] = i;
-        }
-
-        //float[] bufIn = { 5, 10, 2, 1, 0, 20, 30, 45, 12, 63, 48, 3, 6, 32, 87, 39};
-        uint[] bufOut = new uint[pointPositions.Length]; //{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };*/
-
-
-        uint[] bufOut = new uint[/*m_pointsCount*//*262144*/m_indexComputeBuffers[m_frameIndex].count];
-
-        //m_kernel = m_computeShader.FindKernel("main");
-        
-
-        //m_computeBufferIn = new ComputeBuffer(m_pointsCount, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
-        //m_computeBufferIn.SetData(bufIn);
-        //m_computeShader.SetBuffer(m_kernel, "Input", computeBufferIn);
+        uint[] bufOut = new uint[/*m_indexComputeBuffers[m_frameIndex].count*/m_indexComputeBuffer.count];
+                                                           
 
         m_computeBufferTemp = new ComputeBuffer(bufOut.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
-        m_computeBufferTemp.SetData(bufOut);
-        //m_computeShader.SetBuffer(m_kernel, "Output", computeBufferOut);
-
-        //m_computeShader.Dispatch(m_kernel, 1, 1, 1);
-
-        //computeBufferOut.GetData(bufOut);
-
-        //pointRenderer.material.SetBuffer("_IndicesValues", m_computeBufferIn);
-
-        /*uint[] inArray = new uint[512 * 4];
-
-        for (int i = 0; i < inArray.Length; i++)
-            inArray[i] = (uint)(inArray.Length - 1 - i);
-        
-        inBuffer = new ComputeBuffer(inArray.Length, 4);
-        tempBuffer = new ComputeBuffer(inArray.Length, 4);*/
-
-        //inBuffer.SetData(bufIn);
-
-        float timeBefore = Time.realtimeSinceStartup;        
-
-        //GpuSort.BitonicSort32(m_indexComputeBuffers[2], m_computeBufferTemp, m_pointsBuffer, trans, transform.localToWorldMatrix);
-        m_indexComputeBuffers[m_frameIndex].GetData(bufOut);
-
-        float timeAfter = Time.realtimeSinceStartup; //be aware, the dispatch is probably async? it seems to be just the time it takes to go through the for loops and set the buffers.
-        print("Time in milliseconds: " + (timeAfter - timeBefore) * 1000.0f);
-
-        print(bufOut[10]);
-
-        //One down-side to storing and loading a texture is that we are storing all channels, as well as any unused parts of the texture.
-        //TextAsset ta = Resources.Load("fireAtriumTex", typeof(TextAsset)) as TextAsset;
-        //byte[] texBytes = CompressionHelper.DecompressBytes(ta.bytes);
-        //texture.LoadRawTextureData(texBytes);
-
-        //Vector4[] pointsArr = points.ToArray();
-        //var byteArray = new byte[pointsArr.Length * 4 * 4];
-        //Buffer.BlockCopy(pointsArr, 0, byteArray, 0, byteArray.Length);
-
-        //CompressionHelper.CompressMemToFile(byteArray, "fireAtriumPoints.lzf");       
-
-        //CompressionHelper.CompressMemToFile(texture.GetRawTextureData(), "fireAtriumTex.lzf");       
+        m_computeBufferTemp.SetData(bufOut);  
 
         Debug.Log("Number of points: " + m_pointsCount);
 
@@ -586,26 +467,6 @@ public class PointCloud : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        //Debug.Log(Time.fixedTime);
-
-        //m_computeShader.Dispatch(m_kernel, 1, 1, 1);
-
-        //m_frameIndex = 2;//((int)(Time.fixedTime * m_frameSpeed)) % m_lastFrameIndex;
-
-        //pointRenderer.material.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
-
-        //t = 29;
-
-        //Debug.Log(count);
-
-        /*int t = 0;
-
-        m_currentTime += Time.deltaTime;
-        if (m_currentTime > m_frameSpeed) {
-            m_frameIndex = m_frameIndex + 1 % m_lastFrameIndex;
-            m_currentTime = 0;
-        }*/
-
         m_currentTime += Time.deltaTime;
         ++m_framesSinceUpdate;
         m_accumulation += Time.timeScale / Time.deltaTime;
@@ -618,14 +479,6 @@ public class PointCloud : MonoBehaviour {
             m_fpsText = "FPS: " + m_currentFPS;
         }
 
-
-        //GpuSort.BitonicSort32(m_indexComputeBuffers[m_frameIndex], m_computeBufferTemp, m_pointsBuffer, pointRenderer.localToWorldMatrix);
-
-        //uint[] bufOut = new uint[/*m_pointsCount*//*262144*/m_indexComputeBuffers[m_frameIndex].count];
-        //m_indexComputeBuffers[m_frameIndex].GetData(bufOut);
-        //print(bufOut[10]);
-
-        //Debug.Log(t);
         pointRenderer.material.SetInt("_FrameTime", m_frameIndex);
         float aspect = Camera.main.GetComponent<Camera>().aspect;
         pointRenderer.material.SetFloat("aspect", aspect);
@@ -672,7 +525,7 @@ public class PointCloud : MonoBehaviour {
             m_myRadixSort.Dispatch(LocalPrefixSum, m_actualNumberOfThreadGroups, 1, 1);
             m_myRadixSort.Dispatch(GlobalPrefixSum, 1, 1, 1);
             m_myRadixSort.Dispatch(RadixReorder, m_actualNumberOfThreadGroups, 1, 1);
-        }      
+        }                                                                                          
 
         pointRenderer.material.SetPass(0);
         pointRenderer.material.SetMatrix("model", pointRenderer.localToWorldMatrix);
@@ -684,8 +537,8 @@ public class PointCloud : MonoBehaviour {
         //Graphics.DrawProcedural(MeshTopology.Points, 1, m_pointsCount);
         //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count*6);  // index buffer.
 
-        //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/(m_indexComputeBuffers[m_frameIndex].count)*6 );  // index buffer.
-        Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*/(m_indexComputeBuffers[m_frameIndex].count));  // index buffer.
+        Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*//*m_indexComputeBuffers[m_frameIndex].count*6*/m_indexComputeBuffer.count*6 );  // index buffer.
+        //Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*//*m_indexComputeBuffers[m_frameIndex].count*/m_indexComputeBuffer.count);  // index buffer.
 
         //Maybe this rendering stuff is supposed to be attached to the camera?
     }
@@ -693,10 +546,10 @@ public class PointCloud : MonoBehaviour {
     void OnDestroy() {
         m_pointsBuffer.Release();
 
-        foreach (ComputeBuffer cb in m_indexComputeBuffers)
+        /*foreach (ComputeBuffer cb in m_indexComputeBuffers)
         {
             cb.Release();
-        }
+        } */
        
     }
 }
