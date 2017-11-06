@@ -2,7 +2,9 @@
 #pragma kernel GlobalPrefixSum
 #pragma kernel RadixReorder
 
-#define GROUP_SIZE 64
+#define GROUP_SIZE 256
+
+#include "UnityCG.cginc"
 
 struct Particle {
 	uint key;

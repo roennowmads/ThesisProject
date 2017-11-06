@@ -356,7 +356,7 @@ public class PointCloud : MonoBehaviour {
 
         List<int> indices = new List<int>();
 
-        int numberOfParticles = 64;
+        int numberOfParticles = 16384*4;
 
         m_pointsCount = numberOfParticles;
 
@@ -398,23 +398,14 @@ public class PointCloud : MonoBehaviour {
         m_myRadixSort.GetKernelThreadGroupSizes(LocalPrefixSum, out x, out y, out z);
         m_threadGroupSize = (int)x;
 
-        int threadGroupsNeeded = 16;
         inputSize = m_indexComputeBuffer.count;//m_indexComputeBuffers[m_frameIndex].count;
-        m_actualNumberOfThreadGroups = inputSize / m_threadGroupSize;
+        m_actualNumberOfThreadGroups = inputSize / m_threadGroupSize;                               
 
-
-        int Min = 0;
-        int Max = 2047;
-        System.Random randNum = new System.Random();
-
-        uint[] bufOutRadix = new uint[m_actualNumberOfThreadGroups * 16];
+        Matrix4x4[] bufOutRadix = new Matrix4x4[m_actualNumberOfThreadGroups];
 
         uint[] bufOutPrefixSum = new uint[16]; //the size represents the 16 possible values with 4 bits.
 
         PartInt[] bufOutFinal = new PartInt[inputSize];
-        for (int i = 0; i < bufOutFinal.Length; i++) {
-            bufOutFinal[i].key = 9999u;
-        }
 
         m_inOutBuffers = new ComputeBuffer[2];
         m_inOutBuffers[0] = m_indexComputeBuffer;//m_indexComputeBuffers[m_frameIndex];//new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(PartInt)), ComputeBufferType.Default);
@@ -424,7 +415,7 @@ public class PointCloud : MonoBehaviour {
 
         ComputeBuffer m_computeBufferValueScans = new ComputeBuffer(inputSize, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
 
-        ComputeBuffer m_computeBufferOut = new ComputeBuffer(bufOutRadix.Length / 16, Marshal.SizeOf(typeof(Matrix4x4)), ComputeBufferType.Default);
+        ComputeBuffer m_computeBufferOut = new ComputeBuffer(bufOutRadix.Length, Marshal.SizeOf(typeof(Matrix4x4)), ComputeBufferType.Default);
         m_computeBufferOut.SetData(bufOutRadix);
 
         ComputeBuffer computeBufferDigitPrefixSum = new ComputeBuffer(16, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
@@ -499,7 +490,7 @@ public class PointCloud : MonoBehaviour {
 
     private void OnRenderObject()
     {
-        //GpuSort.BitonicSort32(m_indexComputeBuffers[m_frameIndex], m_computeBufferTemp, m_pointsBuffer, pointRenderer.localToWorldMatrix);
+        //GpuSort.BitonicSort32(/*m_indexComputeBuffers[m_frameIndex]*/m_indexComputeBuffer, m_computeBufferTemp, m_pointsBuffer, pointRenderer.localToWorldMatrix);
 
 
         m_myRadixSort.SetVector("camPos", Camera.main.transform.position);     //camera view direction DOT point position == distance to camera.
@@ -508,12 +499,12 @@ public class PointCloud : MonoBehaviour {
         m_myRadixSort.SetFloats("model", transMatrix[0], transMatrix[1], transMatrix[2], transMatrix[3],
                                   transMatrix[4], transMatrix[5], transMatrix[6], transMatrix[7],
                                   transMatrix[8], transMatrix[9], transMatrix[10], transMatrix[11],
-                                  transMatrix[12], transMatrix[13], transMatrix[14], transMatrix[15]);
+                                  transMatrix[12], transMatrix[13], transMatrix[14], transMatrix[15]);       
 
         int outSwapIndex = 1;
-        int numberOfPasses = 8;
+        int numberOfPasses = 4;
         for (int i = 0; i < numberOfPasses; i++) {
-            int bitshift = 4 * i;
+            int bitshift = 16 + 4 * i;
             m_myRadixSort.SetInt("bitshift", bitshift);
             int swapIndex0 = i % 2;
             outSwapIndex = (i + 1) % 2;
@@ -528,8 +519,6 @@ public class PointCloud : MonoBehaviour {
         }                                                                                          
 
         pointRenderer.material.SetPass(0);
-        pointRenderer.material.SetMatrix("model", pointRenderer.localToWorldMatrix);
-
         GL.MultMatrix(pointRenderer.localToWorldMatrix);
 
         //Debug.Log(m_indexComputeBuffers[m_frameIndex].count);
