@@ -51,6 +51,9 @@ groupshared uint4x4 temp[GROUP_SIZE];
 int bitshift;
 float4x4 modelview;
 float3 camPos;
+float scaledMaxDistance;
+float3 objectWorldPos;
+float depthIndices;
 
 //source for intra warp scan: 
 //http://research.nvidia.com/sites/default/files/publications/nvr-2008-003.pdf
@@ -138,8 +141,9 @@ void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID
 	
 	uint key = KeysIn[DTid.x];  //indexAndColor
 	float4 transVert = mul(modelview, float4(-_Points[key >> 8], 1.0));
-	float depth = dot(transVert.xyz, camPos);
-	uint intDepth = asuint(depth);
+	float depth = dot(transVert.xyz - objectWorldPos, camPos);
+	float relativeDepth = (depth + scaledMaxDistance) / (scaledMaxDistance + scaledMaxDistance);
+	uint intDepth = uint(relativeDepth * depthIndices);
 	
 	//take four bits of every input element:
 	uint keyBits = 15u - ((intDepth >> bitshift) & 0xF);

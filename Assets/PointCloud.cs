@@ -62,6 +62,11 @@ public class PointCloud : MonoBehaviour {
 
     private ComputeBuffer m_indexComputeBuffer;
 
+    private int numberOfRadixSortPasses = 4;
+
+    private float m_maxDistance;
+    private List<Vector3> m_ppoints;
+
     struct PartInt : IComparable {
         public uint key;
 
@@ -314,6 +319,17 @@ public class PointCloud : MonoBehaviour {
         return points;
     }
 
+    private float findMaxDistance(List<Vector3> points) {
+        float maxDistance = 0;
+        foreach (Vector3 p in points) {
+            float distance = p.magnitude;
+            if (distance > maxDistance) {
+                maxDistance = distance;
+            }
+        }
+        return maxDistance;
+    }
+
     void Start () {
         m_textureSideSize = 1 << m_textureSideSizePower;
         m_textureSize = m_textureSideSize * m_textureSideSize;
@@ -356,24 +372,27 @@ public class PointCloud : MonoBehaviour {
 
         List<int> indices = new List<int>();
 
-        int numberOfParticles = 4096;
+        int numberOfParticles = 256;
 
         m_pointsCount = numberOfParticles;
 
         for (int i = 0; i < numberOfParticles; i++) {
-            indices.Add((i << 8) + (i % 255));
+            indices.Add((i << 8) + (i*4 % 64));
         }
 
-        List<Vector3> ppoints = new List<Vector3>();
+        m_ppoints = new List<Vector3>();
 
         for (int i = 0; i < numberOfParticles; i++) {
-            ppoints.Add(new Vector3(0.0f + i*0.1f ,0.0f ,0.0f ));
+            m_ppoints.Add(new Vector3(0.0f + i*0.1f ,0.0f ,0.0f ));
         }
 
+        m_maxDistance = findMaxDistance(m_ppoints);
+
+        Debug.Log("Max distance " + m_maxDistance);
         
         m_pointsBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
         //m_pointsBuffer.SetData(points);
-        m_pointsBuffer.SetData(ppoints.ToArray());
+        m_pointsBuffer.SetData(m_ppoints.ToArray());
         pointRenderer.material.SetBuffer("_Points", m_pointsBuffer);
 
 
@@ -445,7 +464,6 @@ public class PointCloud : MonoBehaviour {
 
         pointRenderer.material.SetBuffer("_IndicesValues", m_inOutBuffers[0]);
 
-
         uint[] bufOut = new uint[/*m_indexComputeBuffers[m_frameIndex].count*/m_indexComputeBuffer.count];
                                                            
 
@@ -497,17 +515,39 @@ public class PointCloud : MonoBehaviour {
 
         Matrix4x4 M = pointRenderer.localToWorldMatrix;
         Matrix4x4 V = Camera.main.worldToCameraMatrix;
-        Matrix4x4 transMatrix = V * M;
+        Matrix4x4 transMatrix = /*V **/ M;
 
+        Vector3 zero = new Vector3(0.0f, 0.0f, 0.0f);
+        Vector3 transZero = transMatrix.MultiplyPoint(zero);
+        
+        //Vector3 transVert = pointRenderer.localToWorldMatrix.MultiplyPoint(m_ppoints[0]);
+        Vector3 transVert = transMatrix.MultiplyPoint(m_ppoints[255]);
+	    float depth = Vector3.Dot(transVert - transZero, Camera.main.transform.forward);
+
+        //Vector3 transVert2 = transMatrix.MultiplyPoint(m_ppoints[4000]);
+	    //float depth2 = Vector3.Dot(transVert2 - transZero, Camera.main.transform.forward);
+
+        float globalScale = transform.lossyScale.x;
+        float scaledMaxDistance = m_maxDistance * globalScale;
+
+        m_myRadixSort.SetVector("objectWorldPos", transZero);
+        m_myRadixSort.SetFloat("scaledMaxDistance", scaledMaxDistance);
+
+        //depth that is always positive:
+        float relativeDepth = (depth - (-scaledMaxDistance)) / (scaledMaxDistance - (-scaledMaxDistance));
+
+        Debug.Log(depth + " " + ((uint)(relativeDepth * Mathf.Pow(2.0f, 4.0f*numberOfRadixSortPasses))));
+                                                   
         m_myRadixSort.SetFloats("modelview", transMatrix[0], transMatrix[1], transMatrix[2], transMatrix[3],
                                   transMatrix[4], transMatrix[5], transMatrix[6], transMatrix[7],
                                   transMatrix[8], transMatrix[9], transMatrix[10], transMatrix[11],
                                   transMatrix[12], transMatrix[13], transMatrix[14], transMatrix[15]);       
+        
 
+        m_myRadixSort.SetFloat("depthIndices", Mathf.Pow(2.0f, 4.0f*numberOfRadixSortPasses));
         int outSwapIndex = 1;
-        int numberOfPasses = 8;//4;
-        for (int i = 0; i < numberOfPasses; i++) {
-            int bitshift = /*16 +*/ 4 * i;
+        for (int i = 0; i < numberOfRadixSortPasses; i++) {
+            int bitshift = 4 * i;
             m_myRadixSort.SetInt("bitshift", bitshift);
             int swapIndex0 = i % 2;
             outSwapIndex = (i + 1) % 2;
