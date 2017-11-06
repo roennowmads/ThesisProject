@@ -32,7 +32,7 @@ public class PointCloud : MonoBehaviour {
     private float m_currentTime = 0;
     private int m_frameIndex = 0;
 
-    public ComputeShader m_radixShader;
+    //public ComputeShader m_radixShader;
     private int m_kernel;
 
     private RadixSort radixSort;
@@ -375,7 +375,7 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.material.SetInt("_Magnitude", m_textureSideSizePower);
         pointRenderer.material.SetInt("_TextureSwitchFrameNumber", m_textureSwitchFrameNumber);
 
-        m_kernel = m_radixShader.FindKernel("CSMain");
+        //m_kernel = m_radixShader.FindKernel("CSMain");
 
         m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort", typeof(ComputeShader));
         LocalPrefixSum = m_myRadixSort.FindKernel("LocalPrefixSum");
@@ -672,16 +672,20 @@ public class PointCloud : MonoBehaviour {
             m_myRadixSort.Dispatch(LocalPrefixSum, m_actualNumberOfThreadGroups, 1, 1);
             m_myRadixSort.Dispatch(GlobalPrefixSum, 1, 1, 1);
             m_myRadixSort.Dispatch(RadixReorder, m_actualNumberOfThreadGroups, 1, 1);
-        }
+        }      
 
         pointRenderer.material.SetPass(0);
         pointRenderer.material.SetMatrix("model", pointRenderer.localToWorldMatrix);
+
+        GL.MultMatrix(pointRenderer.localToWorldMatrix);
 
         //Debug.Log(m_indexComputeBuffers[m_frameIndex].count);
 
         //Graphics.DrawProcedural(MeshTopology.Points, 1, m_pointsCount);
         //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count*6);  // index buffer.
-        Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/(m_indexComputeBuffers[m_frameIndex].count)*6 );  // index buffer.
+
+        //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/(m_indexComputeBuffers[m_frameIndex].count)*6 );  // index buffer.
+        Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*/(m_indexComputeBuffers[m_frameIndex].count));  // index buffer.
 
         //Maybe this rendering stuff is supposed to be attached to the camera?
     }

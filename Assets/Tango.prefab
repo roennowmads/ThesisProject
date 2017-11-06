@@ -1546,7 +1546,6 @@ MonoBehaviour:
   m_lastFrameIndex: 29
   m_frameSpeed: 5
   m_textureSideSizePower: 12
-  m_radixShader: {fileID: 0}
   m_FPSLabelOffsetX: 15
   m_FPSLabelOffsetY: 250
 --- !u!114 &114116868975665934
@@ -1682,9 +1681,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a51157d22e0288d4da1bd381ee3be6ae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_tangoApplication: {fileID: 0}
-  m_tangoServiceVersion: 
-  m_findPlaneWaitingForDepth: 0
   m_pointCloud: {fileID: 114435679767268334}
   m_prefabMarker: {fileID: 1881572918475422, guid: 1c90f249b7fb4ed41a74b6486074baba,
     type: 2}
