@@ -356,7 +356,7 @@ public class PointCloud : MonoBehaviour {
 
         List<int> indices = new List<int>();
 
-        int numberOfParticles = 16384*4;
+        int numberOfParticles = 4096;
 
         m_pointsCount = numberOfParticles;
 
@@ -493,18 +493,21 @@ public class PointCloud : MonoBehaviour {
         //GpuSort.BitonicSort32(/*m_indexComputeBuffers[m_frameIndex]*/m_indexComputeBuffer, m_computeBufferTemp, m_pointsBuffer, pointRenderer.localToWorldMatrix);
 
 
-        m_myRadixSort.SetVector("camPos", Camera.main.transform.position);     //camera view direction DOT point position == distance to camera.
+        m_myRadixSort.SetVector("camPos", Camera.main.transform.forward);     //camera view direction DOT point position == distance to camera.
 
-        Matrix4x4 transMatrix = pointRenderer.localToWorldMatrix;
-        m_myRadixSort.SetFloats("model", transMatrix[0], transMatrix[1], transMatrix[2], transMatrix[3],
+        Matrix4x4 M = pointRenderer.localToWorldMatrix;
+        Matrix4x4 V = Camera.main.worldToCameraMatrix;
+        Matrix4x4 transMatrix = V * M;
+
+        m_myRadixSort.SetFloats("modelview", transMatrix[0], transMatrix[1], transMatrix[2], transMatrix[3],
                                   transMatrix[4], transMatrix[5], transMatrix[6], transMatrix[7],
                                   transMatrix[8], transMatrix[9], transMatrix[10], transMatrix[11],
                                   transMatrix[12], transMatrix[13], transMatrix[14], transMatrix[15]);       
 
         int outSwapIndex = 1;
-        int numberOfPasses = 4;
+        int numberOfPasses = 8;//4;
         for (int i = 0; i < numberOfPasses; i++) {
-            int bitshift = 16 + 4 * i;
+            int bitshift = /*16 +*/ 4 * i;
             m_myRadixSort.SetInt("bitshift", bitshift);
             int swapIndex0 = i % 2;
             outSwapIndex = (i + 1) % 2;

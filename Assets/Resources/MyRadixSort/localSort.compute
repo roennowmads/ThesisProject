@@ -2,7 +2,7 @@
 #pragma kernel GlobalPrefixSum
 #pragma kernel RadixReorder
 
-#define GROUP_SIZE 256
+#define GROUP_SIZE 64
 
 #include "UnityCG.cginc"
 
@@ -49,7 +49,7 @@ groupshared uint4x4 sharedBuffer[GROUP_SIZE];
 groupshared uint4x4 temp[GROUP_SIZE];
 
 int bitshift;
-float4x4 model;
+float4x4 modelview;
 float3 camPos;
 
 //source for intra warp scan: 
@@ -137,8 +137,8 @@ void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID
 	//uint indexAndColor = Data.Load(DTid.x);
 	
 	uint key = KeysIn[DTid.x];  //indexAndColor
-	float4 transVert = mul(model, float4(-_Points[key >> 8], 1.0));
-	float depth = distance(camPos, transVert.xyz);
+	float4 transVert = mul(modelview, float4(-_Points[key >> 8], 1.0));
+	float depth = dot(transVert.xyz, camPos);
 	uint intDepth = asuint(depth);
 	
 	//take four bits of every input element:
