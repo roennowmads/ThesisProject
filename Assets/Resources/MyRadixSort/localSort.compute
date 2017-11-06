@@ -136,11 +136,11 @@ void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID
 	
 	uint key = KeysIn[DTid.x];  //indexAndColor
 	float4 transVert = mul(model, float4(-_Points[key >> 8], 1.0));
-	float depth = 100000.0 + dot(camPos, transVert.xyz);
+	float depth = distance(camPos, transVert.xyz);
 	uint intDepth = asuint(depth);
 	
 	//take four bits of every input element:
-	uint keyBits = (intDepth >> bitshift) & 0xF;
+	uint keyBits = 15u - ((intDepth >> bitshift) & 0xF);
 
 	DepthVals[DTid.x] = keyBits;
     
