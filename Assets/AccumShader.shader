@@ -87,7 +87,7 @@
 				float4 position = float4(-_Points[index], 1.0);
 				float colorValue = (value & 0xFF) * inv255;
 
-				o.color = tex2Dlod(_ColorTex, half4(pow((colorValue*2.0), .0625), 0, 0, 0)).rgb /** modifier*/;
+				o.color = tex2Dlod(_ColorTex, half4(pow((colorValue), .0625), 0, 0, 0)).rgb /** modifier*/;
 				
 				o.vertex = UnityObjectToClipPos(position);
 
@@ -95,7 +95,7 @@
 				//	return o;
 				//}
 
-				half size = 0.02;
+				half size = 0.08;
 				half2 quadSize = half2(size, size * aspect);
 				half2 deltaSize = quadCoords[quad_vertexID] * quadSize;
 				o.vertex.xy += deltaSize;

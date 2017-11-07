@@ -14,6 +14,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
     private int m_lookupTextureSize = 256;
     private ComputeBuffer m_pointsBuffer;
     private int m_frameIndex = 0;
+    private float m_currentTime = 0;
 
     public RenderTexture m_renderTex;
     public RenderTexture m_opaqueTex;
@@ -45,25 +46,33 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
     void readIndicesAndValues(List<ComputeBuffer> computeBuffers)
     {
-        int k = 2;
+        //int k = 2;
+        for (int k = 0; k < 40; k++)
         {
             //TextAsset ta = Resources.Load("AtriumData/binaryDataFull/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
             TextAsset ta = Resources.Load(m_valueDataPath + "/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
             byte[] bytes = ta.bytes;
 
-            int bufferSize = 4096 * 4 * 4 * 2;
+            //int bufferSize = 4096 * 4 * 4 * 2;
 
-            uint[] zeroedBytes = new uint[bufferSize];
+            /*uint[] zeroedBytes = new uint[bytes.Length/4];
 
-            Buffer.BlockCopy(bytes, 0, zeroedBytes, 0,  bufferSize*4);
+            for (int i = 3; i < bytes.Length; i+=4) {
+                zeroedBytes[i/4] = bytes[i];
+            }    */
+
+            //Buffer.BlockCopy(bytes, 0, zeroedBytes, 0,  bufferSize*4);
 
             //Shuffle(zeroedBytes);
 
-            ComputeBuffer indexComputeBuffer = new ComputeBuffer(bufferSize, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
+            if (bytes.Length / 4 > 0) {
+                ComputeBuffer indexComputeBuffer = new ComputeBuffer(bytes.Length / 4, Marshal.SizeOf(typeof(uint)), ComputeBufferType.GPUMemory);
 
-            indexComputeBuffer.SetData(zeroedBytes);
+                indexComputeBuffer.SetData(bytes);
 
-            computeBuffers.Add(indexComputeBuffer);
+                computeBuffers.Add(indexComputeBuffer);
+
+            }
         }
         
     } 
@@ -184,6 +193,21 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         //m_renderTex.Create();
     }
 
+    private void Update () {
+        //m_frameIndex = m_frameIndex + 1 % 20;
+
+        m_currentTime += Time.deltaTime;
+        if (m_currentTime > 0.5) {
+            m_frameIndex = 20;//(m_frameIndex + 1) % m_indexComputeBuffers.Count;
+            m_currentTime = 0;
+            Debug.Log(m_frameIndex);
+
+            m_material.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
+            m_accumMaterial.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
+            m_revealageMaterial.SetBuffer("_IndicesValues", m_indexComputeBuffers[m_frameIndex]);
+        }
+    }
+
     //void OnRenderImage(RenderTexture src, RenderTexture dest) {        
     //    Graphics.Blit(src, m_renderTex);
     //    Graphics.Blit(src, dest);
@@ -204,6 +228,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
         Shader.DisableKeyword("_WEIGHTED0");
         Shader.DisableKeyword("_WEIGHTED1");
         Shader.EnableKeyword("_WEIGHTED2");
+
+
 
         if (Camera.current == Camera.main) {
             
@@ -227,7 +253,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
             m_revealageMaterial.SetPass(0);
             Graphics.DrawProcedural(MeshTopology.Triangles, (m_indexComputeBuffers[m_frameIndex].count) * 6);
 
-            Graphics.Blit(m_opaqueTex, m_resultTex, m_blendMaterial);
+            //Graphics.Blit(m_opaqueTex, m_resultTex, m_blendMaterial);
 
             Graphics.SetRenderTarget(null);
 
@@ -235,16 +261,16 @@ private List<ComputeBuffer> m_indexComputeBuffers;
             GL.LoadPixelMatrix(0, Screen.width, Screen.height, 0);
 
             Graphics.DrawTexture(   // be aware that this call seems to fuck the particles up, if the texture is shown on a plane it looks different.
-                new Rect(0, 0, Screen.width / 2, Screen.height),
-                m_opaqueTex, m_blendMaterial); // m_revealageTex
+                new Rect(0, 0, Screen.width, Screen.height),
+                m_opaqueTex, m_blendMaterial); // m_revealageTex     
 
             //Graphics.DrawTexture(   // be aware that this call seems to fuck the particles up, if the texture is shown on a plane it looks different.
             //    new Rect(0, 0, Screen.width / 2, Screen.height),
             //    m_resultTex); // m_revealageTex
 
-            Graphics.DrawTexture(   // be aware that this call seems to fuck the particles up, if the texture is shown on a plane it looks different.
-                new Rect(Screen.width / 2, 0, Screen.width / 2, Screen.height),
-                m_renderTex, m_textureMaterial); // m_revealageTex
+            /*Graphics.DrawTexture(   // be aware that this call seems to fuck the particles up, if the texture is shown on a plane it looks different.
+                new Rect(0, 0, Screen.width, Screen.height),
+                m_renderTex, m_textureMaterial); // m_revealageTex   */  
 
 
             GL.PopMatrix();
