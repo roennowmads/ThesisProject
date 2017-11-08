@@ -120,7 +120,7 @@ Shader "Unlit/SortingTestGLSL" { // defines the name of the shader
 				}
 
 				SV_Target0.xyz = vs_COLOR0;
-				SV_Target0.w = albedo;
+				SV_Target0.w = albedo*0.5;
 				
 			}
 

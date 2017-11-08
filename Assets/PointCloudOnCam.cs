@@ -63,7 +63,7 @@ private List<ComputeBuffer> m_indexComputeBuffers;
 
             Buffer.BlockCopy(bytes, 0/*50000*4*/, zeroedBytes, 0,  bufferSize*4);
 
-            //Shuffle(zeroedBytes);
+            Shuffle(zeroedBytes);
 
             ComputeBuffer indexComputeBuffer = new ComputeBuffer(bufferSize, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
 
@@ -347,8 +347,8 @@ private List<ComputeBuffer> m_indexComputeBuffers;
                 renderDirect();
             }
             else {
-                renderToTextures();
-                //renderToScreenSideBySide();
+                //renderToTextures();
+                renderToScreenSideBySide();
             }
 
         }
