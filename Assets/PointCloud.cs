@@ -372,7 +372,7 @@ public class PointCloud : MonoBehaviour {
 
         List<int> indices = new List<int>();
 
-        int numberOfParticles = 256;
+        int numberOfParticles = 16384;
 
         m_pointsCount = numberOfParticles;
 
@@ -382,7 +382,7 @@ public class PointCloud : MonoBehaviour {
 
         m_ppoints = new List<Vector3>();
 
-        for (int i = 0; i < numberOfParticles; i++) {
+        for (int i = numberOfParticles; i > 0; i--) {
             m_ppoints.Add(new Vector3(0.0f + i*0.1f ,0.0f ,0.0f ));
         }
 
@@ -508,21 +508,21 @@ public class PointCloud : MonoBehaviour {
 
     private void OnRenderObject()
     {
-        //GpuSort.BitonicSort32(/*m_indexComputeBuffers[m_frameIndex]*/m_indexComputeBuffer, m_computeBufferTemp, m_pointsBuffer, pointRenderer.localToWorldMatrix);
+        GpuSort.BitonicSort32(/*m_indexComputeBuffers[m_frameIndex]*/m_indexComputeBuffer, m_computeBufferTemp, m_pointsBuffer, pointRenderer.localToWorldMatrix);
 
 
-        m_myRadixSort.SetVector("camPos", Camera.main.transform.forward);     //camera view direction DOT point position == distance to camera.
+        /*m_myRadixSort.SetVector("camPos", Camera.main.transform.forward);     //camera view direction DOT point position == distance to camera.
 
         Matrix4x4 M = pointRenderer.localToWorldMatrix;
         Matrix4x4 V = Camera.main.worldToCameraMatrix;
-        Matrix4x4 transMatrix = /*V **/ M;
+        Matrix4x4 transMatrix = M;
 
         Vector3 zero = new Vector3(0.0f, 0.0f, 0.0f);
         Vector3 transZero = transMatrix.MultiplyPoint(zero);
         
         //Vector3 transVert = pointRenderer.localToWorldMatrix.MultiplyPoint(m_ppoints[0]);
-        Vector3 transVert = transMatrix.MultiplyPoint(m_ppoints[255]);
-	    float depth = Vector3.Dot(transVert - transZero, Camera.main.transform.forward);
+        //Vector3 transVert = transMatrix.MultiplyPoint(m_ppoints[255]);
+	    //float depth = Vector3.Dot(transVert - transZero, Camera.main.transform.forward);
 
         //Vector3 transVert2 = transMatrix.MultiplyPoint(m_ppoints[4000]);
 	    //float depth2 = Vector3.Dot(transVert2 - transZero, Camera.main.transform.forward);
@@ -534,9 +534,9 @@ public class PointCloud : MonoBehaviour {
         m_myRadixSort.SetFloat("scaledMaxDistance", scaledMaxDistance);
 
         //depth that is always positive:
-        float relativeDepth = (depth - (-scaledMaxDistance)) / (scaledMaxDistance - (-scaledMaxDistance));
+        //float relativeDepth = (depth - (-scaledMaxDistance)) / (scaledMaxDistance - (-scaledMaxDistance));
 
-        Debug.Log(depth + " " + ((uint)(relativeDepth * Mathf.Pow(2.0f, 4.0f*numberOfRadixSortPasses))));
+        //Debug.Log(depth + " " + ((uint)(relativeDepth * Mathf.Pow(2.0f, 4.0f*numberOfRadixSortPasses))));
                                                    
         m_myRadixSort.SetFloats("modelview", transMatrix[0], transMatrix[1], transMatrix[2], transMatrix[3],
                                   transMatrix[4], transMatrix[5], transMatrix[6], transMatrix[7],
@@ -559,7 +559,7 @@ public class PointCloud : MonoBehaviour {
             m_myRadixSort.Dispatch(LocalPrefixSum, m_actualNumberOfThreadGroups, 1, 1);
             m_myRadixSort.Dispatch(GlobalPrefixSum, 1, 1, 1);
             m_myRadixSort.Dispatch(RadixReorder, m_actualNumberOfThreadGroups, 1, 1);
-        }                                                                                          
+        } */                                                                                         
 
         pointRenderer.material.SetPass(0);
         GL.MultMatrix(pointRenderer.localToWorldMatrix);
@@ -569,8 +569,8 @@ public class PointCloud : MonoBehaviour {
         //Graphics.DrawProcedural(MeshTopology.Points, 1, m_pointsCount);
         //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count*6);  // index buffer.
 
-        Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*//*m_indexComputeBuffers[m_frameIndex].count*6*/m_indexComputeBuffer.count*6 );  // index buffer.
-        //Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*//*m_indexComputeBuffers[m_frameIndex].count*/m_indexComputeBuffer.count);  // index buffer.
+        //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*//*m_indexComputeBuffers[m_frameIndex].count*6*/m_indexComputeBuffer.count*6 );  // index buffer.
+        Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*//*m_indexComputeBuffers[m_frameIndex].count*/m_indexComputeBuffer.count);  // index buffer.
 
         //Maybe this rendering stuff is supposed to be attached to the camera?
     }

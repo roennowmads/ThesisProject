@@ -19,8 +19,8 @@
 // Constants
 //--------------------------------------------------------------------------------------
 
-#define BITONIC_BLOCK_SIZE 512
-#define TRANSPOSE_BLOCK_SIZE 32
+#define BITONIC_BLOCK_SIZE 128//256//512
+#define TRANSPOSE_BLOCK_SIZE 16//16//32
 
 //--------------------------------------------------------------------------------------
 // Constant Buffers

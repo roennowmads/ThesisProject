@@ -2,7 +2,7 @@
 #pragma kernel GlobalPrefixSum
 #pragma kernel RadixReorder
 
-#define GROUP_SIZE 64
+#define GROUP_SIZE 512
 
 #include "UnityCG.cginc"
 
