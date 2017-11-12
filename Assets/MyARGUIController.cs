@@ -1,4 +1,4 @@
-﻿#if UNITY_ANDROID
+﻿#if UNITY_ANDROID && false
 
 using System.Collections;
 using System.Collections.Generic;

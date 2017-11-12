@@ -32,17 +32,17 @@ StructuredBuffer<DepthAndValueScans> DepthValueScanIn;
 StructuredBuffer<uint4x4> Input;
 RWStructuredBuffer<uint4x4> Output;
 
-#define WARP_SIZE 64
+#define WARP_SIZE 32
 
 #if WARP_SIZE == 64
 #define GROUP_SIZE 512
 #define WARP_SHIFT 6   // == log2(64)
 #elif WARP_SIZE == 32
-#define GROUP_SIZE 480
+#define GROUP_SIZE 512
 #define WARP_SHIFT 5
 #else
 #define WARP_SIZE 16
-#define GROUP_SIZE 240
+#define GROUP_SIZE 512
 #define WARP_SHIFT 4
 #endif
 
@@ -51,6 +51,9 @@ groupshared uint4x4 temp[GROUP_SIZE];
 int bitshift;
 float4x4 model;
 float3 camPos;
+float scaledMaxDistance;
+float3 objectWorldPos;
+float depthIndices;
 
 //source for intra warp scan: 
 //http://research.nvidia.com/sites/default/files/publications/nvr-2008-003.pdf
@@ -75,7 +78,7 @@ uint4x4 ScanWarp(uint index, uint lane)
 	if (lane >= 32)
 		temp[index] = temp[index - 32] + temp[index];
 #endif
-	return lane > 0 ? temp[index - 1] : 0;//uint4x4(0,0,0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	return lane > 0 ? temp[index - 1] : uint4x4(0,0,0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); //0;
 }
 
 uint4x4 ScanWarpInclusive(uint index, uint lane)
@@ -148,8 +151,13 @@ void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID
 	
 	uint key = KeysIn[DTid.x];  //indexAndColor
 	float4 transVert = mul(model, float4(-_Points[key >> 8], 1.0));
-	float depth = distance(camPos, transVert.xyz);
-	uint intDepth = asuint(depth);
+	//float depth = distance(camPos, transVert.xyz);
+	//uint intDepth = asuint(depth);
+
+	float depth = dot(transVert.xyz - objectWorldPos, camPos);
+	float relativeDepth = (depth + scaledMaxDistance) / (scaledMaxDistance + scaledMaxDistance);
+	uint intDepth = uint(relativeDepth * depthIndices);
+	
 	
 	//take four bits of every input element:
 	uint keyBits = 15u - ((intDepth >> bitshift) & 0xF);  // we invert the 0-15 to 15-0 to get a reverse sort
