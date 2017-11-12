@@ -135,7 +135,7 @@ Shader "Unlit/SortingTest" {
 
 				//Translating the vertices in a quad shape:
 				//half size = 0.4 * exp(1.0 - value) /** modifier*/;
-				half size = 0.01 /** exp(1.0 - colorValue)*/ /** modifier*/;
+				half size = /*0.25**/0.075 /** exp(1.0 - colorValue)*/ /** modifier*/;
 				//half size = 0.15 * exp(value) /** modifier*/;
 				half2 quadSize = half2(size, size * aspect);
 				half2 deltaSize = quadCoords[quad_vertexID] * quadSize;
@@ -158,7 +158,7 @@ Shader "Unlit/SortingTest" {
 				//o.color = fixed4(/*i.color*/fixed3(0.5,0.1,0.1), albedo*0.0525);
 
 				//good for fireball:
-				o.color = fixed4(i.color, albedo/**0.25*/);
+				o.color = fixed4(i.color, 1.0/*albedo*//**0.25*/);
 				return o;
 			}
 			ENDCG

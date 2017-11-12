@@ -61,8 +61,11 @@ public class PointCloud : MonoBehaviour {
     private ComputeBuffer[] m_inOutBuffers;
     private int m_actualNumberOfThreadGroups;
 
+    private ComputeBuffer m_indexComputeBuffer;
     private int numberOfRadixSortPasses = 4;
+
     private float m_maxDistance;
+    private List<Vector3> m_ppoints;
 
     Texture2D createColorLookupTexture() {
         int numberOfValues = m_lookupTextureSize;
@@ -265,10 +268,11 @@ public class PointCloud : MonoBehaviour {
         return points;
     }
 
-    private float findMaxDistance(float[] points) {
+    private float findMaxDistance(/*float[]*/List<Vector3> points) {
         float maxDistance = 0;
-        for (int i = 0; i < points.Length; i+=3) {
-            Vector3 p = new Vector3(points[i], points[i + 1], points[i + 2]);
+        //for (int i = 0; i < points.Length; i+=3) {
+        foreach (Vector3 p in points) {
+            //Vector3 p = new Vector3(points[i], points[i + 1], points[i + 2]);
             float distance = p.magnitude;
             if (distance > maxDistance) {
                 maxDistance = distance;
@@ -281,9 +285,11 @@ public class PointCloud : MonoBehaviour {
         m_textureSideSize = 1 << m_textureSideSizePower;
         m_textureSize = m_textureSideSize * m_textureSideSize;
 
+        Screen.SetResolution(1920, 1080, true);
+
         //Set up mesh:
-        float[] points = readPointsFile3Attribs();
-        m_pointsCount = points.Length / 3;
+        //float[] points = readPointsFile3Attribs();
+        //m_pointsCount = points.Length / 3;
 
          //Set up textures:
         Texture2D colorTexture = createColorLookupTexture();
@@ -292,9 +298,9 @@ public class PointCloud : MonoBehaviour {
         //That means we can pack 3 10bit integer values into a pixel 
         //Texture2D texture = new Texture2D(m_textureSize, m_textureSize, TextureFormat.RFloat, false, false);
 
-        m_indexComputeBuffers = new List<ComputeBuffer>();
+        //m_indexComputeBuffers = new List<ComputeBuffer>();
 
-        readIndicesAndValues(m_indexComputeBuffers);
+        //readIndicesAndValues(m_indexComputeBuffers);
 
         //texture.anisoLevel = 1;
         //readPointsFile1Value(texture, texture2);
@@ -303,11 +309,33 @@ public class PointCloud : MonoBehaviour {
         //pointRenderer.material.SetTexture("_MainTex2", texture2);
         pointRenderer.material.SetTexture("_ColorTex", colorTexture);
 
-        m_maxDistance = findMaxDistance(points);
+
+        List<int> indices = new List<int>();
+
+        int numberOfParticles = 131072;//65536;
+
+        m_pointsCount = numberOfParticles;
+
+        for (int i = 0; i < numberOfParticles; i++) {
+            indices.Add((i << 8) + (i*4 % 64));
+        }
+
+        m_ppoints = new List<Vector3>();
+
+        for (int i = 0; i < numberOfParticles; i++) {
+            m_ppoints.Add(new Vector3(0.0f - i*0.1f ,0.0f ,0.0f ));
+        }
+
+
+        m_maxDistance = findMaxDistance(/*points*/m_ppoints);
         
         m_pointsBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
-        m_pointsBuffer.SetData(points);
+        //m_pointsBuffer.SetData(points);
+        m_pointsBuffer.SetData(m_ppoints.ToArray());
         pointRenderer.material.SetBuffer("_Points", m_pointsBuffer);
+
+        m_indexComputeBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(int)), ComputeBufferType.Default);
+        m_indexComputeBuffer.SetData(indices.ToArray());
 
         //pointRenderer.material.SetInt("_PointsCount", /*m_pointsCount*/pointPositions.Length);
         pointRenderer.material.SetInt("_PointsCount", m_pointsCount);
@@ -331,7 +359,7 @@ public class PointCloud : MonoBehaviour {
         m_threadGroupSize = (int)x;
 
         int threadGroupsNeeded = 16 /** 16*/;
-        inputSize = m_indexComputeBuffers[m_frameIndex].count;//m_threadGroupSize * threadGroupsNeeded;
+        inputSize = m_indexComputeBuffer.count;//m_indexComputeBuffers[m_frameIndex].count;//m_threadGroupSize * threadGroupsNeeded;
         m_actualNumberOfThreadGroups = inputSize / m_threadGroupSize;
 
         uint[] bufOutRadix = new uint[m_actualNumberOfThreadGroups * 16];
@@ -344,7 +372,7 @@ public class PointCloud : MonoBehaviour {
         }
 
         m_inOutBuffers = new ComputeBuffer[2];
-        m_inOutBuffers[0] = m_indexComputeBuffers[m_frameIndex];//new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(PartInt)), ComputeBufferType.Default);
+        m_inOutBuffers[0] = m_indexComputeBuffer;//m_indexComputeBuffers[m_frameIndex];//new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(PartInt)), ComputeBufferType.Default);
         //m_inOutBuffers[0].SetData(bufInRadix);
         m_inOutBuffers[1] = new ComputeBuffer(m_inOutBuffers[0].count, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
         m_inOutBuffers[1].SetData(bufOutFinal);
@@ -375,10 +403,10 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.material.SetBuffer("_IndicesValues", m_inOutBuffers[0]);
         m_myRadixSort.SetFloat("depthIndices", Mathf.Pow(2.0f, 4.0f*numberOfRadixSortPasses));
 
-        //uint[] bufOut = new uint[/*m_pointsCount*//*262144*/m_indexComputeBuffers[m_frameIndex].count];
+        uint[] bufOut = new uint[/*m_pointsCount*//*262144*/m_indexComputeBuffer/*s[m_frameIndex]*/.count];
 
-        //m_computeBufferTemp = new ComputeBuffer(bufOut.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
-        //m_computeBufferTemp.SetData(bufOut);
+        m_computeBufferTemp = new ComputeBuffer(bufOut.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
+        m_computeBufferTemp.SetData(bufOut);
 
         Debug.Log("Number of points: " + m_pointsCount);
 
@@ -419,10 +447,10 @@ public class PointCloud : MonoBehaviour {
 
     private void OnRenderObject()
     {
-        //GpuSort.BitonicSort32(m_indexComputeBuffers[m_frameIndex], m_computeBufferTemp, m_pointsBuffer, pointRenderer.localToWorldMatrix);
+        GpuSort.BitonicSort32(m_indexComputeBuffer/*s[m_frameIndex]*/, m_computeBufferTemp, m_pointsBuffer, pointRenderer.localToWorldMatrix);
 
 
-        m_myRadixSort.SetVector("camPos", Camera.main.transform.forward);     //camera view direction DOT point position == distance to camera.
+        /*m_myRadixSort.SetVector("camPos", Camera.main.transform.forward);     //camera view direction DOT point position == distance to camera.
 
 
         
@@ -457,16 +485,20 @@ public class PointCloud : MonoBehaviour {
             m_myRadixSort.Dispatch(LocalPrefixSum, m_actualNumberOfThreadGroups, 1, 1);
             m_myRadixSort.Dispatch(GlobalPrefixSum, 1, 1, 1);
             m_myRadixSort.Dispatch(RadixReorder, m_actualNumberOfThreadGroups, 1, 1);
-        }    
+        }            */                                    
 
         pointRenderer.material.SetPass(0);
         pointRenderer.material.SetMatrix("model", pointRenderer.localToWorldMatrix);
 
-        //Debug.Log(m_indexComputeBuffers[m_frameIndex].count);
+        GL.MultMatrix(pointRenderer.localToWorldMatrix); 
 
-        //Graphics.DrawProcedural(MeshTopology.Points, 1, m_pointsCount);
+        //Debug.Log(m_indexComputeBuffers[m_frameIndex].count);
+                                                                             
         //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count*6);  // index buffer.
-        Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/(m_indexComputeBuffers[m_frameIndex].count)*6 );  // index buffer.
+        //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/(m_indexComputeBuffers[m_frameIndex].count)*6 );  // index buffer.
+
+        //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*//*m_indexComputeBuffers[m_frameIndex].count*6*/m_indexComputeBuffer.count*6 );  // index buffer.
+        Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*//*m_indexComputeBuffers[m_frameIndex].count*/m_indexComputeBuffer.count);  // index buffer.
 
         //Maybe this rendering stuff is supposed to be attached to the camera?
     }
@@ -474,10 +506,10 @@ public class PointCloud : MonoBehaviour {
     void OnDestroy() {
         m_pointsBuffer.Release();
 
-        foreach (ComputeBuffer cb in m_indexComputeBuffers)
+        /*foreach (ComputeBuffer cb in m_indexComputeBuffers)
         {
             cb.Release();
-        }
+        }  */
        
     }
 }

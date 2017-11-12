@@ -33,17 +33,14 @@ StructuredBuffer<uint4x4> Input;
 RWStructuredBuffer<uint4x4> Output;
 
 #define WARP_SIZE 32
+#define GROUP_SIZE 512
 
 #if WARP_SIZE == 64
-#define GROUP_SIZE 512
 #define WARP_SHIFT 6   // == log2(64)
 #elif WARP_SIZE == 32
-#define GROUP_SIZE 512
-#define WARP_SHIFT 5
-#else
-#define WARP_SIZE 16
-#define GROUP_SIZE 512
-#define WARP_SHIFT 4
+#define WARP_SHIFT 5   // == log2(32)
+#elif WARP_SIZE == 16                  //optimal for adreno 510
+#define WARP_SHIFT 4   // == log2(16)
 #endif
 
 groupshared uint4x4 temp[GROUP_SIZE];
