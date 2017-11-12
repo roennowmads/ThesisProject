@@ -375,17 +375,10 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.material.SetBuffer("_IndicesValues", m_inOutBuffers[0]);
         m_myRadixSort.SetFloat("depthIndices", Mathf.Pow(2.0f, 4.0f*numberOfRadixSortPasses));
 
-        uint[] bufOut = new uint[/*m_pointsCount*//*262144*/m_indexComputeBuffers[m_frameIndex].count];
+        //uint[] bufOut = new uint[/*m_pointsCount*//*262144*/m_indexComputeBuffers[m_frameIndex].count];
 
-        m_computeBufferTemp = new ComputeBuffer(bufOut.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
-        m_computeBufferTemp.SetData(bufOut);
-
-        float timeBefore = Time.realtimeSinceStartup;        
-
-        float timeAfter = Time.realtimeSinceStartup; //be aware, the dispatch is probably async? it seems to be just the time it takes to go through the for loops and set the buffers.
-        print("Time in milliseconds: " + (timeAfter - timeBefore) * 1000.0f);
-
-        print(bufOut[10]);
+        //m_computeBufferTemp = new ComputeBuffer(bufOut.Length, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
+        //m_computeBufferTemp.SetData(bufOut);
 
         Debug.Log("Number of points: " + m_pointsCount);
 
