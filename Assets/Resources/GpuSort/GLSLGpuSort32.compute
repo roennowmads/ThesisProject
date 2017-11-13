@@ -15,9 +15,10 @@ GLSLPROGRAM
 	#pragma kernel GLSLBitonicSort
 
 	#version 310 es
+	//#version 450
 
 	#define BITONIC_BLOCK_SIZE 512
-	#define TRANSPOSE_BLOCK_SIZE 32
+	#define TRANSPOSE_BLOCK_SIZE 16
 
 	layout(std140) uniform CB {
 		uint g_iLevel;
@@ -66,8 +67,8 @@ GLSLPROGRAM
 		// Load shared data
 		uint indexAndColor = Data_buf[globalID]; 
 
-		float[3] vertPosArr = _Points_buf[indexAndColor >> 8].value;
-		vec4 vertPos = vec4(vertPosArr[0], vertPosArr[1], vertPosArr[2], -1.0);
+		uint index = indexAndColor >> 8u;
+		vec4 vertPos = vec4(_Points_buf[index].value[0], _Points_buf[index].value[1], _Points_buf[index].value[2], -1.0);
 		vec3 transVert = (hlslcc_mtx4x4model * -vertPos).xyz;
 
 		shared_data[GI].indexAndColor = indexAndColor;

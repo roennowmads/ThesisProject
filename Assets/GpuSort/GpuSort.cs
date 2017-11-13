@@ -14,7 +14,7 @@ static public class GpuSort
 {
     // ---- Constants ----
 
-    private const uint BITONIC_BLOCK_SIZE = 256;
+    private const uint BITONIC_BLOCK_SIZE = 512;
     private const uint TRANSPOSE_BLOCK_SIZE = 16;
 
     // ---- Members ----
@@ -35,7 +35,7 @@ static public class GpuSort
     static private void Init()
     {
         // Acquire compute shaders.
-        sort32GLSL = (ComputeShader) Resources.Load("GpuSort/GpuSort32", typeof(ComputeShader));
+        sort32GLSL = (ComputeShader) Resources.Load("GpuSort/GLSLGpuSort32", typeof(ComputeShader));
         sort32 = (ComputeShader)Resources.Load("GpuSort/GpuSort32", typeof(ComputeShader));
         sort64 = (ComputeShader) Resources.Load("GpuSort/GpuSort64", typeof(ComputeShader));
 
@@ -45,7 +45,7 @@ static public class GpuSort
         if (sort64 == null) Debug.LogError("GpuSort64 not found.");
 
         // Find kernels
-        kSort32 = sort32GLSL.FindKernel("BitonicSort");
+        kSort32 = sort32GLSL.FindKernel("GLSLBitonicSort");
         //kSort64 = sort64.FindKernel("BitonicSort");
         kTranspose32 = sort32.FindKernel("MatrixTranspose");
         //kTranspose64 = sort64.FindKernel("MatrixTranspose");
