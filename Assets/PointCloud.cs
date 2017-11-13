@@ -62,9 +62,10 @@ public class PointCloud : MonoBehaviour {
     private int m_actualNumberOfThreadGroups;
 
     private ComputeBuffer m_indexComputeBuffer;
-    private int numberOfRadixSortPasses = 4;
+    private int numberOfRadixSortPasses = 2;
 
     private float m_maxDistance;
+    private Vector3 m_pointCloudCenter;
     private List<Vector3> m_ppoints;
 
     Texture2D createColorLookupTexture() {
@@ -268,6 +269,32 @@ public class PointCloud : MonoBehaviour {
         return points;
     }
 
+    private Vector3 getMeanVector3(List<Vector3> points) {
+        Vector3 mean = new Vector3(0, 0, 0);
+        foreach (Vector3 p in points) {
+            mean += p;
+        }
+        mean /= points.Count;
+        return mean; 
+    }
+
+    private Vector3 getPointCloudCenter (List<Vector3> points) {
+        return getMeanVector3(points);
+    }
+
+    private float getMaxDistance(List<Vector3> points, Vector3 center) {
+        float maxDistance = 0;                      
+        foreach (Vector3 p in points) {
+            float distance = Vector3.Distance(center, p);
+            //float distance = p.magnitude;
+            if (distance > maxDistance) {
+                maxDistance = distance;
+            }
+        }
+        return maxDistance + maxDistance*0.01f; //adding a little more to make sure we're not cutting anything off with inprecision.
+    }
+
+
     private float findMaxDistance(/*float[]*/List<Vector3> points) {
         float maxDistance = 0;
         //for (int i = 0; i < points.Length; i+=3) {
@@ -312,7 +339,7 @@ public class PointCloud : MonoBehaviour {
 
         List<int> indices = new List<int>();
 
-        int numberOfParticles = 131072;//65536;
+        int numberOfParticles = 32768;//131072;//65536;
 
         m_pointsCount = numberOfParticles;
 
@@ -323,11 +350,12 @@ public class PointCloud : MonoBehaviour {
         m_ppoints = new List<Vector3>();
 
         for (int i = 0; i < numberOfParticles; i++) {
-            m_ppoints.Add(new Vector3(0.0f - i*0.1f ,0.0f ,0.0f ));
+            m_ppoints.Add(new Vector3(0.0f - i*0.01f ,0.0f ,0.0f ));
         }
 
 
-        m_maxDistance = findMaxDistance(/*points*/m_ppoints);
+        m_pointCloudCenter = getPointCloudCenter(m_ppoints);
+        m_maxDistance = getMaxDistance(m_ppoints, m_pointCloudCenter);//findMaxDistance(/*points*/m_ppoints);
         
         m_pointsBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
         //m_pointsBuffer.SetData(points);
@@ -447,10 +475,10 @@ public class PointCloud : MonoBehaviour {
 
     private void OnRenderObject()
     {
-        GpuSort.BitonicSort32(m_indexComputeBuffer/*s[m_frameIndex]*/, m_computeBufferTemp, m_pointsBuffer, pointRenderer.localToWorldMatrix);
+        //GpuSort.BitonicSort32(m_indexComputeBuffer/*s[m_frameIndex]*/, m_computeBufferTemp, m_pointsBuffer, pointRenderer.localToWorldMatrix);
 
 
-        /*m_myRadixSort.SetVector("camPos", Camera.main.transform.forward);     //camera view direction DOT point position == distance to camera.
+        m_myRadixSort.SetVector("camPos", Camera.main.transform.forward);     //camera view direction DOT point position == distance to camera.
 
 
         
@@ -461,7 +489,7 @@ public class PointCloud : MonoBehaviour {
                                   transMatrix[8], transMatrix[9], transMatrix[10], transMatrix[11],
                                   transMatrix[12], transMatrix[13], transMatrix[14], transMatrix[15]);
 
-        Vector3 zero = new Vector3(0.0f, 0.0f, 0.0f);
+        Vector3 zero = -m_pointCloudCenter;
         Vector3 transZero = transMatrix.MultiplyPoint(zero);
 
         float globalScale = transform.lossyScale.x;
@@ -485,7 +513,7 @@ public class PointCloud : MonoBehaviour {
             m_myRadixSort.Dispatch(LocalPrefixSum, m_actualNumberOfThreadGroups, 1, 1);
             m_myRadixSort.Dispatch(GlobalPrefixSum, 1, 1, 1);
             m_myRadixSort.Dispatch(RadixReorder, m_actualNumberOfThreadGroups, 1, 1);
-        }            */                                    
+        }                                                  
 
         pointRenderer.material.SetPass(0);
         pointRenderer.material.SetMatrix("model", pointRenderer.localToWorldMatrix);
@@ -497,8 +525,8 @@ public class PointCloud : MonoBehaviour {
         //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count*6);  // index buffer.
         //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/(m_indexComputeBuffers[m_frameIndex].count)*6 );  // index buffer.
 
-        //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*//*m_indexComputeBuffers[m_frameIndex].count*6*/m_indexComputeBuffer.count*6 );  // index buffer.
-        Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*//*m_indexComputeBuffers[m_frameIndex].count*/m_indexComputeBuffer.count);  // index buffer.
+        Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*//*m_indexComputeBuffers[m_frameIndex].count*6*/m_indexComputeBuffer.count*6 );  // index buffer.
+        //Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*//*m_indexComputeBuffers[m_frameIndex].count*/m_indexComputeBuffer.count);  // index buffer.
 
         //Maybe this rendering stuff is supposed to be attached to the camera?
     }
