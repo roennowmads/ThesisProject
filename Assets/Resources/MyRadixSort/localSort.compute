@@ -33,7 +33,7 @@ StructuredBuffer<uint4x4> Input;
 RWStructuredBuffer<uint4x4> Output;
 
 #define WARP_SIZE 32
-#define GROUP_SIZE 256
+#define GROUP_SIZE 512
 
 #if WARP_SIZE == 64
 #define WARP_SHIFT 6   // == log2(64)
