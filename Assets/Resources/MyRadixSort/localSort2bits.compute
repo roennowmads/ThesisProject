@@ -1,18 +1,17 @@
 #pragma kernel LocalPrefixSum
 #pragma kernel GlobalPrefixSum
 #pragma kernel RadixReorder
-#pragma kernel WarpScanTest
 
 StructuredBuffer<uint> KeysIn;
-RWStructuredBuffer<uint4x4> BucketsOut;
-RWStructuredBuffer<uint> GlobalDigitPrefixSumOut;
+RWStructuredBuffer<uint4> BucketsOut;
+RWStructuredBuffer<uint4> GlobalDigitPrefixSumOut;
 RWStructuredBuffer<uint> ValueScans;
-RWStructuredBuffer<uint4x4> GlobalPrefixSumOut;
+RWStructuredBuffer<uint4> GlobalPrefixSumOut;
 
-StructuredBuffer<uint4x4> BucketsIn;
+StructuredBuffer<uint4> BucketsIn;
 
-StructuredBuffer<uint4x4> GlobalPrefixSumIn;
-StructuredBuffer<uint> GlobalDigitPrefixSumIn;
+StructuredBuffer<uint4> GlobalPrefixSumIn;
+StructuredBuffer<uint4> GlobalDigitPrefixSumIn;
 StructuredBuffer<uint> ValueScansIn;
 RWStructuredBuffer<uint> KeysOut;
 
@@ -26,9 +25,6 @@ struct DepthAndValueScans {
 RWStructuredBuffer<DepthAndValueScans> DepthValueScanOut;
 StructuredBuffer<DepthAndValueScans> DepthValueScanIn;
 
-StructuredBuffer<uint4x4> Input;
-RWStructuredBuffer<uint4x4> Output;
-
 #define WARP_SIZE 32
 #define GROUP_SIZE 512
 
@@ -40,7 +36,7 @@ RWStructuredBuffer<uint4x4> Output;
 #define WARP_SHIFT 4   // == log2(16)
 #endif
 
-groupshared uint4x4 temp[GROUP_SIZE];
+groupshared uint4 temp[GROUP_SIZE];
 
 int bitshift;
 float4x4 model;
@@ -54,7 +50,7 @@ float depthIndices;
 
 
 
-uint4x4 ScanWarp(uint index, uint lane)
+uint4 ScanWarp(uint index, uint lane)
 {
 	if (lane >= 1)
 		temp[index] = temp[index - 1] + temp[index];
@@ -72,10 +68,10 @@ uint4x4 ScanWarp(uint index, uint lane)
 	if (lane >= 32)
 		temp[index] = temp[index - 32] + temp[index];
 #endif
-	return lane > 0 ? temp[index - 1] : uint4x4(0,0,0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); //0;
+	return lane > 0 ? temp[index - 1] : uint4(0,0,0,0); //0;
 }
 
-uint4x4 ScanWarpInclusive(uint index, uint lane)
+uint4 ScanWarpInclusive(uint index, uint lane)
 {
 	if (lane >= 1)
 		temp[index] = temp[index - 1] + temp[index];
@@ -96,13 +92,13 @@ uint4x4 ScanWarpInclusive(uint index, uint lane)
 	return temp[index];
 }
 
-uint4x4 ScanGroup(uint index)
+uint4 ScanGroup(uint index)
 {
 	uint lane = index & (WARP_SIZE - 1); // index of thread in warp (0..31)
 	uint warpId = index >> WARP_SHIFT;
 
 	// Step 1: Intra-warp scan in each warp
-	uint4x4 val = ScanWarpInclusive(index, lane);
+	uint4 val = ScanWarpInclusive(index, lane);
 	GroupMemoryBarrierWithGroupSync();
 
 	// Step 2: Collect per-warp partial results
@@ -128,17 +124,6 @@ uint4x4 ScanGroup(uint index)
 }
 
 [numthreads(GROUP_SIZE, 1, 1)]
-void WarpScanTest(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
-{
-	temp[GI] = Input[GI];
-	GroupMemoryBarrierWithGroupSync();
-	uint4x4 result = ScanGroup(GI);
-	GroupMemoryBarrierWithGroupSync();
-
-	Output[GI] = temp[GI];
-}
-
-[numthreads(GROUP_SIZE, 1, 1)]
 void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
 {	
 	uint key = KeysIn[DTid.x];  //indexAndColor
@@ -148,35 +133,17 @@ void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID
 	uint intDepth = uint(relativeDepth * depthIndices);	
 	
 	//take four bits of every input element:
-	uint keyBits = 15u - ((intDepth >> bitshift) & 0xF);  // we invert the 0-15 to 15-0 to get a reverse sort	
+	uint keyBits = 3u - ((intDepth >> bitshift) & 0xF);  // we invert the 0-15 to 15-0 to get a reverse sort	
     
-	 //hey this is only 16 bits, but it takes up 128 bits! ah we'll use it for counting so we need it to be potentially large.
-	//if we're doing 4 bits (16 values) we need compare the 16 values to all values between 0-15 and return 0 or 1 depending on whether they are equal.
-	uint4x4 miniBlock = uint4x4(
-		keyBits.xxxx == uint4(0u, 1u, 2u, 3u), keyBits.xxxx == uint4(4u, 5u, 6u, 7u), 
-		keyBits.xxxx == uint4(8u, 9u, 10u, 11u), keyBits.xxxx == uint4(12u, 13u, 14u, 15u));
 
-	//block local scan:
-	//if we know how many threads there are in a group, we know how many times we need to do this step (this is probably not the fastest way to do intra block scan). 
+	uint4 miniBlock = uint4(keyBits.xxxx == uint4(0u, 1u, 2u, 3u));
 
 	temp[GI] = miniBlock; //counts of 0u, 1u, 2u, 3u, counts of 4u, 5u, 6u, 7u, counts of 8u, 9u, 10u, 11u, counts of 12u, 13u, 14u, 15u
 	GroupMemoryBarrierWithGroupSync();
-	uint4x4 result = ScanGroup(GI);
-
-	//After this we have all the final sums for each 4 value subblock. Now we need to offset the partial sums with the previous subblocks final sum:
-
-	//it's not as simple as just getting some values. We need to make sure all the local prefix sums are adjusted to the global offsets.
-	//Also in each of these threads we're dealing with 4 values that each should create 16 ValueScans values.
-
-	//After the last GroupMemoryBarrierWithGroupSync we have all the local final sums though, so we can do some things by taking the last "groups" last element (biggest sum) as a base value for this "group".
-	//These are not final global prefix sums, but that's fine, we can make the global in a later pass. They have "block scope".
-
-	//sharedBuffer[GI][0].x is the block count for the 0's
-	//sharedBuffer[GI][3].w is the block count for the 15's
+	uint4 result = ScanGroup(GI);
 
 	DepthValueScanOut[DTid.x].depth = keyBits;
-	//We only store the values that we actually need to create a local index:
-	DepthValueScanOut[DTid.x].valueScan = ((uint[16])result)[keyBits];
+	DepthValueScanOut[DTid.x].valueScan = result[keyBits];
 
 	//Final counts for each block:
 	if (GI == (GROUP_SIZE - 1u)) {
@@ -191,34 +158,23 @@ void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID
 [numthreads(GROUP_SIZE, 1, 1)]
 void GlobalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
 {
-	//Get the last element of each block (total block sums):
-	//The following four uint4's contains the total sums of the values 0-15 (each value individually) from each block:
-	//counts of 0u, 1u, 2u, 3u, counts of 4u, 5u, 6u, 7u, counts of 8u, 9u, 10u, 11u, counts of 12u, 13u, 14u, 15u
-	//GI as an index only works (if it actually does?) here as long as the number of blocks is <= GROUP_SIZE.
-
-	//block local scan:
-	//if we know how many threads there are in a group, we know how many times we need to do this step (this is probably not the fastest way to do intra block scan). 
-
 	temp[GI] = BucketsIn[GI];
 	GroupMemoryBarrierWithGroupSync();
-	uint result[16] = (uint[16])ScanGroup(GI);
+	uint4 result = ScanGroup(GI);
 
-	//After this step the sharedBuffer contains partial and full prefix sums of all the blocks that could fit within one thread group (that is, GROUP_SIZE blocks).
-	GlobalPrefixSumOut[GI] = uint4x4(result);
-
-	//here we need to take the value from the last BLOCK not the last thread. This complicates things because sharedBuffer is block scope only.
-	//The shaderBuffer does contain the partial sums of the blocks though. This kernel was meant to be run only with one thread group, and have all the partial sums within one block.
+	GlobalPrefixSumOut[GI] = result;
 
 	if (GI == (GROUP_SIZE - 1u)) {
 		//Here we scan the counts of the 16 values, in order to get their base indices.
 
 		//exclusive scan:
-		uint prefixSums[16];
-		prefixSums[0] = 0u;
-		for (uint i = 1u; i < 16u; i++) {
-			prefixSums[i] = prefixSums[i - 1] + result[i - 1];
-			GlobalDigitPrefixSumOut[i] = prefixSums[i];
-		}
+		uint4 prefixSums;
+		prefixSums.x = 0u;
+		prefixSums.y = prefixSums.x + result.x;
+		prefixSums.z = prefixSums.y + result.y;
+		prefixSums.w = prefixSums.z + result.z;
+
+		GlobalDigitPrefixSumOut[0] = prefixSums;
 	}
 }
 
@@ -241,13 +197,13 @@ void RadixReorder(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_Dispat
 
 	//Correct the ValueScans according to the Global offset:
 	if (groupId.x > 0) {
-		uint prevBlockFinalSum[16] = (uint[16])GlobalPrefixSumIn[groupId.x - 1]; //this gives a new sum for each increase in GI. While we want the same for this group, right?
+		uint4 prevBlockFinalSum = GlobalPrefixSumIn[groupId.x - 1]; //this gives a new sum for each increase in GI. While we want the same for this group, right?
 		uint prevSum0 = prevBlockFinalSum[keyBits];
 		localOffset += prevSum0; //miniBlock[0][0][0] contains the partial sum of 0's. It appears every 16's index of the ValueScans buffer.
 	}
 
 	uint key = KeysIn[DTid.x];  //indexAndColor
-	uint globalOffset = GlobalDigitPrefixSumIn[keyBits];
+	uint globalOffset = GlobalDigitPrefixSumIn[0][keyBits];
 
 	uint newIndex = globalOffset + localOffset - 1u;
 
