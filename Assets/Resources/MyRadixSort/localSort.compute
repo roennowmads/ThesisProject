@@ -29,8 +29,10 @@ StructuredBuffer<DepthAndValueScans> DepthValueScanIn;
 StructuredBuffer<uint4x4> Input;
 RWStructuredBuffer<uint4x4> Output;
 
+#define INTRA_WARP_SCAN
+
 #define WARP_SIZE 32
-#define GROUP_SIZE 512
+#define GROUP_SIZE 256//512
 
 #if WARP_SIZE == 64
 #define WARP_SHIFT 6   // == log2(64)
@@ -161,7 +163,26 @@ void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID
 
 	temp[GI] = miniBlock; //counts of 0u, 1u, 2u, 3u, counts of 4u, 5u, 6u, 7u, counts of 8u, 9u, 10u, 11u, counts of 12u, 13u, 14u, 15u
 	GroupMemoryBarrierWithGroupSync();
+	
+#if defined(INTRA_WARP_SCAN)
 	uint4x4 result = ScanGroup(GI);
+#else
+	uint4x4 result;
+	{
+		[unroll(int(log2(GROUP_SIZE)))]
+		for (uint i = 0u; i < uint(log2(GROUP_SIZE)); i++) {		//log2(256) == 8
+			result = temp[GI];
+
+			uint sumOffset = 1 << i;
+			if (GI >= sumOffset) { //step0: ignore first elem, step1: ignore first 2 elems, step1: ignore first 4 elems, etc.
+				result += temp[GI - sumOffset];
+			}
+			GroupMemoryBarrierWithGroupSync();
+			temp[GI] = result;
+			GroupMemoryBarrierWithGroupSync();
+		}
+	}
+#endif
 
 	//After this we have all the final sums for each 4 value subblock. Now we need to offset the partial sums with the previous subblocks final sum:
 
@@ -201,7 +222,27 @@ void GlobalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupI
 
 	temp[GI] = BucketsIn[GI];
 	GroupMemoryBarrierWithGroupSync();
+
+#if defined(INTRA_WARP_SCAN)
 	uint result[16] = (uint[16])ScanGroup(GI);
+#else
+	uint4x4 resultMat;
+	{
+		[unroll(int(log2(GROUP_SIZE)))]
+		for (uint i = 0u; i < uint(log2(GROUP_SIZE)); i++) {		//log2(256) == 8
+			resultMat = temp[GI];
+
+			uint sumOffset = 1 << i;
+			if (GI >= sumOffset) { //step0: ignore first elem, step1: ignore first 2 elems, step1: ignore first 4 elems, etc.
+				resultMat += temp[GI - sumOffset];
+			}
+			GroupMemoryBarrierWithGroupSync();
+			temp[GI] = resultMat;
+			GroupMemoryBarrierWithGroupSync();
+		}
+	}
+	uint result[16] = (uint[16])resultMat; 
+#endif
 
 	//After this step the sharedBuffer contains partial and full prefix sums of all the blocks that could fit within one thread group (that is, GROUP_SIZE blocks).
 	GlobalPrefixSumOut[GI] = uint4x4(result);

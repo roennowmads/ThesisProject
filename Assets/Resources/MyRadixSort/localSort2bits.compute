@@ -25,8 +25,10 @@ struct DepthAndValueScans {
 RWStructuredBuffer<DepthAndValueScans> DepthValueScanOut;
 StructuredBuffer<DepthAndValueScans> DepthValueScanIn;
 
-#define WARP_SIZE 32
-#define GROUP_SIZE 512
+//#define INTRA_WARP_SCAN
+
+#define WARP_SIZE 16
+#define GROUP_SIZE 256//512
 
 #if WARP_SIZE == 64
 #define WARP_SHIFT 6   // == log2(64)
@@ -132,7 +134,7 @@ void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID
 	float relativeDepth = (depth + scaledMaxDistance) / (scaledMaxDistance + scaledMaxDistance);
 	uint intDepth = uint(relativeDepth * depthIndices);	
 	
-	//take four bits of every input element:
+	//take two bits of every input element:
 	uint keyBits = 3u - ((intDepth >> bitshift) & 0x3);  // we invert the 0-15 to 15-0 to get a reverse sort	
     
 
@@ -140,7 +142,27 @@ void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID
 
 	temp[GI] = miniBlock;					 
 	GroupMemoryBarrierWithGroupSync();
+
+#if defined(INTRA_WARP_SCAN)
 	uint4 result = ScanGroup(GI);			//counts of 0u, 1u, 2u, 3u
+#else
+	uint4 result;
+	{
+		[unroll(int(log2(GROUP_SIZE)))]
+		for (uint i = 0u; i < uint(log2(GROUP_SIZE)); i++) {		//log2(256) == 8
+			result = temp[GI];
+
+			uint sumOffset = 1 << i;
+			if (GI >= sumOffset) { //step0: ignore first elem, step1: ignore first 2 elems, step1: ignore first 4 elems, etc.
+				result += temp[GI - sumOffset];
+			}
+			GroupMemoryBarrierWithGroupSync();
+			temp[GI] = result;
+			GroupMemoryBarrierWithGroupSync();
+		}
+	}
+#endif
+
 
 	DepthValueScanOut[DTid.x].depth = keyBits;
 	DepthValueScanOut[DTid.x].valueScan = result[keyBits];
@@ -156,7 +178,26 @@ void GlobalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupI
 {
 	temp[GI] = BucketsIn[GI];
 	GroupMemoryBarrierWithGroupSync();
+
+#if defined(INTRA_WARP_SCAN)
 	uint4 result = ScanGroup(GI);
+#else
+	uint4 result;
+	{
+		[unroll(int(log2(GROUP_SIZE)))]
+		for (uint i = 0u; i < uint(log2(GROUP_SIZE)); i++) {		//log2(256) == 8
+			result = temp[GI];
+
+			uint sumOffset = 1 << i;
+			if (GI >= sumOffset) { //step0: ignore first elem, step1: ignore first 2 elems, step1: ignore first 4 elems, etc.
+				result += temp[GI - sumOffset];
+			}
+			GroupMemoryBarrierWithGroupSync();
+			temp[GI] = result;
+			GroupMemoryBarrierWithGroupSync();
+		}
+	}
+#endif
 
 	GlobalPrefixSumOut[GI] = result;
 

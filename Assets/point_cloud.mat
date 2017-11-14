@@ -7,7 +7,7 @@ Material:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_Name: point_cloud
-  m_Shader: {fileID: 4800000, guid: 268cbeb370ac3e844a78195221d5f9f9, type: 3}
+  m_Shader: {fileID: 4800000, guid: ccc60c3314f38f647b43469d546f0149, type: 3}
   m_ShaderKeywords: _EMISSION
   m_LightmapFlags: 1
   m_EnableInstancingVariants: 1

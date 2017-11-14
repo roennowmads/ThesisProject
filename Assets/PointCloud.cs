@@ -61,8 +61,8 @@ public class PointCloud : MonoBehaviour {
     private ComputeBuffer[] m_inOutBuffers;
     private int m_actualNumberOfThreadGroups;
                                                     
-    private int numberOfRadixSortPasses = 4;
-    private int m_bitsPerPass = 2;
+    private int numberOfRadixSortPasses = 2;
+    private int m_bitsPerPass = 4;
     private int m_passLengthMultiplier;
 
     private float m_maxDistance;
@@ -161,7 +161,7 @@ public class PointCloud : MonoBehaviour {
             //    bufferSize--;
             //}
 
-            int bufferSize = 4096 * 4 * 4 * 2;
+            int bufferSize = 4096 * 4 * 4 /** 2*/;
 
             uint[] zeroedBytes = new uint[bufferSize];
 
@@ -493,10 +493,10 @@ public class PointCloud : MonoBehaviour {
 
     private void OnRenderObject()
     {
-        //GpuSort.BitonicSort32(m_indexComputeBuffers[m_frameIndex], m_computeBufferTemp, m_pointsBuffer, pointRenderer.localToWorldMatrix);
+        GpuSort.BitonicSort32(m_indexComputeBuffers[m_frameIndex], m_computeBufferTemp, m_pointsBuffer, pointRenderer.localToWorldMatrix);
 
 
-        m_myRadixSort.SetVector("camPos", Camera.main.transform.forward);     //camera view direction DOT point position == distance to camera.
+        /*m_myRadixSort.SetVector("camPos", Camera.main.transform.forward);     //camera view direction DOT point position == distance to camera.
 
 
         
@@ -531,7 +531,7 @@ public class PointCloud : MonoBehaviour {
             m_myRadixSort.Dispatch(LocalPrefixSum, m_actualNumberOfThreadGroups, 1, 1);
             m_myRadixSort.Dispatch(GlobalPrefixSum, 1, 1, 1);
             m_myRadixSort.Dispatch(RadixReorder, m_actualNumberOfThreadGroups, 1, 1);
-        }                                                  
+        }                              */                    
 
         pointRenderer.material.SetPass(0);
         pointRenderer.material.SetMatrix("model", pointRenderer.localToWorldMatrix);
@@ -540,8 +540,8 @@ public class PointCloud : MonoBehaviour {
 
         //Debug.Log(m_indexComputeBuffers[m_frameIndex].count);
                                                                              
-        Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count*6);  // index buffer.         
-        //Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count);  // index buffer.         
+        //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count*6);  // index buffer.         
+        Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count);  // index buffer.         
 
         //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*//*m_indexComputeBuffers[m_frameIndex].count*6*/m_indexComputeBuffer.count*6 );  // index buffer.
         //Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*//*m_indexComputeBuffers[m_frameIndex].count*/m_indexComputeBuffer.count);  // index buffer.
