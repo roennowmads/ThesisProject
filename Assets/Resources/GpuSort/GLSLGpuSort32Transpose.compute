@@ -33,6 +33,6 @@ GLSLPROGRAM
 		barrier();
 
 		uvec2 XY = gl_GlobalInvocationID.yx - gl_LocalInvocationID.yx + gl_LocalInvocationID.xy;
-		Data_buf[XY.y * g_iHeight + XY.x] = transpose_shared_data[gl_LocalInvocationID.x * TRANSPOSE_BLOCK_SIZE + gl_LocalInvocationID.y];
+		Data_buf[XY.y * g_iHeight + XY.x] = transpose_shared_data[gl_LocalInvocationID.x * uint(TRANSPOSE_BLOCK_SIZE) + gl_LocalInvocationID.y];
 	}
 ENDGLSL
