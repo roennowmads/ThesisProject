@@ -62,6 +62,8 @@ public class PointCloud : MonoBehaviour {
     private int m_actualNumberOfThreadGroups;
                                                     
     private int numberOfRadixSortPasses = 4;
+    private int m_bitsPerPass = 2;
+    private int m_passLengthMultiplier;
 
     private float m_maxDistance;
     private Vector3 m_pointCloudCenter;
@@ -388,13 +390,18 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.material.SetInt("_Magnitude", m_textureSideSizePower);
         pointRenderer.material.SetInt("_TextureSwitchFrameNumber", m_textureSwitchFrameNumber);
 
-       // m_kernel = m_radixShader.FindKernel("CSMain");
+        // m_kernel = m_radixShader.FindKernel("CSMain");
+        m_passLengthMultiplier = m_bitsPerPass == 4 ? 4 : 1;
 
-        m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort2bits", typeof(ComputeShader));
+        if (m_bitsPerPass == 4) {
+            m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort", typeof(ComputeShader));
+        }
+        else {
+            m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort2bits", typeof(ComputeShader));
+        }
         LocalPrefixSum = m_myRadixSort.FindKernel("LocalPrefixSum");
         GlobalPrefixSum = m_myRadixSort.FindKernel("GlobalPrefixSum");
         RadixReorder = m_myRadixSort.FindKernel("RadixReorder");
-        //WarpScanTest = m_myRadixSort.FindKernel("WarpScanTest");
 
         uint x, y, z;
         m_myRadixSort.GetKernelThreadGroupSizes(LocalPrefixSum, out x, out y, out z);
@@ -403,46 +410,44 @@ public class PointCloud : MonoBehaviour {
         inputSize = /*m_indexComputeBuffer.count;*/m_indexComputeBuffers[m_frameIndex].count;
         m_actualNumberOfThreadGroups = inputSize / m_threadGroupSize;
 
-        uint[] bufOutRadix = new uint[m_actualNumberOfThreadGroups * 4];
-
-        uint[] bufOutPrefixSum = new uint[4]; //the size represents the 16 possible values with 4 bits.
-
+        uint[] bufOutRadix = new uint[m_actualNumberOfThreadGroups * 4 * m_passLengthMultiplier];
+        uint[] bufOutPrefixSum = new uint[4 * m_passLengthMultiplier]; //the size represents the 16 possible values with 4 bits.
         uint[] bufOutFinal = new uint[inputSize];
-        for (int i = 0; i < bufOutFinal.Length; i++) {
-            bufOutFinal[i] = 9999u;
-        }
 
         m_inOutBuffers = new ComputeBuffer[2];
-        m_inOutBuffers[0] = /*m_indexComputeBuffer;*/m_indexComputeBuffers[m_frameIndex];//new ComputeBuffer(bufInRadix.Length, Marshal.SizeOf(typeof(PartInt)), ComputeBufferType.Default);
+        m_inOutBuffers[0] = /*m_indexComputeBuffer;*/m_indexComputeBuffers[m_frameIndex];
         //m_inOutBuffers[0].SetData(bufInRadix);
         m_inOutBuffers[1] = new ComputeBuffer(m_inOutBuffers[0].count, Marshal.SizeOf(typeof(uint))*2, ComputeBufferType.Default);
         //m_inOutBuffers[1].SetData(bufOutFinal);
 
-        ComputeBuffer m_computeBufferOut = new ComputeBuffer(m_actualNumberOfThreadGroups, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
-        m_computeBufferOut.SetData(bufOutRadix);
+        ComputeBuffer computeBufferOut = new ComputeBuffer(m_actualNumberOfThreadGroups, Marshal.SizeOf(typeof(Vector4))*m_passLengthMultiplier, ComputeBufferType.Default);
+        computeBufferOut.SetData(bufOutRadix);
 
-        ComputeBuffer computeBufferDigitPrefixSum = new ComputeBuffer(1, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
+        ComputeBuffer computeBufferDigitPrefixSum = new ComputeBuffer(1, Marshal.SizeOf(typeof(Vector4))*m_passLengthMultiplier, ComputeBufferType.Default);
         computeBufferDigitPrefixSum.SetData(bufOutPrefixSum);
 
-        ComputeBuffer m_computeBufferGlobalPrefixSum = new ComputeBuffer(m_threadGroupSize, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Default);
+        ComputeBuffer computeBufferGlobalPrefixSum = new ComputeBuffer(m_threadGroupSize, Marshal.SizeOf(typeof(Vector4))*m_passLengthMultiplier, ComputeBufferType.Default);
 
         ComputeBuffer depthsAndValueScans = new ComputeBuffer(m_inOutBuffers[0].count, Marshal.SizeOf(typeof(uint))*2, ComputeBufferType.Default);
 
 
-        m_myRadixSort.SetBuffer(LocalPrefixSum, "BucketsOut", m_computeBufferOut);
+        m_myRadixSort.SetFloat("depthIndices", Mathf.Pow(2.0f, (float)m_bitsPerPass*numberOfRadixSortPasses));
+
+        m_myRadixSort.SetBuffer(LocalPrefixSum, "BucketsOut", computeBufferOut);
         m_myRadixSort.SetBuffer(LocalPrefixSum, "DepthValueScanOut", depthsAndValueScans);
         m_myRadixSort.SetBuffer(LocalPrefixSum, "_Points", m_pointsBuffer);
 
         m_myRadixSort.SetBuffer(GlobalPrefixSum, "GlobalDigitPrefixSumOut", computeBufferDigitPrefixSum);
-        m_myRadixSort.SetBuffer(GlobalPrefixSum, "BucketsIn", m_computeBufferOut);
-        m_myRadixSort.SetBuffer(GlobalPrefixSum, "GlobalPrefixSumOut", m_computeBufferGlobalPrefixSum);
+        m_myRadixSort.SetBuffer(GlobalPrefixSum, "BucketsIn", computeBufferOut);
+        m_myRadixSort.SetBuffer(GlobalPrefixSum, "GlobalPrefixSumOut", computeBufferGlobalPrefixSum);
 
         m_myRadixSort.SetBuffer(RadixReorder, "GlobalDigitPrefixSumIn", computeBufferDigitPrefixSum);
         m_myRadixSort.SetBuffer(RadixReorder, "DepthValueScanIn", depthsAndValueScans);
-        m_myRadixSort.SetBuffer(RadixReorder, "GlobalPrefixSumIn", m_computeBufferGlobalPrefixSum);
+        m_myRadixSort.SetBuffer(RadixReorder, "GlobalPrefixSumIn", computeBufferGlobalPrefixSum);
+        
 
         pointRenderer.material.SetBuffer("_IndicesValues", m_inOutBuffers[0]);
-        m_myRadixSort.SetFloat("depthIndices", Mathf.Pow(2.0f, 2.0f*numberOfRadixSortPasses));
+        
 
         uint[] bufOut = new uint[/*m_pointsCount*//*262144*/m_indexComputeBuffers[m_frameIndex].count];
 
@@ -514,7 +519,7 @@ public class PointCloud : MonoBehaviour {
 
         int outSwapIndex = 1;
         for (int i = 0; i < numberOfRadixSortPasses; i++) {
-            int bitshift = 2 * i;
+            int bitshift = m_bitsPerPass * i;
             m_myRadixSort.SetInt("bitshift", bitshift);
             int swapIndex0 = i % 2;
             outSwapIndex = (i + 1) % 2;
