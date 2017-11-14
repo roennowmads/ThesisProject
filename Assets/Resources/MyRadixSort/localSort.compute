@@ -6,15 +6,12 @@
 StructuredBuffer<uint> KeysIn;
 RWStructuredBuffer<uint4x4> BucketsOut;
 RWStructuredBuffer<uint> GlobalDigitPrefixSumOut;
-RWStructuredBuffer<uint> ValueScans;
 RWStructuredBuffer<uint4x4> GlobalPrefixSumOut;
 
 StructuredBuffer<uint4x4> BucketsIn;
-
-StructuredBuffer<uint4x4> GlobalPrefixSumIn;
-StructuredBuffer<uint> GlobalDigitPrefixSumIn;
-StructuredBuffer<uint> ValueScansIn;
 RWStructuredBuffer<uint> KeysOut;
+StructuredBuffer<uint> GlobalDigitPrefixSumIn;
+StructuredBuffer<uint4x4> GlobalPrefixSumIn;
 
 StructuredBuffer<float3> _Points;
 
@@ -32,7 +29,7 @@ RWStructuredBuffer<uint4x4> Output;
 #define INTRA_WARP_SCAN
 
 #define WARP_SIZE 32
-#define GROUP_SIZE 256//512
+#define GROUP_SIZE 512
 
 #if WARP_SIZE == 64
 #define WARP_SHIFT 6   // == log2(64)

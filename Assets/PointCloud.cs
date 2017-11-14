@@ -161,7 +161,7 @@ public class PointCloud : MonoBehaviour {
             //    bufferSize--;
             //}
 
-            int bufferSize = 4096 * 4 * 4 /** 2*/;
+            int bufferSize = 4096 * 4 * 4 * 2;
 
             uint[] zeroedBytes = new uint[bufferSize];
 
@@ -391,13 +391,15 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.material.SetInt("_TextureSwitchFrameNumber", m_textureSwitchFrameNumber);
 
         // m_kernel = m_radixShader.FindKernel("CSMain");
-        m_passLengthMultiplier = m_bitsPerPass == 4 ? 4 : 1;
-
+        m_passLengthMultiplier = m_bitsPerPass * m_bitsPerPass;
         if (m_bitsPerPass == 4) {
             m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort", typeof(ComputeShader));
         }
-        else {
+        else if (m_bitsPerPass == 2) {
             m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort2bits", typeof(ComputeShader));
+        }
+        else {                                                                                                       
+            m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort1bit", typeof(ComputeShader));
         }
         LocalPrefixSum = m_myRadixSort.FindKernel("LocalPrefixSum");
         GlobalPrefixSum = m_myRadixSort.FindKernel("GlobalPrefixSum");
@@ -410,8 +412,8 @@ public class PointCloud : MonoBehaviour {
         inputSize = /*m_indexComputeBuffer.count;*/m_indexComputeBuffers[m_frameIndex].count;
         m_actualNumberOfThreadGroups = inputSize / m_threadGroupSize;
 
-        uint[] bufOutRadix = new uint[m_actualNumberOfThreadGroups * 4 * m_passLengthMultiplier];
-        uint[] bufOutPrefixSum = new uint[4 * m_passLengthMultiplier]; //the size represents the 16 possible values with 4 bits.
+        uint[] bufOutRadix = new uint[m_actualNumberOfThreadGroups * 2 * m_passLengthMultiplier];
+        uint[] bufOutPrefixSum = new uint[2 * m_passLengthMultiplier]; //the size represents the 16 possible values with 4 bits.
         uint[] bufOutFinal = new uint[inputSize];
 
         m_inOutBuffers = new ComputeBuffer[2];
@@ -420,13 +422,13 @@ public class PointCloud : MonoBehaviour {
         m_inOutBuffers[1] = new ComputeBuffer(m_inOutBuffers[0].count, Marshal.SizeOf(typeof(uint))*2, ComputeBufferType.Default);
         //m_inOutBuffers[1].SetData(bufOutFinal);
 
-        ComputeBuffer computeBufferOut = new ComputeBuffer(m_actualNumberOfThreadGroups, Marshal.SizeOf(typeof(Vector4))*m_passLengthMultiplier, ComputeBufferType.Default);
+        ComputeBuffer computeBufferOut = new ComputeBuffer(m_actualNumberOfThreadGroups, Marshal.SizeOf(typeof(Vector2))*m_passLengthMultiplier, ComputeBufferType.Default);
         computeBufferOut.SetData(bufOutRadix);
 
-        ComputeBuffer computeBufferDigitPrefixSum = new ComputeBuffer(1, Marshal.SizeOf(typeof(Vector4))*m_passLengthMultiplier, ComputeBufferType.Default);
+        ComputeBuffer computeBufferDigitPrefixSum = new ComputeBuffer(1, Marshal.SizeOf(typeof(Vector2))*m_passLengthMultiplier, ComputeBufferType.Default);
         computeBufferDigitPrefixSum.SetData(bufOutPrefixSum);
 
-        ComputeBuffer computeBufferGlobalPrefixSum = new ComputeBuffer(m_threadGroupSize, Marshal.SizeOf(typeof(Vector4))*m_passLengthMultiplier, ComputeBufferType.Default);
+        ComputeBuffer computeBufferGlobalPrefixSum = new ComputeBuffer(m_threadGroupSize, Marshal.SizeOf(typeof(Vector2))*m_passLengthMultiplier, ComputeBufferType.Default);
 
         ComputeBuffer depthsAndValueScans = new ComputeBuffer(m_inOutBuffers[0].count, Marshal.SizeOf(typeof(uint))*2, ComputeBufferType.Default);
 
@@ -493,10 +495,10 @@ public class PointCloud : MonoBehaviour {
 
     private void OnRenderObject()
     {
-        GpuSort.BitonicSort32(m_indexComputeBuffers[m_frameIndex], m_computeBufferTemp, m_pointsBuffer, pointRenderer.localToWorldMatrix);
+        //GpuSort.BitonicSort32(m_indexComputeBuffers[m_frameIndex], m_computeBufferTemp, m_pointsBuffer, pointRenderer.localToWorldMatrix);
 
 
-        /*m_myRadixSort.SetVector("camPos", Camera.main.transform.forward);     //camera view direction DOT point position == distance to camera.
+        m_myRadixSort.SetVector("camPos", Camera.main.transform.forward);     //camera view direction DOT point position == distance to camera.
 
 
         
@@ -531,7 +533,7 @@ public class PointCloud : MonoBehaviour {
             m_myRadixSort.Dispatch(LocalPrefixSum, m_actualNumberOfThreadGroups, 1, 1);
             m_myRadixSort.Dispatch(GlobalPrefixSum, 1, 1, 1);
             m_myRadixSort.Dispatch(RadixReorder, m_actualNumberOfThreadGroups, 1, 1);
-        }                              */                    
+        }                                                  
 
         pointRenderer.material.SetPass(0);
         pointRenderer.material.SetMatrix("model", pointRenderer.localToWorldMatrix);
@@ -540,8 +542,8 @@ public class PointCloud : MonoBehaviour {
 
         //Debug.Log(m_indexComputeBuffers[m_frameIndex].count);
                                                                              
-        //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count*6);  // index buffer.         
-        Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count);  // index buffer.         
+        Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count*6);  // index buffer.         
+        //Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count);  // index buffer.         
 
         //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*//*m_indexComputeBuffers[m_frameIndex].count*6*/m_indexComputeBuffer.count*6 );  // index buffer.
         //Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*//*m_indexComputeBuffers[m_frameIndex].count*/m_indexComputeBuffer.count);  // index buffer.
