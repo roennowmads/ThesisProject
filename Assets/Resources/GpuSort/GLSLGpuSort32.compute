@@ -1,24 +1,11 @@
-//--------------------------------------------------------------------------------------
-// File: ComputeShaderSort11.hlsl
-//
-// This file contains the compute shaders to perform GPU sorting using DirectX 11.
-// 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-//--------------------------------------------------------------------------------------
-
-//--------------------------------------------------------------------------------------
-// Pragmas
-//--------------------------------------------------------------------------------------
-
 GLSLPROGRAM
 
 	#pragma kernel GLSLBitonicSort
 
-	#version 310 es
-	//#version 450
+	//#version 310 es
+	#version 450
 
 	#define BITONIC_BLOCK_SIZE 512
-	#define TRANSPOSE_BLOCK_SIZE 16
 
 	layout(std140) uniform CB {
 		uint g_iLevel;
@@ -51,7 +38,6 @@ GLSLPROGRAM
 	//--------------------------------------------------------------------------------------
 	// Bitonic Sort Compute Shader
 	//--------------------------------------------------------------------------------------
-	//shared indexDepth shared_data[BITONIC_BLOCK_SIZE]; 
 
 	shared struct indexDepth {
 		uint indexAndColor;
@@ -109,4 +95,7 @@ GLSLPROGRAM
 		// Store shared data
 		Data_buf[globalID] = shared_data[GI].indexAndColor;
 	}
+
+
+
 ENDGLSL

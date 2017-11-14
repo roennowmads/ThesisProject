@@ -19,7 +19,7 @@ static public class GpuSort
 
     // ---- Members ----
 
-    static private ComputeShader sort32, sort32GLSL;
+    static private ComputeShader sort32, sort32GLSL, sort32TransposeGLSL;
     static private ComputeShader sort64;
     static private int kSort32;
     static private int kSort64;
@@ -36,18 +36,20 @@ static public class GpuSort
     {
         // Acquire compute shaders.
         sort32GLSL = (ComputeShader) Resources.Load("GpuSort/GLSLGpuSort32", typeof(ComputeShader));
-        sort32 = (ComputeShader)Resources.Load("GpuSort/GpuSort32", typeof(ComputeShader));
+        sort32TransposeGLSL = (ComputeShader) Resources.Load("GpuSort/GLSLGpuSort32Transpose", typeof(ComputeShader));
+        //sort32 = (ComputeShader)Resources.Load("GpuSort/GpuSort32", typeof(ComputeShader));
         sort64 = (ComputeShader) Resources.Load("GpuSort/GpuSort64", typeof(ComputeShader));
 
         // If they were not found, crash!
         if (sort32GLSL == null) Debug.LogError("GpuSort32 not found.");
-        if (sort32 == null) Debug.LogError("GpuSort32 not found.");
+        //if (sort32 == null) Debug.LogError("GpuSort32 not found.");
         if (sort64 == null) Debug.LogError("GpuSort64 not found.");
 
         // Find kernels
         kSort32 = sort32GLSL.FindKernel("GLSLBitonicSort");
         //kSort64 = sort64.FindKernel("BitonicSort");
-        kTranspose32 = sort32.FindKernel("MatrixTranspose");
+        kTranspose32 = sort32TransposeGLSL.FindKernel("GLSLMatrixTranspose");
+        //kTranspose32 = sort32.FindKernel("MatrixTranspose");
         //kTranspose64 = sort64.FindKernel("MatrixTranspose");
 
         // Done
@@ -57,7 +59,7 @@ static public class GpuSort
     static public void BitonicSort32(ComputeBuffer inBuffer, ComputeBuffer tmpBuffer, ComputeBuffer pointsBuffer, Matrix4x4 transMatrix)
     {
         if (!init) Init();
-        BitonicSortGeneric(sort32GLSL, sort32, kSort32, kTranspose32, inBuffer, tmpBuffer, pointsBuffer, transMatrix);   
+        BitonicSortGeneric(sort32GLSL, sort32TransposeGLSL, kSort32, kTranspose32, inBuffer, tmpBuffer, pointsBuffer, transMatrix);   
     }
 
     static public void BitonicSort64(ComputeBuffer inBuffer, ComputeBuffer tmpBuffer, ComputeBuffer pointsBuffer, Matrix4x4 transMatrix)
