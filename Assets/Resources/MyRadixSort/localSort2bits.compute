@@ -133,27 +133,23 @@ void LocalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID
 	uint intDepth = uint(relativeDepth * depthIndices);	
 	
 	//take four bits of every input element:
-	uint keyBits = 3u - ((intDepth >> bitshift) & 0xF);  // we invert the 0-15 to 15-0 to get a reverse sort	
+	uint keyBits = 3u - ((intDepth >> bitshift) & 0x3);  // we invert the 0-15 to 15-0 to get a reverse sort	
     
 
 	uint4 miniBlock = uint4(keyBits.xxxx == uint4(0u, 1u, 2u, 3u));
 
-	temp[GI] = miniBlock; //counts of 0u, 1u, 2u, 3u, counts of 4u, 5u, 6u, 7u, counts of 8u, 9u, 10u, 11u, counts of 12u, 13u, 14u, 15u
+	temp[GI] = miniBlock;					 
 	GroupMemoryBarrierWithGroupSync();
-	uint4 result = ScanGroup(GI);
+	uint4 result = ScanGroup(GI);			//counts of 0u, 1u, 2u, 3u
 
 	DepthValueScanOut[DTid.x].depth = keyBits;
 	DepthValueScanOut[DTid.x].valueScan = result[keyBits];
 
 	//Final counts for each block:
 	if (GI == (GROUP_SIZE - 1u)) {
-		BucketsOut[groupId.x] = result; //counts of 0u, 1u, 2u, 3u, counts of 4u, 5u, 6u, 7u, counts of 8u, 9u, 10u, 11u, counts of 12u, 13u, 14u, 15u
+		BucketsOut[groupId.x] = result;
 	}
 }
-
-//the number of thread groups will for most of our cases be at least as large as the thread group size. So we need to parallelize the global prefix sum as well.
-
-//4 x uvec4 x NUMBER_OF_THREADGROUPS values. IF the number of values is higher than 4 x uvec4 x GROUP_SIZE, we have to do this global prefix sum in multiple steps, since all the values won't fit in a block.
 
 [numthreads(GROUP_SIZE, 1, 1)]
 void GlobalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
@@ -178,28 +174,18 @@ void GlobalPrefixSum(uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupI
 	}
 }
 
-//GlobalPrefixSum returns the indiviual counts for each value 0-15, while we actually need the prefix sum of them.
-//Is this actually correct? if it is, then I just need to run a prefix sum on the result, otherwise i need to change something.
-//It is correct. It's just that the previous is "horizontal" and we need to do one last "vertical scan".
-//For a 16K input array that looks like this: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15, 0,1,2,3, ...], there will 1024 of each of the 16 elements.
-//As a last step we need to do an exclusive scan over the 16 buckets, so we get this: 
-//[0, 1024, 2048, 3072, 4096, 5120, ...], which we can use as direct index locations for the keyOut array.
-//Since there are only 16 of these, we might as well do it in one thread.
-
-//[2,3,5,4] -> [2,5,8,9], [0,2,5,8]
-
 [numthreads(GROUP_SIZE, 1, 1)]
 void RadixReorder(uint3 groupThreadId : SV_GroupThreadID, uint3 DTid : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint GI : SV_GroupIndex)
 {
 	DepthAndValueScans depthValueScans = DepthValueScanIn[DTid.x];
-	uint localOffset = depthValueScans.valueScan; //ValueScans, every 16th value is a partial prefix sum of the same value.
 	uint keyBits = depthValueScans.depth;
+	uint localOffset = depthValueScans.valueScan; //ValueScans, every 16th value is a partial prefix sum of the same value.
 
 	//Correct the ValueScans according to the Global offset:
 	if (groupId.x > 0) {
 		uint4 prevBlockFinalSum = GlobalPrefixSumIn[groupId.x - 1]; //this gives a new sum for each increase in GI. While we want the same for this group, right?
 		uint prevSum0 = prevBlockFinalSum[keyBits];
-		localOffset += prevSum0; //miniBlock[0][0][0] contains the partial sum of 0's. It appears every 16's index of the ValueScans buffer.
+		localOffset += prevSum0;
 	}
 
 	uint key = KeysIn[DTid.x];  //indexAndColor

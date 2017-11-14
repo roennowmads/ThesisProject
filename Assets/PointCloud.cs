@@ -60,8 +60,7 @@ public class PointCloud : MonoBehaviour {
 
     private ComputeBuffer[] m_inOutBuffers;
     private int m_actualNumberOfThreadGroups;
-
-    //private ComputeBuffer m_indexComputeBuffer;
+                                                    
     private int numberOfRadixSortPasses = 4;
 
     private float m_maxDistance;
@@ -401,8 +400,7 @@ public class PointCloud : MonoBehaviour {
         m_myRadixSort.GetKernelThreadGroupSizes(LocalPrefixSum, out x, out y, out z);
         m_threadGroupSize = (int)x;
 
-        int threadGroupsNeeded = 16 /** 16*/;
-        inputSize = /*m_indexComputeBuffer.count;*/m_indexComputeBuffers[m_frameIndex].count;//m_threadGroupSize * threadGroupsNeeded;
+        inputSize = /*m_indexComputeBuffer.count;*/m_indexComputeBuffers[m_frameIndex].count;
         m_actualNumberOfThreadGroups = inputSize / m_threadGroupSize;
 
         uint[] bufOutRadix = new uint[m_actualNumberOfThreadGroups * 4];
@@ -444,7 +442,7 @@ public class PointCloud : MonoBehaviour {
         m_myRadixSort.SetBuffer(RadixReorder, "GlobalPrefixSumIn", m_computeBufferGlobalPrefixSum);
 
         pointRenderer.material.SetBuffer("_IndicesValues", m_inOutBuffers[0]);
-        m_myRadixSort.SetFloat("depthIndices", Mathf.Pow(2.0f, 4.0f*numberOfRadixSortPasses));
+        m_myRadixSort.SetFloat("depthIndices", Mathf.Pow(2.0f, 2.0f*numberOfRadixSortPasses));
 
         uint[] bufOut = new uint[/*m_pointsCount*//*262144*/m_indexComputeBuffers[m_frameIndex].count];
 
