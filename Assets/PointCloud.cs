@@ -61,9 +61,10 @@ public class PointCloud : MonoBehaviour {
     private ComputeBuffer[] m_inOutBuffers;
     private int m_actualNumberOfThreadGroups;
                                                     
-    private int numberOfRadixSortPasses = 2;
-    private int m_bitsPerPass = 4;
+    private int numberOfRadixSortPasses = 4;
+    private int m_bitsPerPass = 2;
     private int m_passLengthMultiplier;
+    private int m_elemsPerThread = 4;
 
     private float m_maxDistance;
     private Vector3 m_pointCloudCenter;
@@ -396,7 +397,12 @@ public class PointCloud : MonoBehaviour {
             m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort", typeof(ComputeShader));
         }
         else if (m_bitsPerPass == 2) {
-            m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort2bits", typeof(ComputeShader));
+            if (m_elemsPerThread == 4) {
+                m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort2bits4PerThread", typeof(ComputeShader));
+            }
+            else {
+                m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort2bits", typeof(ComputeShader));
+            }
         }
         else {                                                                                                       
             m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort1bit", typeof(ComputeShader));
@@ -414,13 +420,11 @@ public class PointCloud : MonoBehaviour {
 
         uint[] bufOutRadix = new uint[m_actualNumberOfThreadGroups * 2 * m_passLengthMultiplier];
         uint[] bufOutPrefixSum = new uint[2 * m_passLengthMultiplier]; //the size represents the 16 possible values with 4 bits.
-        uint[] bufOutFinal = new uint[inputSize];
 
         m_inOutBuffers = new ComputeBuffer[2];
         m_inOutBuffers[0] = /*m_indexComputeBuffer;*/m_indexComputeBuffers[m_frameIndex];
         //m_inOutBuffers[0].SetData(bufInRadix);
         m_inOutBuffers[1] = new ComputeBuffer(m_inOutBuffers[0].count, Marshal.SizeOf(typeof(uint))*2, ComputeBufferType.Default);
-        //m_inOutBuffers[1].SetData(bufOutFinal);
 
         ComputeBuffer computeBufferOut = new ComputeBuffer(m_actualNumberOfThreadGroups, Marshal.SizeOf(typeof(Vector2))*m_passLengthMultiplier, ComputeBufferType.Default);
         computeBufferOut.SetData(bufOutRadix);
@@ -530,9 +534,9 @@ public class PointCloud : MonoBehaviour {
             m_myRadixSort.SetBuffer(RadixReorder, "KeysIn", m_inOutBuffers[swapIndex0]);
             m_myRadixSort.SetBuffer(RadixReorder, "KeysOut", m_inOutBuffers[outSwapIndex]);
 
-            m_myRadixSort.Dispatch(LocalPrefixSum, m_actualNumberOfThreadGroups, 1, 1);
+            m_myRadixSort.Dispatch(LocalPrefixSum, m_actualNumberOfThreadGroups / m_elemsPerThread, 1, 1);
             m_myRadixSort.Dispatch(GlobalPrefixSum, 1, 1, 1);
-            m_myRadixSort.Dispatch(RadixReorder, m_actualNumberOfThreadGroups, 1, 1);
+            m_myRadixSort.Dispatch(RadixReorder, m_actualNumberOfThreadGroups / m_elemsPerThread, 1, 1);
         }                                                  
 
         pointRenderer.material.SetPass(0);
