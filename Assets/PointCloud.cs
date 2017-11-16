@@ -71,6 +71,38 @@ public class PointCloud : MonoBehaviour {
     private List<Vector3> m_ppoints;
 
     private CommandBuffer m_cmd;
+ 
+    struct PointCloudInfo {
+        public float maxX;
+        public float minX;
+        public float maxZ;
+        public float minZ;
+        public float maxDistance;
+    }
+
+    struct TileInfo {
+        public Vector3 tileCenter;
+        public List<uint> indices;
+    }
+
+    struct TileComputeBufferInfo {
+        public Vector3 tileCenter;
+        public ComputeBuffer buffer;
+    }
+
+    private static System.Random rng = new System.Random(); 
+
+    private void Shuffle(List<TileComputeBufferInfo> list)  
+    {  
+        int n = list.Count;  
+        while (n > 1) {  
+            n--;  
+            int k = rng.Next(n + 1);  
+            TileComputeBufferInfo value = list[k];  
+            list[k] = list[n];  
+            list[n] = value;  
+        }  
+    }
 
     Texture2D createColorLookupTexture() {
         int numberOfValues = m_lookupTextureSize;
@@ -147,16 +179,6 @@ public class PointCloud : MonoBehaviour {
         yield return 0;
     }
 
-    struct TileInfo {
-        public Vector3 tileCenter;
-        public List<uint> indices;
-    }
-
-    struct TileComputeBufferInfo {
-        public Vector3 tileCenter;
-        public ComputeBuffer buffer;
-    }
-
     private TileInfo[] partitionIndexBuffer (uint[] indexBuffer, float[] points, PointCloudInfo pointCloudInfo, int numberOfPartitions) {
         TileInfo[] tiles = new TileInfo[numberOfPartitions];
         for (int i = 0; i < numberOfPartitions; i++) {
@@ -173,7 +195,6 @@ public class PointCloud : MonoBehaviour {
         foreach (uint indexAndColor in indexBuffer) {
             uint index = (indexAndColor >> 8) * 3;
             float x = points[index];
-            //float y = points[index + 1];
             float z = points[index + 2];
 
             float scaledX = (x - pointCloudInfo.minX) / (pointCloudInfo.maxX - pointCloudInfo.minX);    // float value 0.0 - 1.0
@@ -214,7 +235,7 @@ public class PointCloud : MonoBehaviour {
             //    bufferSize--;
             //}
 
-            int bufferSize = bytes.Length / 4;//4096 * 4 * 4 * 2;
+            int bufferSize = /*bytes.Length / 4;*/4096 * 4 * 4 * 2;
 
             uint[] zeroedBytes = new uint[bufferSize];
 
@@ -222,29 +243,21 @@ public class PointCloud : MonoBehaviour {
 
             //try to cut the size to something like 4096
 
-            TileInfo[] tiles = partitionIndexBuffer(zeroedBytes, points, pointCloudInfo, 4096);  
+            TileInfo[] tiles = partitionIndexBuffer(zeroedBytes, points, pointCloudInfo, 6400);  
 
             //List<ComputeBuffer> tileBuffers = new List<ComputeBuffer>();
-            foreach (var tile in tiles) {
-                if (tile.indices.Count > 0) {
-                    TileComputeBufferInfo tileComputeBufferInfo = new TileComputeBufferInfo();
-                    tileComputeBufferInfo.tileCenter = tile.tileCenter;
-                    tileComputeBufferInfo.buffer = new ComputeBuffer(tile.indices.Count, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
-                    tileComputeBufferInfo.buffer.SetData(tile.indices.ToArray());
-                    tileBuffers.Add(tileComputeBufferInfo);
-                }
+            foreach (var tile in tiles) {     
+                TileComputeBufferInfo tileComputeBufferInfo = new TileComputeBufferInfo();
+                tileComputeBufferInfo.tileCenter = tile.tileCenter;
+                tileComputeBufferInfo.buffer = new ComputeBuffer(tile.indices.Count, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
+                tileComputeBufferInfo.buffer.SetData(tile.indices.ToArray());
+                tileBuffers.Add(tileComputeBufferInfo);
             }
-            
-            
-            
-            
             //ComputeBuffer indexComputeBuffer = new ComputeBuffer(bufferSize, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
 
             //indexComputeBuffer.SetData(/*zeroedBytes*//*bytes*/zeroedBytes);
 
             //computeBuffers.Add(indexComputeBuffer);
-
-            
             
             //int frameSize = bytes.Length;
             //Buffer.BlockCopy(bytes, 0, vals, k * frameSize, frameSize);
@@ -328,8 +341,6 @@ public class PointCloud : MonoBehaviour {
         tex.Apply();
         //tex2.LoadRawTextureData(vals2);
         //tex2.Apply();
-
-
     } 
 
     float[] readPointsFile3Attribs()
@@ -378,14 +389,6 @@ public class PointCloud : MonoBehaviour {
             }
         }
         return maxDistance + maxDistance*0.01f; //adding a little more to make sure we're not cutting anything off with inprecision.
-    }
-
-    struct PointCloudInfo {
-        public float maxX;
-        public float minX;
-        public float maxZ;
-        public float minZ;
-        public float maxDistance;
     }
 
     private PointCloudInfo getMaxDistance(float[] points, Vector3 center) {
@@ -444,9 +447,6 @@ public class PointCloud : MonoBehaviour {
 
         m_indexComputeBuffers = new List<TileComputeBufferInfo>();
         readIndicesAndValues(m_indexComputeBuffers, points, pointCloudInfo);
-
-
-
 
         //texture.anisoLevel = 1;
         //readPointsFile1Value(texture, texture2);
@@ -561,13 +561,16 @@ public class PointCloud : MonoBehaviour {
         Debug.Log("Number of points: " + m_pointsCount);   */
 
         m_cmd = new CommandBuffer();
-        for (int i = 0; i < m_indexComputeBuffers.Count; i++) {
+        /*for (int i = 0; i < m_indexComputeBuffers.Count; i++) {
             m_cmd.SetGlobalBuffer("_IndicesValues", m_indexComputeBuffers[i].buffer);
             m_cmd.DrawProcedural(pointRenderer.localToWorldMatrix, pointRenderer.material, 0, MeshTopology.Triangles, m_indexComputeBuffers[i].buffer.count * 6);
-        }
+            //m_cmd.DrawProcedural(pointRenderer.localToWorldMatrix, pointRenderer.material, 0, MeshTopology.Points, m_indexComputeBuffers[i].buffer.count);
+        }*/
+
+        Shuffle(m_indexComputeBuffers);
 
     }
-	
+    	
 	// Update is called once per frame
 	void Update () {
         m_currentTime += Time.deltaTime;
@@ -591,17 +594,15 @@ public class PointCloud : MonoBehaviour {
         Vector3 camPos = Camera.main.transform.position;
         Matrix4x4 transMatrix = pointRenderer.localToWorldMatrix;       
         
-        m_indexComputeBuffers.Sort((s1, s2) => Vector3.Distance(camPos, transMatrix.MultiplyPoint(s1.tileCenter)).CompareTo(Vector3.Distance(camPos, transMatrix.MultiplyPoint(s2.tileCenter))));
-
+        m_indexComputeBuffers.Sort((s1, s2) => Vector3.Distance(camPos, transMatrix.MultiplyPoint(s1.tileCenter)).CompareTo(Vector3.Distance(camPos, transMatrix.MultiplyPoint(s2.tileCenter))));   
         //m_indexComputeBuffers = m_indexComputeBuffers.OrderBy(x => Vector3.Distance(camPos, transMatrix.MultiplyPoint(x.tileCenter))).ToList();
-
+ 
         m_cmd.Clear();
         for (int i = 0; i < m_indexComputeBuffers.Count; i++) {
             m_cmd.SetGlobalBuffer("_IndicesValues", m_indexComputeBuffers[i].buffer);
             m_cmd.DrawProcedural(pointRenderer.localToWorldMatrix, pointRenderer.material, 0, MeshTopology.Triangles, m_indexComputeBuffers[i].buffer.count * 6);
+            //m_cmd.DrawProcedural(pointRenderer.localToWorldMatrix, pointRenderer.material, 0, MeshTopology.Points, m_indexComputeBuffers[i].buffer.count);
         }
-        
-
     }
 
     private void OnGUI()
@@ -622,10 +623,7 @@ public class PointCloud : MonoBehaviour {
         //GpuSort.BitonicSort32(m_indexComputeBuffers[m_frameIndex], m_computeBufferTemp, m_pointsBuffer, pointRenderer.localToWorldMatrix);
 
 
-        /*m_myRadixSort.SetVector("camPos", Camera.main.transform.forward);     //camera view direction DOT point position == distance to camera.
-
-
-        
+        /*m_myRadixSort.SetVector("camPos", Camera.main.transform.forward);     //camera view direction DOT point position == distance to camera.       
 
         Matrix4x4 transMatrix = pointRenderer.localToWorldMatrix;
         m_myRadixSort.SetFloats("model", transMatrix[0], transMatrix[1], transMatrix[2], transMatrix[3],
@@ -662,7 +660,7 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.material.SetPass(0);
         pointRenderer.material.SetMatrix("model", pointRenderer.localToWorldMatrix);
 
-        //GL.MultMatrix(pointRenderer.localToWorldMatrix);
+        GL.MultMatrix(pointRenderer.localToWorldMatrix);
         
         //Debug.Log(m_indexComputeBuffers[m_frameIndex].count);
 
