@@ -27,7 +27,7 @@ public class PointCloud : MonoBehaviour {
 
     private ComputeBuffer m_pointsBuffer, /*m_computeBufferIn,*/ m_computeBufferTemp;
 
-    private List<ComputeBuffer> m_indexComputeBuffers;
+    private List<TileComputeBufferInfo> m_indexComputeBuffers;
 
     private float m_currentTime = 0;
     private int m_frameIndex = 0;
@@ -147,16 +147,29 @@ public class PointCloud : MonoBehaviour {
         yield return 0;
     }
 
-    private List<List<uint>> partitionIndexBuffer (uint[] indexBuffer, float[] points, PointCloudInfo pointCloudInfo, int numberOfPartitions) {
-        List<List<uint>> tiles = new List<List<uint>>();
+    struct TileInfo {
+        public Vector3 tileCenter;
+        public List<uint> indices;
+    }
+
+    struct TileComputeBufferInfo {
+        public Vector3 tileCenter;
+        public ComputeBuffer buffer;
+    }
+
+    private TileInfo[] partitionIndexBuffer (uint[] indexBuffer, float[] points, PointCloudInfo pointCloudInfo, int numberOfPartitions) {
+        TileInfo[] tiles = new TileInfo[numberOfPartitions];
         for (int i = 0; i < numberOfPartitions; i++) {
-            tiles.Add(new List<uint>());
+            TileInfo tileInfo = new TileInfo();
+            tileInfo.tileCenter = new Vector3(0, 0, 0);
+            tileInfo.indices = new List<uint>();
+            tiles[i] = tileInfo;
         }
 
         int tilesPerSide = (int)Mathf.Sqrt(numberOfPartitions);
 
         //need to have x min max, and z min max to find the right tile index.
-
+                                                       
         foreach (uint indexAndColor in indexBuffer) {
             uint index = (indexAndColor >> 8) * 3;
             float x = points[index];
@@ -170,16 +183,21 @@ public class PointCloud : MonoBehaviour {
             int tileZ = Mathf.FloorToInt(scaledZ * tilesPerSide);
 
             int tileIndex = tileX + tileZ * tilesPerSide;
-
-            tiles[tileIndex].Add(indexAndColor);
+            
+            tiles[tileIndex].tileCenter += new Vector3(x, 0, z);
+            tiles[tileIndex].indices.Add(indexAndColor);    
         }
 
-        //tiles.RemoveAll(tile => tile.Count == 0);
+        tiles = tiles.Where(tile => tile.indices.Count > 0).ToArray();
+                                           
+        for (int i = 0; i < tiles.Length; i++) {
+            tiles[i].tileCenter /= tiles[i].indices.Count;
+        }                      
 
         return tiles;
     }
 
-    void readIndicesAndValues(List<ComputeBuffer> tileBuffers, float[] points, PointCloudInfo pointCloudInfo)
+    void readIndicesAndValues(List<TileComputeBufferInfo> tileBuffers, float[] points, PointCloudInfo pointCloudInfo)
     {
         //byte[] vals = new byte[m_textureSize];
         //for (int k = 0; k < m_lastFrameIndex; k++)
@@ -204,14 +222,16 @@ public class PointCloud : MonoBehaviour {
 
             //try to cut the size to something like 4096
 
-            List<List<uint>> tiles = partitionIndexBuffer(zeroedBytes, points, pointCloudInfo, 100);  
+            TileInfo[] tiles = partitionIndexBuffer(zeroedBytes, points, pointCloudInfo, 4096);  
 
             //List<ComputeBuffer> tileBuffers = new List<ComputeBuffer>();
             foreach (var tile in tiles) {
-                if (tile.Count > 0) {
-                    ComputeBuffer buf = new ComputeBuffer(tile.Count, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
-                    buf.SetData(tile.ToArray());
-                    tileBuffers.Add(buf);
+                if (tile.indices.Count > 0) {
+                    TileComputeBufferInfo tileComputeBufferInfo = new TileComputeBufferInfo();
+                    tileComputeBufferInfo.tileCenter = tile.tileCenter;
+                    tileComputeBufferInfo.buffer = new ComputeBuffer(tile.indices.Count, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
+                    tileComputeBufferInfo.buffer.SetData(tile.indices.ToArray());
+                    tileBuffers.Add(tileComputeBufferInfo);
                 }
             }
             
@@ -422,7 +442,7 @@ public class PointCloud : MonoBehaviour {
         PointCloudInfo pointCloudInfo = getMaxDistance(points, m_pointCloudCenter);
         m_maxDistance = pointCloudInfo.maxDistance;
 
-        m_indexComputeBuffers = new List<ComputeBuffer>();
+        m_indexComputeBuffers = new List<TileComputeBufferInfo>();
         readIndicesAndValues(m_indexComputeBuffers, points, pointCloudInfo);
 
 
@@ -542,8 +562,8 @@ public class PointCloud : MonoBehaviour {
 
         m_cmd = new CommandBuffer();
         for (int i = 0; i < m_indexComputeBuffers.Count; i++) {
-            m_cmd.SetGlobalBuffer("_IndicesValues", m_indexComputeBuffers[i]);
-            m_cmd.DrawProcedural(pointRenderer.localToWorldMatrix, pointRenderer.material, 0, MeshTopology.Triangles, m_indexComputeBuffers[i].count * 6);
+            m_cmd.SetGlobalBuffer("_IndicesValues", m_indexComputeBuffers[i].buffer);
+            m_cmd.DrawProcedural(pointRenderer.localToWorldMatrix, pointRenderer.material, 0, MeshTopology.Triangles, m_indexComputeBuffers[i].buffer.count * 6);
         }
 
     }
@@ -566,6 +586,22 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.material.SetInt("_FrameTime", m_frameIndex);
         float aspect = Camera.main.GetComponent<Camera>().aspect;
         pointRenderer.material.SetFloat("aspect", aspect);
+
+
+        Vector3 camPos = Camera.main.transform.position;
+        Matrix4x4 transMatrix = pointRenderer.localToWorldMatrix;       
+        
+        m_indexComputeBuffers.Sort((s1, s2) => Vector3.Distance(camPos, transMatrix.MultiplyPoint(s1.tileCenter)).CompareTo(Vector3.Distance(camPos, transMatrix.MultiplyPoint(s2.tileCenter))));
+
+        //m_indexComputeBuffers = m_indexComputeBuffers.OrderBy(x => Vector3.Distance(camPos, transMatrix.MultiplyPoint(x.tileCenter))).ToList();
+
+        m_cmd.Clear();
+        for (int i = 0; i < m_indexComputeBuffers.Count; i++) {
+            m_cmd.SetGlobalBuffer("_IndicesValues", m_indexComputeBuffers[i].buffer);
+            m_cmd.DrawProcedural(pointRenderer.localToWorldMatrix, pointRenderer.material, 0, MeshTopology.Triangles, m_indexComputeBuffers[i].buffer.count * 6);
+        }
+        
+
     }
 
     private void OnGUI()
