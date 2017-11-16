@@ -271,32 +271,71 @@ public class PointCloud : MonoBehaviour {
         return points;
     }
 
+    private Vector3 getPointCloudCenter(float[] points) {
+        float maxX = float.NegativeInfinity;
+        float minX = float.PositiveInfinity;
+        float maxY = float.NegativeInfinity;
+        float minY = float.PositiveInfinity;
+        float maxZ = float.NegativeInfinity;
+        float minZ = float.PositiveInfinity;
 
-    private Vector3 getMeanVector3(float[] points) {
-        Vector3 mean = new Vector3(0, 0, 0);
         for (int i = 0; i < points.Length; i+=3) {  
             Vector3 p = new Vector3(points[i], points[i + 1], points[i + 2]);
-            mean += p;
-        }
-        mean /= (points.Length / 3);
-        return mean; 
-    }
+            if (p.x > maxX) {
+                maxX = p.x;
+            }
+            else if (p.x < minX) {
+                minX = p.x;
+            }
 
-    private Vector3 getMeanVector3(List<Vector3> points) {
-        Vector3 mean = new Vector3(0, 0, 0);
-        foreach (Vector3 p in points) {
-            mean += p;
-        }
-        mean /= points.Count;
-        return mean; 
-    }
+            if (p.y > maxY) {
+                maxY = p.y;
+            }
+            else if (p.y < minY) {
+                minY = p.y;
+            }
 
-    private Vector3 getPointCloudCenter (float[] points) {
-        return getMeanVector3(points);
+            if (p.z > maxZ) {
+                maxZ = p.z;
+            }
+            else if (p.z < minZ) {
+                minZ = p.z;
+            }
+        }
+        return new Vector3(minX + ((maxX - minX) / 2.0f), minY + ((maxY - minY) / 2.0f), minZ + ((maxZ - minZ) / 2.0f));
     }
 
     private Vector3 getPointCloudCenter (List<Vector3> points) {
-        return getMeanVector3(points);
+        float maxX = float.NegativeInfinity;
+        float minX = float.PositiveInfinity;
+        float maxY = float.NegativeInfinity;
+        float minY = float.PositiveInfinity;
+        float maxZ = float.NegativeInfinity;
+        float minZ = float.PositiveInfinity;
+
+        foreach (Vector3 p in points) {
+            if (p.x > maxX) {
+                maxX = p.x;
+            }
+            else if (p.x < minX) {
+                minX = p.x;
+            }
+
+            if (p.y > maxY) {
+                maxY = p.y;
+            }
+            else if (p.y < minY) {
+                minY = p.y;
+            }
+
+            if (p.z > maxZ) {
+                maxZ = p.z;
+            }
+            else if (p.z < minZ) {
+                minZ = p.z;
+            }
+        }
+        return new Vector3(minX + ((maxX - minX) / 2.0f), minY + ((maxY - minY) / 2.0f), minZ + ((maxZ - minZ) / 2.0f));
     }
 
     private float getMaxDistance(List<Vector3> points, Vector3 center) {
