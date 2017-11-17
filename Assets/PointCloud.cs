@@ -13,7 +13,7 @@ public class PointCloud : MonoBehaviour {
     public string m_valueDataPath = "OilRigData";
     public int m_lastFrameIndex = 25;
     
-    public float m_frameSpeed = 5.0f;
+    public float m_frameSpeed = 0.5f;
     public int m_textureSideSizePower = 14;
 
     private int m_pointsCount = 61440;
@@ -58,17 +58,25 @@ public class PointCloud : MonoBehaviour {
     private const float UI_FPS_LABEL_SIZE_X = 200.0f;
     private const float UI_FPS_LABEL_SIZE_Y = 200.0f;
 
-    private ComputeBuffer[] m_inOutBuffers;
-    private int m_actualNumberOfThreadGroups;
+    //private ComputeBuffer[] m_inOutBuffers;
+    //private int m_actualNumberOfThreadGroups;
                                                     
-    private int numberOfRadixSortPasses = 2;
-    private int m_bitsPerPass = 4;
+    private int numberOfRadixSortPasses = 4;
+    private int m_bitsPerPass = 2;
     private int m_passLengthMultiplier;
     private int m_elemsPerThread = 1;
 
     private float m_maxDistance;
     private Vector3 m_pointCloudCenter;
     private List<Vector3> m_ppoints;
+
+    private List<int> inputSizes = new List<int>();
+    private List<int> actualNumberOfThreadGroupsList = new List<int>();
+    private List<ComputeBuffer> bucketsList = new List<ComputeBuffer>();
+    private List<ComputeBuffer> depthsAndValueScansList = new List<ComputeBuffer>();
+    private List<ComputeBuffer[]> inOutBufferList = new List<ComputeBuffer[]>();
+
+    private float m_currentTimeFrames = 0;
 
     Texture2D createColorLookupTexture() {
         int numberOfValues = m_lookupTextureSize;
@@ -148,8 +156,8 @@ public class PointCloud : MonoBehaviour {
     void readIndicesAndValues(List<ComputeBuffer> computeBuffers, int threadGroupSize)
     {
         //byte[] vals = new byte[m_textureSize];
-        //for (int k = 0; k < m_lastFrameIndex; k++)
-        int k = 2;
+        for (int k = 0; k < m_lastFrameIndex; k++)
+        //int k = 2;
         {
             //TextAsset ta = Resources.Load("AtriumData/binaryDataFull/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
             TextAsset ta = Resources.Load(m_valueDataPath + "/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
@@ -171,7 +179,7 @@ public class PointCloud : MonoBehaviour {
             
             ComputeBuffer indexComputeBuffer = new ComputeBuffer(bufferSize, Marshal.SizeOf(typeof(uint)), ComputeBufferType.Default);
 
-            indexComputeBuffer.SetData(/*zeroedBytes*//*bytes*/zeroedBytes);
+            indexComputeBuffer.SetData(zeroedBytes);
 
             computeBuffers.Add(indexComputeBuffer);
 
@@ -453,45 +461,56 @@ public class PointCloud : MonoBehaviour {
         m_indexComputeBuffers = new List<ComputeBuffer>();
         readIndicesAndValues(m_indexComputeBuffers, m_threadGroupSize); //make index buffer size depend on threadgroupsize
 
-        inputSize = /*m_indexComputeBuffer.count;*/m_indexComputeBuffers[m_frameIndex].count;
-        m_actualNumberOfThreadGroups = inputSize / m_threadGroupSize;
 
-        uint[] bufOutRadix = new uint[m_actualNumberOfThreadGroups * 2 * m_passLengthMultiplier];
-        uint[] bufOutPrefixSum = new uint[2 * m_passLengthMultiplier]; //the size represents the 16 possible values with 4 bits.
 
-        m_inOutBuffers = new ComputeBuffer[2];
-        m_inOutBuffers[0] = /*m_indexComputeBuffer;*/m_indexComputeBuffers[m_frameIndex];
-        //m_inOutBuffers[0].SetData(bufInRadix);
-        m_inOutBuffers[1] = new ComputeBuffer(m_inOutBuffers[0].count, Marshal.SizeOf(typeof(uint))*2, ComputeBufferType.Default);
 
-        ComputeBuffer computeBufferOut = new ComputeBuffer(m_actualNumberOfThreadGroups, Marshal.SizeOf(typeof(Vector2))*m_passLengthMultiplier, ComputeBufferType.Default);
-        computeBufferOut.SetData(bufOutRadix);
+        foreach (var buf in m_indexComputeBuffers) {
+            int inputSize = buf.count;
+            int actualNumberOfThreadGroups = inputSize / m_threadGroupSize;
+
+            inputSizes.Add(inputSize);
+            actualNumberOfThreadGroupsList.Add(actualNumberOfThreadGroups);
+
+            ComputeBuffer[] inOutBuffers = new ComputeBuffer[2];
+            inOutBuffers[0] = buf;
+            inOutBuffers[1] = new ComputeBuffer(inputSize, Marshal.SizeOf(typeof(uint))*2, ComputeBufferType.Default);
+                                  
+            inOutBufferList.Add(inOutBuffers);
+            bucketsList.Add(new ComputeBuffer(actualNumberOfThreadGroups, Marshal.SizeOf(typeof(Vector2)) * m_passLengthMultiplier, ComputeBufferType.Default));
+            depthsAndValueScansList.Add(new ComputeBuffer(inputSize, Marshal.SizeOf(typeof(uint)) * 2, ComputeBufferType.Default));
+        }
+
+
+
+        //inputSize = /*m_indexComputeBuffer.count;*/m_indexComputeBuffers[m_frameIndex].count;
+        //m_actualNumberOfThreadGroups = inputSize / m_threadGroupSize;
+
+        //m_inOutBuffers = new ComputeBuffer[2];
+        //m_inOutBuffers[0] = /*m_indexComputeBuffer;*/m_indexComputeBuffers[m_frameIndex];
+        //m_inOutBuffers[1] = new ComputeBuffer(m_inOutBuffers[0].count, Marshal.SizeOf(typeof(uint))*2, ComputeBufferType.Default);
+
+        //ComputeBuffer computeBufferOut = new ComputeBuffer(m_actualNumberOfThreadGroups, Marshal.SizeOf(typeof(Vector2))*m_passLengthMultiplier, ComputeBufferType.Default);
 
         ComputeBuffer computeBufferDigitPrefixSum = new ComputeBuffer(1, Marshal.SizeOf(typeof(Vector2))*m_passLengthMultiplier, ComputeBufferType.Default);
-        computeBufferDigitPrefixSum.SetData(bufOutPrefixSum);
 
         ComputeBuffer computeBufferGlobalPrefixSum = new ComputeBuffer(m_threadGroupSize, Marshal.SizeOf(typeof(Vector2))*m_passLengthMultiplier, ComputeBufferType.Default);
 
-        ComputeBuffer depthsAndValueScans = new ComputeBuffer(m_inOutBuffers[0].count, Marshal.SizeOf(typeof(uint))*2, ComputeBufferType.Default);
+        //ComputeBuffer depthsAndValueScans = new ComputeBuffer(m_inOutBuffers[0].count, Marshal.SizeOf(typeof(uint))*2, ComputeBufferType.Default);
 
 
         m_myRadixSort.SetFloat("depthIndices", Mathf.Pow(2.0f, (float)m_bitsPerPass*numberOfRadixSortPasses));
 
-        m_myRadixSort.SetBuffer(LocalPrefixSum, "BucketsOut", computeBufferOut);
-        m_myRadixSort.SetBuffer(LocalPrefixSum, "DepthValueScanOut", depthsAndValueScans);
+        //m_myRadixSort.SetBuffer(LocalPrefixSum, "BucketsOut", computeBufferOut);
+        //m_myRadixSort.SetBuffer(LocalPrefixSum, "DepthValueScanOut", depthsAndValueScans);
         m_myRadixSort.SetBuffer(LocalPrefixSum, "_Points", m_pointsBuffer);
 
         m_myRadixSort.SetBuffer(GlobalPrefixSum, "GlobalDigitPrefixSumOut", computeBufferDigitPrefixSum);
-        m_myRadixSort.SetBuffer(GlobalPrefixSum, "BucketsIn", computeBufferOut);
+        //m_myRadixSort.SetBuffer(GlobalPrefixSum, "BucketsIn", computeBufferOut);
         m_myRadixSort.SetBuffer(GlobalPrefixSum, "GlobalPrefixSumOut", computeBufferGlobalPrefixSum);
 
         m_myRadixSort.SetBuffer(RadixReorder, "GlobalDigitPrefixSumIn", computeBufferDigitPrefixSum);
-        m_myRadixSort.SetBuffer(RadixReorder, "DepthValueScanIn", depthsAndValueScans);
-        m_myRadixSort.SetBuffer(RadixReorder, "GlobalPrefixSumIn", computeBufferGlobalPrefixSum);
-        
-
-        pointRenderer.material.SetBuffer("_IndicesValues", m_inOutBuffers[0]);
-        
+        //m_myRadixSort.SetBuffer(RadixReorder, "DepthValueScanIn", depthsAndValueScans);
+        m_myRadixSort.SetBuffer(RadixReorder, "GlobalPrefixSumIn", computeBufferGlobalPrefixSum);        
 
         uint[] bufOut = new uint[/*m_pointsCount*//*262144*/m_indexComputeBuffers[m_frameIndex].count];
 
@@ -505,10 +524,18 @@ public class PointCloud : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
         m_currentTime += Time.deltaTime;
+        m_currentTimeFrames += Time.deltaTime;
         ++m_framesSinceUpdate;
         m_accumulation += Time.timeScale / Time.deltaTime;
+
+        if (m_currentTimeFrames >= m_frameSpeed) {
+            m_frameIndex = (m_frameIndex + 1) % m_lastFrameIndex;
+            m_currentTimeFrames = 0;
+        }
+
         if (m_currentTime >= m_updateFrequency)
         {
+            
             m_currentFPS = (int)(m_accumulation / m_framesSinceUpdate);
             m_currentTime = 0.0f;
             m_framesSinceUpdate = 0;
@@ -559,7 +586,14 @@ public class PointCloud : MonoBehaviour {
 
         m_myRadixSort.SetVector("objectWorldPos", transZero);
         m_myRadixSort.SetFloat("scaledMaxDistance", scaledMaxDistance);
-        
+       
+        m_myRadixSort.SetBuffer(LocalPrefixSum, "BucketsOut", bucketsList[m_frameIndex]);
+        m_myRadixSort.SetBuffer(LocalPrefixSum, "DepthValueScanOut", depthsAndValueScansList[m_frameIndex]);
+
+        m_myRadixSort.SetBuffer(GlobalPrefixSum, "BucketsIn", bucketsList[m_frameIndex]);
+        m_myRadixSort.SetBuffer(RadixReorder, "DepthValueScanIn", depthsAndValueScansList[m_frameIndex]);
+
+        pointRenderer.material.SetBuffer("_IndicesValues", inOutBufferList[m_frameIndex][0]);
 
         int outSwapIndex = 1;
         for (int i = 0; i < numberOfRadixSortPasses; i++) {
@@ -568,13 +602,13 @@ public class PointCloud : MonoBehaviour {
             int swapIndex0 = i % 2;
             outSwapIndex = (i + 1) % 2;
 
-            m_myRadixSort.SetBuffer(LocalPrefixSum, "KeysIn", m_inOutBuffers[swapIndex0]);
-            m_myRadixSort.SetBuffer(RadixReorder, "KeysIn", m_inOutBuffers[swapIndex0]);
-            m_myRadixSort.SetBuffer(RadixReorder, "KeysOut", m_inOutBuffers[outSwapIndex]);
+            m_myRadixSort.SetBuffer(LocalPrefixSum, "KeysIn", inOutBufferList[m_frameIndex][swapIndex0]);
+            m_myRadixSort.SetBuffer(RadixReorder, "KeysIn", inOutBufferList[m_frameIndex][swapIndex0]);
+            m_myRadixSort.SetBuffer(RadixReorder, "KeysOut", inOutBufferList[m_frameIndex][outSwapIndex]);
 
-            m_myRadixSort.Dispatch(LocalPrefixSum, m_actualNumberOfThreadGroups / m_elemsPerThread, 1, 1);
+            m_myRadixSort.Dispatch(LocalPrefixSum, actualNumberOfThreadGroupsList[m_frameIndex] / m_elemsPerThread, 1, 1);
             m_myRadixSort.Dispatch(GlobalPrefixSum, 1, 1, 1);
-            m_myRadixSort.Dispatch(RadixReorder, m_actualNumberOfThreadGroups / m_elemsPerThread, 1, 1);
+            m_myRadixSort.Dispatch(RadixReorder, actualNumberOfThreadGroupsList[m_frameIndex] / m_elemsPerThread, 1, 1);
         }                                                  
 
         pointRenderer.material.SetPass(0);

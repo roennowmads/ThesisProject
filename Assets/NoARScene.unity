@@ -969,7 +969,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 835920134}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -10.48, y: -0.49, z: -22.12}
+  m_LocalPosition: {x: -10.4, y: -0.49, z: -22.15}
   m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
   m_Children:
   - {fileID: 1715348462}
@@ -1162,7 +1162,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_valueDataPath: OilRigDataIndexed
   m_lastFrameIndex: 29
-  m_frameSpeed: 5
+  m_frameSpeed: 0.1
   m_textureSideSizePower: 12
   m_radixShader: {fileID: 7200000, guid: 1b1d0e2d23f5cfb4db95e9777bb6315e, type: 3}
   m_FPSLabelOffsetX: 15
