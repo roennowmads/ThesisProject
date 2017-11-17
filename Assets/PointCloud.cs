@@ -61,10 +61,10 @@ public class PointCloud : MonoBehaviour {
     private ComputeBuffer[] m_inOutBuffers;
     private int m_actualNumberOfThreadGroups;
                                                     
-    private int numberOfRadixSortPasses = 4;
-    private int m_bitsPerPass = 2;
+    private int numberOfRadixSortPasses = 2;
+    private int m_bitsPerPass = 4;
     private int m_passLengthMultiplier;
-    private int m_elemsPerThread = 4;
+    private int m_elemsPerThread = 1;
 
     private float m_maxDistance;
     private Vector3 m_pointCloudCenter;
@@ -145,28 +145,27 @@ public class PointCloud : MonoBehaviour {
         yield return 0;
     }
 
-    void readIndicesAndValues(List<ComputeBuffer> computeBuffers)
+    void readIndicesAndValues(List<ComputeBuffer> computeBuffers, int threadGroupSize)
     {
         //byte[] vals = new byte[m_textureSize];
         //for (int k = 0; k < m_lastFrameIndex; k++)
         int k = 2;
         {
-            
-            
             //TextAsset ta = Resources.Load("AtriumData/binaryDataFull/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
             TextAsset ta = Resources.Load(m_valueDataPath + "/frame" + k + "0.0", typeof(TextAsset)) as TextAsset; //LoadAsync
-            byte[] bytes = ta.bytes;
+            byte[] bytes = ta.bytes;  
 
-            //int bufferSize = bytes.Length / 4; //131072; //4096;//bytes.Length / 4;
-            //while(bufferSize % 512 != 0) {
-            //    bufferSize--;
-            //}
+            int bufferSize = bytes.Length / 4;
 
-            int bufferSize = 4096 * 4 * 4 * 2;
+            int leftoverThreadGroupSpace = Mathf.CeilToInt((float)bufferSize / threadGroupSize) * threadGroupSize - bufferSize;          
+
+            bufferSize +=  leftoverThreadGroupSpace;
+
+            //int bufferSize = bytes.Length / 4;//4096 * 4 * 4 * 2;
 
             uint[] zeroedBytes = new uint[bufferSize];
 
-            Buffer.BlockCopy(bytes, 0, zeroedBytes, 0, /*bytes.Length*/ bufferSize*4);
+            Buffer.BlockCopy(bytes, 0, zeroedBytes, 0, bytes.Length);
 
             //try to cut the size to something like 4096
             
@@ -379,9 +378,6 @@ public class PointCloud : MonoBehaviour {
         //That means we can pack 3 10bit integer values into a pixel 
         //Texture2D texture = new Texture2D(m_textureSize, m_textureSize, TextureFormat.RFloat, false, false);
 
-        m_indexComputeBuffers = new List<ComputeBuffer>();
-        readIndicesAndValues(m_indexComputeBuffers);
-
         //texture.anisoLevel = 1;
         //readPointsFile1Value(texture, texture2);
         pointRenderer = GetComponent<Renderer>();
@@ -453,6 +449,9 @@ public class PointCloud : MonoBehaviour {
         uint x, y, z;
         m_myRadixSort.GetKernelThreadGroupSizes(LocalPrefixSum, out x, out y, out z);
         m_threadGroupSize = (int)x;
+
+        m_indexComputeBuffers = new List<ComputeBuffer>();
+        readIndicesAndValues(m_indexComputeBuffers, m_threadGroupSize); //make index buffer size depend on threadgroupsize
 
         inputSize = /*m_indexComputeBuffer.count;*/m_indexComputeBuffers[m_frameIndex].count;
         m_actualNumberOfThreadGroups = inputSize / m_threadGroupSize;
