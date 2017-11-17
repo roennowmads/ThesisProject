@@ -39,8 +39,6 @@ Shader "Unlit/SortingTest" {
 			uniform float aspect;
 			uniform int _PointsCount;
 			uniform uint _FrameTime;
-			uniform uint _Magnitude;
-			uniform int _TextureSwitchFrameNumber;
 
 			struct appdata
 			{

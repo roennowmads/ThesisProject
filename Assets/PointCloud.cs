@@ -8,13 +8,15 @@ using UnityEngine.Rendering;
 using System.Runtime.InteropServices;
 using System;
 using System.Linq;
-
+                      
 public class PointCloud : MonoBehaviour {
     public string m_valueDataPath = "OilRigData";
     public int m_lastFrameIndex = 25;
     
     public float m_frameSpeed = 0.5f;
     public int m_textureSideSizePower = 14;
+    
+    public Texture2D particleTexture;
 
     private int m_pointsCount = 61440;
     private Renderer pointRenderer;
@@ -149,7 +151,7 @@ public class PointCloud : MonoBehaviour {
         tex2.Apply();
 
         pointRenderer = GetComponent<Renderer>();
-        pointRenderer.material.SetTexture("_MainTex2", tex2);
+        pointRenderer.sharedMaterial.SetTexture("_MainTex2", tex2);
         yield return 0;
     }
 
@@ -185,8 +187,7 @@ public class PointCloud : MonoBehaviour {
 
             //int frameSize = bytes.Length;
             //Buffer.BlockCopy(bytes, 0, vals, k * frameSize, frameSize);
-        }
-        
+        }  
     } 
 
     void readPointsFile1Value(Texture2D tex, Texture2D tex2) {
@@ -391,8 +392,8 @@ public class PointCloud : MonoBehaviour {
         pointRenderer = GetComponent<Renderer>();
         //pointRenderer.material.mainTexture = texture;
         //pointRenderer.material.SetTexture("_MainTex2", texture2);
-        pointRenderer.material.SetTexture("_ColorTex", colorTexture);
-
+        pointRenderer.sharedMaterial.SetTexture("_ColorTex", colorTexture);
+        pointRenderer.sharedMaterial.SetTexture("_AlbedoTex", particleTexture);
 
         /*List<int> indices = new List<int>();
 
@@ -420,19 +421,15 @@ public class PointCloud : MonoBehaviour {
         m_pointsBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Default);
         m_pointsBuffer.SetData(points);
         //m_pointsBuffer.SetData(m_ppoints.ToArray());
-        pointRenderer.material.SetBuffer("_Points", m_pointsBuffer);
+        pointRenderer.sharedMaterial.SetBuffer("_Points", m_pointsBuffer);
 
         //m_indexComputeBuffer = new ComputeBuffer (m_pointsCount, Marshal.SizeOf(typeof(int)), ComputeBufferType.Default);
         //m_indexComputeBuffer.SetData(indices.ToArray());
 
         //pointRenderer.material.SetInt("_PointsCount", /*m_pointsCount*/pointPositions.Length);
-        pointRenderer.material.SetInt("_PointsCount", m_pointsCount);
+        pointRenderer.sharedMaterial.SetInt("_PointsCount", m_pointsCount);
         float aspect = Camera.main.GetComponent<Camera>().aspect;
-        pointRenderer.material.SetFloat("aspect", aspect);
-        Vector4 trans = transform.position;
-        pointRenderer.material.SetVector("trans", trans);
-        pointRenderer.material.SetInt("_Magnitude", m_textureSideSizePower);
-        pointRenderer.material.SetInt("_TextureSwitchFrameNumber", m_textureSwitchFrameNumber);
+        pointRenderer.sharedMaterial.SetFloat("aspect", aspect);
 
         // m_kernel = m_radixShader.FindKernel("CSMain");
         m_passLengthMultiplier = m_bitsPerPass * m_bitsPerPass;
@@ -544,9 +541,9 @@ public class PointCloud : MonoBehaviour {
         }
 
         //Debug.Log(t);
-        pointRenderer.material.SetInt("_FrameTime", m_frameIndex);
+        pointRenderer.sharedMaterial.SetInt("_FrameTime", m_frameIndex);
         float aspect = Camera.main.GetComponent<Camera>().aspect;
-        pointRenderer.material.SetFloat("aspect", aspect);
+        pointRenderer.sharedMaterial.SetFloat("aspect", aspect);
     }
 
     private void OnGUI()
@@ -593,7 +590,7 @@ public class PointCloud : MonoBehaviour {
         m_myRadixSort.SetBuffer(GlobalPrefixSum, "BucketsIn", bucketsList[m_frameIndex]);
         m_myRadixSort.SetBuffer(RadixReorder, "DepthValueScanIn", depthsAndValueScansList[m_frameIndex]);
 
-        pointRenderer.material.SetBuffer("_IndicesValues", inOutBufferList[m_frameIndex][0]);
+        pointRenderer.sharedMaterial.SetBuffer("_IndicesValues", inOutBufferList[m_frameIndex][0]);
 
         int outSwapIndex = 1;
         for (int i = 0; i < numberOfRadixSortPasses; i++) {
@@ -611,15 +608,15 @@ public class PointCloud : MonoBehaviour {
             m_myRadixSort.Dispatch(RadixReorder, actualNumberOfThreadGroupsList[m_frameIndex] / m_elemsPerThread, 1, 1);
         }                                                  
 
-        pointRenderer.material.SetPass(0);
-        pointRenderer.material.SetMatrix("model", pointRenderer.localToWorldMatrix);
+        pointRenderer.sharedMaterial.SetPass(0);
+        pointRenderer.sharedMaterial.SetMatrix("model", pointRenderer.localToWorldMatrix);
 
         GL.MultMatrix(pointRenderer.localToWorldMatrix); 
 
         //Debug.Log(m_indexComputeBuffers[m_frameIndex].count);
                                                                              
-        //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count*6);  // index buffer.         
-        Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count);  // index buffer.         
+        Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count*6);  // index buffer.         
+        //Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count);  // index buffer.         
 
         //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*//*m_indexComputeBuffers[m_frameIndex].count*6*/m_indexComputeBuffer.count*6 );  // index buffer.
         //Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*//*m_indexComputeBuffers[m_frameIndex].count*/m_indexComputeBuffer.count);  // index buffer.
@@ -628,7 +625,7 @@ public class PointCloud : MonoBehaviour {
     }
 
     void OnDestroy() {
-        m_pointsBuffer.Release();
+        //m_pointsBuffer.Release();
 
         /*foreach (ComputeBuffer cb in m_indexComputeBuffers)
         {
