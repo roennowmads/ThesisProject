@@ -24,7 +24,7 @@ StructuredBuffer<DepthAndValueScans> DepthValueScanIn;
 
 #define INTRA_WARP_SCAN
 
-#define WARP_SIZE 64
+#define WARP_SIZE 16
 #define GROUP_SIZE 512
 
 #if WARP_SIZE == 64

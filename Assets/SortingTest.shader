@@ -15,7 +15,7 @@ Shader "Unlit/SortingTest" {
 	SubShader {
 		Tags{ "Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent" }
 		//Tags{"RenderType" = "Opaque"}
-		//Blend SrcAlpha OneMinusSrcAlpha
+		Blend SrcAlpha OneMinusSrcAlpha
 		//Cull Off
 		ZWrite Off
 		//LOD 200
@@ -158,7 +158,7 @@ Shader "Unlit/SortingTest" {
 				//o.color = fixed4(/*i.color*/fixed3(0.5,0.1,0.1), albedo*0.0525);
 
 				//good for fireball:
-				o.color = fixed4(i.color, 1.0/*albedo*//**0.25*/);
+				o.color = fixed4(i.color, albedo/**0.25*/);
 				return o;
 			}
 			ENDCG

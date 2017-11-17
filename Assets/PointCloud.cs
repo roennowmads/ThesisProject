@@ -64,7 +64,7 @@ public class PointCloud : MonoBehaviour {
     private int numberOfRadixSortPasses = 4;
     private int m_bitsPerPass = 2;
     private int m_passLengthMultiplier;
-    private int m_elemsPerThread = 1;
+    private int m_elemsPerThread = 4;
 
     private float m_maxDistance;
     private Vector3 m_pointCloudCenter;
@@ -618,8 +618,8 @@ public class PointCloud : MonoBehaviour {
 
         //Debug.Log(m_indexComputeBuffers[m_frameIndex].count);
                                                                              
-        Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count*6);  // index buffer.         
-        //Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count);  // index buffer.         
+        //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count*6);  // index buffer.         
+        Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count);  // index buffer.         
 
         //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*//*m_indexComputeBuffers[m_frameIndex].count*6*/m_indexComputeBuffer.count*6 );  // index buffer.
         //Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*//*m_indexComputeBuffers[m_frameIndex].count*/m_indexComputeBuffer.count);  // index buffer.
