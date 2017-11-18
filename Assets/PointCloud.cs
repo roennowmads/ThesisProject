@@ -527,7 +527,7 @@ public class PointCloud : MonoBehaviour {
         m_accumulation += Time.timeScale / Time.deltaTime;
 
         if (m_currentTimeFrames >= m_frameSpeed) {
-            m_frameIndex = 2;//(m_frameIndex + 1) % m_lastFrameIndex;
+            m_frameIndex = (m_frameIndex + 1) % m_lastFrameIndex;
             m_currentTimeFrames = 0;
         }
 
@@ -547,7 +547,7 @@ public class PointCloud : MonoBehaviour {
         pointRenderer.sharedMaterial.SetFloat("aspect", aspect);
     }
 
-    private void OnGUI()
+    /*private void OnGUI()
     {
         {
             Color oldColor = GUI.color;
@@ -558,7 +558,7 @@ public class PointCloud : MonoBehaviour {
                                UI_FPS_LABEL_SIZE_Y), UI_FONT_SIZE + m_fpsText + "</size>");
             GUI.color = oldColor;
         }
-    }
+    } */
 
     private void OnRenderObject()
     {
