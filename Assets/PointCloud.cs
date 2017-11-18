@@ -527,7 +527,7 @@ public class PointCloud : MonoBehaviour {
         m_accumulation += Time.timeScale / Time.deltaTime;
 
         if (m_currentTimeFrames >= m_frameSpeed) {
-            m_frameIndex = 2;//(m_frameIndex + 1) % m_lastFrameIndex;
+            m_frameIndex = (m_frameIndex + 1) % m_lastFrameIndex;
             m_currentTimeFrames = 0;
         }
 
@@ -616,8 +616,8 @@ public class PointCloud : MonoBehaviour {
 
         //Debug.Log(m_indexComputeBuffers[m_frameIndex].count);
                                                                              
-        //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count*6);  // index buffer.         
-        Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count);  // index buffer.         
+        Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count*6);  // index buffer.         
+        //Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*/m_indexComputeBuffers[m_frameIndex].count);  // index buffer.         
 
         //Graphics.DrawProcedural(MeshTopology.Triangles, /*m_pointsCount*6*//*m_indexComputeBuffers[m_frameIndex].count*6*/m_indexComputeBuffer.count*6 );  // index buffer.
         //Graphics.DrawProcedural(MeshTopology.Points, /*m_pointsCount*6*//*m_indexComputeBuffers[m_frameIndex].count*/m_indexComputeBuffer.count);  // index buffer.
