@@ -437,6 +437,7 @@ public class PointCloud : MonoBehaviour {
             m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort", typeof(ComputeShader));
         }
         else if (m_bitsPerPass == 2) {
+            m_passLengthMultiplier = m_bitsPerPass;
             if (m_elemsPerThread == 4) {
                 m_myRadixSort = (ComputeShader)Resources.Load("MyRadixSort/localSort2bits4PerThread", typeof(ComputeShader));
             }
@@ -456,7 +457,7 @@ public class PointCloud : MonoBehaviour {
         m_threadGroupSize = (int)x;
 
         m_indexComputeBuffers = new List<ComputeBuffer>();
-        readIndicesAndValues(m_indexComputeBuffers, m_threadGroupSize); //make index buffer size depend on threadgroupsize
+        readIndicesAndValues(m_indexComputeBuffers, m_threadGroupSize*m_elemsPerThread); //make index buffer size depend on threadgroupsize
 
 
 

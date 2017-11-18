@@ -1546,6 +1546,7 @@ MonoBehaviour:
   m_lastFrameIndex: 29
   m_frameSpeed: 5
   m_textureSideSizePower: 12
+  particleTexture: {fileID: 0}
   m_radixShader: {fileID: 0}
   m_FPSLabelOffsetX: 15
   m_FPSLabelOffsetY: 250

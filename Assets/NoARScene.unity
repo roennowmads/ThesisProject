@@ -708,7 +708,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &587598598
 Transform:
   m_ObjectHideFlags: 0
@@ -1164,6 +1164,7 @@ MonoBehaviour:
   m_lastFrameIndex: 29
   m_frameSpeed: 0.1
   m_textureSideSizePower: 12
+  particleTexture: {fileID: 2800000, guid: 25829737ed2695041a4f6457b32a4d88, type: 3}
   m_radixShader: {fileID: 7200000, guid: 1b1d0e2d23f5cfb4db95e9777bb6315e, type: 3}
   m_FPSLabelOffsetX: 15
   m_FPSLabelOffsetY: 250
@@ -1215,7 +1216,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1073365730
 Transform:
   m_ObjectHideFlags: 0
@@ -1846,7 +1847,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &2112320112
 Transform:
   m_ObjectHideFlags: 0
