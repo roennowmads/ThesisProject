@@ -243,7 +243,7 @@ public class PointCloud : MonoBehaviour {
 
             //try to cut the size to something like 4096
 
-            TileInfo[] tiles = partitionIndexBuffer(zeroedBytes, points, pointCloudInfo, 6400);  
+            TileInfo[] tiles = partitionIndexBuffer(zeroedBytes, points, pointCloudInfo, 1600);  
 
             //List<ComputeBuffer> tileBuffers = new List<ComputeBuffer>();
             foreach (var tile in tiles) {     
@@ -600,8 +600,8 @@ public class PointCloud : MonoBehaviour {
         m_cmd.Clear();
         for (int i = 0; i < m_indexComputeBuffers.Count; i++) {
             m_cmd.SetGlobalBuffer("_IndicesValues", m_indexComputeBuffers[i].buffer);
-            m_cmd.DrawProcedural(pointRenderer.localToWorldMatrix, pointRenderer.material, 0, MeshTopology.Triangles, m_indexComputeBuffers[i].buffer.count * 6);
-            //m_cmd.DrawProcedural(pointRenderer.localToWorldMatrix, pointRenderer.material, 0, MeshTopology.Points, m_indexComputeBuffers[i].buffer.count);
+            //m_cmd.DrawProcedural(pointRenderer.localToWorldMatrix, pointRenderer.material, 0, MeshTopology.Triangles, m_indexComputeBuffers[i].buffer.count * 6);
+            m_cmd.DrawProcedural(pointRenderer.localToWorldMatrix, pointRenderer.material, 0, MeshTopology.Points, m_indexComputeBuffers[i].buffer.count);
         }
     }
 
