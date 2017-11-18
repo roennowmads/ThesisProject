@@ -4,7 +4,7 @@ Shader "Unlit/SortingTestGLSLPoints" { // defines the name of the shader
 	SubShader{ // Unity chooses the subshader that fits the GPU best
 		Tags{ "QUEUE" = "Transparent" "IGNOREPROJECTOR" = "true" "RenderType" = "Transparent" }
 
-		//Blend SrcAlpha OneMinusSrcAlpha
+		Blend SrcAlpha OneMinusSrcAlpha
 		ZWrite Off
 
 		Pass{ // some shaders require multiple passes
@@ -167,7 +167,7 @@ Shader "Unlit/SortingTestGLSLPoints" { // defines the name of the shader
 
 		SV_Target0.xyz = vs_COLOR0;
 		//SV_Target0.xyz = vec3(c);//vec3(gl_FragCoord.xy / _ScreenParams.xy, 0.0);//vs_COLOR0;
-		SV_Target0.w = /*albedo*/1.0;//0.1;//0.1;//albedo*0.25;
+		SV_Target0.w = albedo*0.25;//0.1;//0.1;//albedo*0.25;
 
 	}
 
